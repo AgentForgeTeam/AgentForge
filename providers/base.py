@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import json
+import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, AsyncIterator, Callable
@@ -25,6 +26,20 @@ def estimate_tokens(text: str) -> int:
     незаметно обходил бы лимиты бюджета.
     """
     return max(1, len(text or "") // 4) if text else 0
+
+
+#: признаки моделей, которые не ведут диалог: озвучка, распознавание речи,
+#: картинки, видео, эмбеддинги, модерация. Агенту они не подходят, и в
+#: выпадающем списке только мешают выбрать рабочую модель.
+_NOT_CHAT = re.compile(
+    r"embed|whisper|tts|transcri|speech|audio|realtime|live|image|imagen|veo|"
+    r"lyria|dall-e|moderation|guard|orpheus|robotics|computer-use|deep-research|"
+    r"antigravity|omni|davinci|babbage|aqa", re.IGNORECASE)
+
+
+def is_chat_model(name: str) -> bool:
+    """Годится ли модель для агента: текст на входе, текст и вызовы на выходе."""
+    return bool(name) and not _NOT_CHAT.search(name)
 
 
 @dataclass

@@ -180,6 +180,7 @@ AI Orchestrator.
 - `tests/smoke.py`
 - `tests/test_core_fixes.py`
 - `tests/test_audit_fixes.py`
+- `tests/test_models.py`
 - `tests/qml_controls_check.py`
 - `tests/test_ui.py`
 - `tests/ui_tour.py`
@@ -2875,7 +2876,7 @@ def keyring_delete_password(username: str) -> None:
 
 ### `providers/base.py`
 
-*179 строк*
+*194 строк*
 
 ````python
 """Единый интерфейс LLM-провайдера.
@@ -2888,6 +2889,7 @@ def keyring_delete_password(username: str) -> None:
 from __future__ import annotations
 
 import json
+import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, AsyncIterator, Callable
@@ -2905,6 +2907,20 @@ def estimate_tokens(text: str) -> int:
     незаметно обходил бы лимиты бюджета.
     """
     return max(1, len(text or "") // 4) if text else 0
+
+
+#: признаки моделей, которые не ведут диалог: озвучка, распознавание речи,
+#: картинки, видео, эмбеддинги, модерация. Агенту они не подходят, и в
+#: выпадающем списке только мешают выбрать рабочую модель.
+_NOT_CHAT = re.compile(
+    r"embed|whisper|tts|transcri|speech|audio|realtime|live|image|imagen|veo|"
+    r"lyria|dall-e|moderation|guard|orpheus|robotics|computer-use|deep-research|"
+    r"antigravity|omni|davinci|babbage|aqa", re.IGNORECASE)
+
+
+def is_chat_model(name: str) -> bool:
+    """Годится ли модель для агента: текст на входе, текст и вызовы на выходе."""
+    return bool(name) and not _NOT_CHAT.search(name)
 
 
 @dataclass
@@ -3061,7 +3077,7 @@ class LLMProvider(ABC):
 
 ### `providers/presets.py`
 
-*122 строк*
+*139 строк*
 
 ````python
 """Пресеты подключения к провайдерам «из коробки».
@@ -3096,7 +3112,13 @@ PRESETS: dict[str, ProviderPreset] = {
         base_url="https://api.openai.com/v1",
         api_style="openai",
         docs_url="https://platform.openai.com/api-keys",
-        suggested_models=["gpt-4o", "gpt-4o-mini", "gpt-4.1", "gpt-4.1-mini", "o4-mini"],
+        # Только модели, которые вызывают инструменты через Chat Completions.
+        # gpt-6-astra и gpt-6.1-sol умеют это лишь через Responses API: их
+        # можно вписать вручную для агентов без инструментов или взять
+        # через OpenRouter.
+        suggested_models=["gpt-5.4-mini", "gpt-5.4-nano", "gpt-5.4", "gpt-6-luna",
+                          "gpt-6-sol", "gpt-4.1", "gpt-4.1-mini", "gpt-4o-mini"],
+        notes="Запросы платные: нужен пополненный баланс в Billing.",
     ),
     "anthropic": ProviderPreset(
         key="anthropic",
@@ -3105,8 +3127,8 @@ PRESETS: dict[str, ProviderPreset] = {
         api_style="anthropic",
         docs_url="https://console.anthropic.com/settings/keys",
         suggested_models=[
-            "claude-sonnet-4-5", "claude-opus-4-1", "claude-3-7-sonnet-latest",
-            "claude-3-5-haiku-latest",
+            "claude-sonnet-5-5", "claude-opus-5-5", "claude-fable-5-1",
+            "claude-haiku-4-5-20251001",
         ],
     ),
     "gemini": ProviderPreset(
@@ -3116,7 +3138,13 @@ PRESETS: dict[str, ProviderPreset] = {
         api_style="gemini",
         free_tier=True,
         docs_url="https://aistudio.google.com/app/apikey",
-        suggested_models=["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"],
+        # Модели 2.5 Google открыл только тем, кто пользовался ими раньше,
+        # 2.0 отключены: новым ключам они отвечают ошибкой.
+        suggested_models=[
+            "gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash",
+            "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite",
+            "gemini-3.1-pro-preview", "gemini-3-flash-preview", "gemini-flash-latest",
+        ],
         notes="Есть бесплатная квота в AI Studio.",
     ),
     "groq": ProviderPreset(
@@ -3127,8 +3155,8 @@ PRESETS: dict[str, ProviderPreset] = {
         free_tier=True,
         docs_url="https://console.groq.com/keys",
         suggested_models=[
+            "openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b",
             "llama-3.3-70b-versatile", "llama-3.1-8b-instant",
-            "qwen/qwen3-32b", "deepseek-r1-distill-llama-70b",
         ],
         notes="Очень быстрый инференс, щедрый бесплатный лимит.",
     ),
@@ -3140,8 +3168,10 @@ PRESETS: dict[str, ProviderPreset] = {
         free_tier=True,
         docs_url="https://openrouter.ai/keys",
         suggested_models=[
-            "deepseek/deepseek-chat", "qwen/qwen-2.5-72b-instruct",
-            "meta-llama/llama-3.3-70b-instruct", "google/gemma-3-27b-it:free",
+            "google/gemini-3.8-flash", "openai/gpt-6-luna", "openai/gpt-6-astra",
+            "anthropic/claude-sonnet-5.5", "deepseek/deepseek-v4.1-flash",
+            "moonshotai/kimi-k3", "qwen/qwen3.8-27b:free", "google/gemma-4-31b-it:free",
+            "nvidia/nemotron-3-super-120b-a12b:free",
         ],
         notes="Единый ключ к десяткам моделей, часть из них бесплатна (суффикс :free).",
     ),
@@ -3154,8 +3184,8 @@ PRESETS: dict[str, ProviderPreset] = {
         free_tier=True,
         local=True,
         docs_url="https://ollama.com/download",
-        suggested_models=["qwen2.5:7b-instruct", "qwen2.5:14b-instruct",
-                          "llama3.1:8b", "mistral-nemo", "gemma3:12b"],
+        suggested_models=["qwen3.8:27b", "qwen3.6:27b", "granite4.1:8b", "lfm2.5:8b",
+                          "qwen2.5:7b-instruct", "llama3.1:8b"],
         notes="Работает офлайн. Ключ не нужен - достаточно запущенного сервера Ollama.",
     ),
     "huggingface": ProviderPreset(
@@ -3165,7 +3195,10 @@ PRESETS: dict[str, ProviderPreset] = {
         api_style="openai",
         free_tier=True,
         docs_url="https://huggingface.co/settings/tokens",
-        suggested_models=["Qwen/Qwen2.5-72B-Instruct", "meta-llama/Llama-3.3-70B-Instruct"],
+        suggested_models=[
+            "Qwen/Qwen3.8-27B", "deepseek-ai/DeepSeek-V4.1-Flash", "openai/gpt-oss-120b",
+            "moonshotai/Kimi-K3", "google/gemma-4-31B-it", "meta-llama/Llama-3.3-70B-Instruct",
+        ],
         notes="Router HF совместим с OpenAI API. Бесплатная квота ограничена.",
     ),
     "custom": ProviderPreset(
@@ -3190,7 +3223,7 @@ def preset_list() -> list[ProviderPreset]:
 
 ### `providers/openai_compat.py`
 
-*339 строк*
+*369 строк*
 
 ````python
 """Провайдер для всех OpenAI-совместимых API.
@@ -3202,6 +3235,7 @@ def preset_list() -> list[ProviderPreset]:
 from __future__ import annotations
 
 import json
+import re
 from typing import Any, AsyncIterator
 
 import httpx
@@ -3216,6 +3250,7 @@ from providers.base import (
     ToolSpec,
     Usage,
     estimate_tokens,
+    is_chat_model,
 )
 
 
@@ -3279,14 +3314,27 @@ class OpenAICompatProvider(LLMProvider):
         серверы (Groq, Ollama, vLLM…) знают только ``max_tokens``.
         """
         payload: dict[str, Any] = {"model": model, "messages": self._to_wire(messages)}
+        tool_payload = self._tools_payload(tools)
         if self.key == "openai":
             payload["max_completion_tokens"] = max_tokens
             if not _is_reasoning_model(model):
                 payload["temperature"] = temperature
+            if tool_payload:
+                name = _bare(model)
+                if name.startswith(_TOOLS_NEED_RESPONSES):
+                    # Понятная ошибка вместо загадочного отказа API.
+                    raise ProviderError(
+                        f"Модель {model} вызывает инструменты только через Responses API, "
+                        "а программа работает через Chat Completions. Выберите для агента "
+                        "gpt-6-luna, gpt-6-sol или gpt-5.4, отключите ему инструменты "
+                        "либо подключите эту модель через OpenRouter.")
+                if name.startswith(_TOOLS_NEED_NO_REASONING):
+                    # Через Chat Completions эти модели вызывают инструменты
+                    # только без рассуждения.
+                    payload["reasoning_effort"] = "none"
         else:
             payload["max_tokens"] = max_tokens
             payload["temperature"] = temperature
-        tool_payload = self._tools_payload(tools)
         if tool_payload:
             payload["tools"] = tool_payload
             payload["tool_choice"] = "auto"
@@ -3488,16 +3536,31 @@ class OpenAICompatProvider(LLMProvider):
         # Обычно {"data": [...]}, но часть серверов отдаёт голый список.
         items = data if isinstance(data, list) else (data.get("data") or data.get("models") or [])
         names = [it.get("id") or it.get("name", "") for it in items if isinstance(it, dict)]
-        return sorted(n for n in names if n)
+        # Озвучка, распознавание речи, картинки и эмбеддинги агенту не подходят.
+        return sorted(n for n in names if is_chat_model(n))
 
 
-#: модели OpenAI, которые принимают только стандартную температуру
-_REASONING_PREFIXES = ("o1", "o3", "o4", "gpt-5")
+#: модели, которые через Chat Completions вызывают инструменты только при
+#: ``reasoning_effort: none`` (так написано в их карточках на сайте OpenAI)
+_TOOLS_NEED_NO_REASONING = ("gpt-6-luna", "gpt-6-sol", "gpt-5.6-luna")
+#: модели, которые через Chat Completions инструменты не вызывают вовсе
+_TOOLS_NEED_RESPONSES = ("gpt-6-astra", "gpt-6.1-sol")
+
+
+def _bare(model: str) -> str:
+    return (model or "").lower().rsplit("/", 1)[-1]
 
 
 def _is_reasoning_model(model: str) -> bool:
-    name = (model or "").lower().rsplit("/", 1)[-1]
-    return name.startswith(_REASONING_PREFIXES) and not name.startswith("gpt-5-chat")
+    """Модели OpenAI с рассуждением: o-серия и GPT начиная с пятой версии.
+
+    Они принимают только стандартную температуру, любую другую API отвергает.
+    """
+    name = _bare(model)
+    if re.match(r"o\d", name):
+        return True
+    match = re.match(r"gpt-(\d+)", name)
+    return bool(match) and int(match.group(1)) >= 5 and "-chat" not in name
 
 
 def _int(value: Any) -> int:
@@ -3804,7 +3867,7 @@ def _error_text(resp: httpx.Response) -> str:
 
 ### `providers/gemini_provider.py`
 
-*245 строк*
+*318 строк*
 
 ````python
 """Провайдер Google Gemini (generativeLanguage API).
@@ -3817,6 +3880,7 @@ def _error_text(resp: httpx.Response) -> str:
 
 from __future__ import annotations
 
+import re
 import uuid
 from typing import Any
 
@@ -3831,7 +3895,25 @@ from providers.base import (
     ToolCall,
     ToolSpec,
     Usage,
+    is_chat_model,
 )
+
+#: сколько токенов сверх лимита ответа оставить «думающим» моделям: у Gemini
+#: ``maxOutputTokens`` включает размышления, и при лимите агента в 2048
+#: модель могла потратить всё на них и вернуть пустой ответ
+THINKING_HEADROOM = 8192
+
+#: почему кандидат остался пустым (``finishReason``) и что сказать человеку
+_EMPTY_REASONS = {
+    "MAX_TOKENS": "модель израсходовала лимит токенов на размышления и не успела "
+                  "ответить. Увеличьте «Макс. токенов» у агента",
+    "SAFETY": "ответ заблокирован фильтром безопасности Google",
+    "PROHIBITED_CONTENT": "ответ заблокирован фильтром безопасности Google",
+    "BLOCKLIST": "ответ заблокирован фильтром безопасности Google",
+    "SPII": "ответ заблокирован: в нём были персональные данные",
+    "RECITATION": "ответ заблокирован: он повторял защищённый текст",
+    "MALFORMED_FUNCTION_CALL": "модель сформировала некорректный вызов инструмента",
+}
 
 
 class GeminiProvider(LLMProvider):
@@ -3894,13 +3976,20 @@ class GeminiProvider(LLMProvider):
         return "\n\n".join(p for p in system_parts if p), contents
 
     def _payload(self, messages: list[ChatMessage], temperature: float, max_tokens: int,
-                 tools: list[ToolSpec] | None) -> dict[str, Any]:
+                 tools: list[ToolSpec] | None, model: str = "") -> dict[str, Any]:
         system, contents = self._split(messages)
-        payload: dict[str, Any] = {
-            "contents": contents,
-            "generationConfig": {"temperature": temperature,
-                                 "maxOutputTokens": max_tokens},
-        }
+        config: dict[str, Any] = {"temperature": temperature, "maxOutputTokens": max_tokens}
+        if _thinks(model):
+            # Размышления входят в maxOutputTokens: без запаса модель может
+            # потратить весь лимит на них и не выдать ответа. Сами мысли
+            # просим присылать, чтобы экран «Выполнение» показывал их вживую.
+            config["maxOutputTokens"] = max_tokens + THINKING_HEADROOM
+            config["thinkingConfig"] = {"includeThoughts": True}
+        if _is_gemini3(model):
+            # Для Gemini 3 Google просит не трогать температуру: ниже 1.0
+            # модель склонна зацикливаться (а супервайзер ставит 0.2).
+            config.pop("temperature", None)
+        payload: dict[str, Any] = {"contents": contents, "generationConfig": config}
         if system:
             payload["systemInstruction"] = {"parts": [{"text": system}]}
         if tools:
@@ -3932,12 +4021,13 @@ class GeminiProvider(LLMProvider):
         """
         import json as _json
 
-        payload = self._payload(messages, temperature, max_tokens, tools)
-        url = f"{self.base_url}/models/{model}:streamGenerateContent?alt=sse"
+        payload = self._payload(messages, temperature, max_tokens, tools, model)
+        url = f"{self.base_url}/models/{_model_id(model)}:streamGenerateContent?alt=sse"
         text_parts: list[str] = []
         calls: list[ToolCall] = []
         usage: dict[str, Any] = {}
         finish_reason = ""
+        block_reason = ""
         try:
             async with self._http().stream("POST", url, headers=self._headers(),
                                            json=payload) as resp:
@@ -3952,6 +4042,8 @@ class GeminiProvider(LLMProvider):
                     except ValueError:
                         continue
                     usage = chunk.get("usageMetadata") or usage
+                    block_reason = ((chunk.get("promptFeedback") or {}).get("blockReason")
+                                    or block_reason)
                     for candidate in chunk.get("candidates") or []:
                         finish_reason = candidate.get("finishReason") or finish_reason
                         for part in (candidate.get("content") or {}).get("parts", []):
@@ -3965,8 +4057,10 @@ class GeminiProvider(LLMProvider):
                                     on_delta(part["text"], kind)
         except httpx.HTTPError as exc:
             raise ProviderError(f"Сетевая ошибка: {exc}") from exc
+        text = "".join(text_parts)
+        _raise_if_empty(text, calls, finish_reason, block_reason)
         return CompletionResult(
-            text="".join(text_parts), tool_calls=calls,
+            text=text, tool_calls=calls,
             usage=Usage(int(usage.get("promptTokenCount", 0)),
                         int(usage.get("candidatesTokenCount", 0))
                         + int(usage.get("thoughtsTokenCount", 0))),
@@ -3976,8 +4070,8 @@ class GeminiProvider(LLMProvider):
     async def complete(self, model: str, messages: list[ChatMessage], *,
                        temperature: float = 0.7, max_tokens: int = 2048,
                        tools: list[ToolSpec] | None = None) -> CompletionResult:
-        payload = self._payload(messages, temperature, max_tokens, tools)
-        url = f"{self.base_url}/models/{model}:generateContent"
+        payload = self._payload(messages, temperature, max_tokens, tools, model)
+        url = f"{self.base_url}/models/{_model_id(model)}:generateContent"
         try:
             resp = await self._http().post(url, headers=self._headers(), json=payload)
         except httpx.HTTPError as exc:
@@ -3985,7 +4079,10 @@ class GeminiProvider(LLMProvider):
         if resp.status_code >= 400:
             raise ProviderError(_error_text(resp), resp.status_code)
 
-        data = resp.json()
+        try:
+            data = resp.json()
+        except ValueError as exc:
+            raise ProviderError(f"Сервер вернул не JSON: {resp.text[:200]}") from exc
         candidate = (data.get("candidates") or [{}])[0]
         text_parts, calls = [], []
         for part in (candidate.get("content") or {}).get("parts", []):
@@ -3994,9 +4091,12 @@ class GeminiProvider(LLMProvider):
             elif "text" in part and not part.get("thought"):
                 # Рассуждение «думающих» моделей в ответ не входит.
                 text_parts.append(part["text"])
+        text = "".join(text_parts)
+        _raise_if_empty(text, calls, candidate.get("finishReason", ""),
+                        (data.get("promptFeedback") or {}).get("blockReason", ""))
         u = data.get("usageMetadata") or {}
         return CompletionResult(
-            text="".join(text_parts),
+            text=text,
             tool_calls=calls,
             # Токены рассуждения оплачиваются как выходные.
             usage=Usage(int(u.get("promptTokenCount", 0)),
@@ -4017,10 +4117,46 @@ class GeminiProvider(LLMProvider):
         names = []
         for m in resp.json().get("models", []):
             name = (m.get("name") or "").removeprefix("models/")
-            if name and "generateContent" in (m.get("supportedGenerationMethods") or
-                                              ["generateContent"]):
+            methods = m.get("supportedGenerationMethods") or ["generateContent"]
+            # Озвучка, картинки и эмбеддинги агенту не подходят, а список и так
+            # длинный: оставляем только модели для диалога.
+            if "generateContent" in methods and is_chat_model(name):
                 names.append(name)
         return sorted(names)
+
+
+def _model_id(model: str) -> str:
+    """Имя модели для адреса запроса: префикс «models/» уже есть в пути."""
+    return (model or "").strip().removeprefix("models/")
+
+
+def _thinks(model: str) -> bool:
+    """Модель рассуждает перед ответом: семейства 2.5 и 3.x, алиасы latest."""
+    name = _model_id(model).lower()
+    return bool(re.match(r"gemini-(2\.5|[3-9])", name)) or (
+        name.startswith("gemini-") and name.endswith("-latest"))
+
+
+def _is_gemini3(model: str) -> bool:
+    name = _model_id(model).lower()
+    return bool(re.match(r"gemini-[3-9]", name)) or (
+        name.startswith("gemini-") and name.endswith("-latest"))
+
+
+def _raise_if_empty(text: str, calls: list[ToolCall], finish_reason: str,
+                    block_reason: str) -> None:
+    """Пустой ответ без объяснения выглядел бы как «агент ничего не сделал».
+
+    Gemini в таких случаях сообщает причину отдельным полем: лимит токенов
+    ушёл на размышления, сработал фильтр безопасности и т.п. Её и отдаём.
+    """
+    if text.strip() or calls:
+        return
+    if block_reason:
+        raise ProviderError(f"Gemini отклонил запрос: {block_reason}")
+    reason = (finish_reason or "").upper()
+    if reason in _EMPTY_REASONS:
+        raise ProviderError(f"Gemini: {_EMPTY_REASONS[reason]} ({reason})")
 
 
 #: ключи JSON Schema, которые понимает ``functionDeclarations``; прочие
@@ -4150,7 +4286,7 @@ def estimate_cost(provider_key: str, model: str,
 
 ### `providers/pricing.json`
 
-*47 строк*
+*77 строк*
 
 ````json
 {
@@ -4158,6 +4294,15 @@ def estimate_cost(provider_key: str, model: str,
   "_default": [0.0, 0.0],
 
   "openai": {
+    "gpt-6-astra": [10.00, 50.00],
+    "gpt-6.1-sol": [2.00, 10.00],
+    "gpt-6-sol": [2.00, 10.00],
+    "gpt-6-luna": [0.10, 0.50],
+    "gpt-5.6-luna": [0.20, 1.20],
+    "gpt-5.4": [2.50, 15.00],
+    "gpt-5.4-mini": [0.75, 4.50],
+    "gpt-5.4-nano": [0.20, 1.25],
+    "gpt-5-mini": [0.25, 2.00],
     "gpt-4o": [2.50, 10.00],
     "gpt-4o-mini": [0.15, 0.60],
     "gpt-4.1": [2.00, 8.00],
@@ -4168,6 +4313,10 @@ def estimate_cost(provider_key: str, model: str,
   },
 
   "anthropic": {
+    "claude-fable-5-1": [10.00, 50.00],
+    "claude-opus-5-5": [4.00, 20.00],
+    "claude-sonnet-5-5": [2.00, 10.00],
+    "claude-haiku-4-5": [1.00, 5.00],
     "claude-opus-4": [15.00, 75.00],
     "claude-sonnet-4": [3.00, 15.00],
     "claude-3-7-sonnet": [3.00, 15.00],
@@ -4177,6 +4326,15 @@ def estimate_cost(provider_key: str, model: str,
   },
 
   "gemini": {
+    "gemini-3.8-flash": [0.75, 3.75],
+    "gemini-3.7-flash": [0.75, 3.75],
+    "gemini-3.6-flash": [0.75, 3.75],
+    "gemini-3.5-flash-lite": [0.30, 2.50],
+    "gemini-3.5-flash": [1.50, 9.00],
+    "gemini-3.1-flash-lite": [0.25, 1.50],
+    "gemini-3.1-pro": [2.00, 12.00],
+    "gemini-3-flash": [0.50, 3.00],
+    "gemini-flash-latest": [0.75, 3.75],
     "gemini-2.5-pro": [1.25, 10.00],
     "gemini-2.5-flash": [0.30, 2.50],
     "gemini-2.5-flash-lite": [0.10, 0.40],
@@ -4184,6 +4342,8 @@ def estimate_cost(provider_key: str, model: str,
   },
 
   "groq": {
+    "openai/gpt-oss-120b": [0.15, 0.75],
+    "openai/gpt-oss-20b": [0.10, 0.50],
     "llama-3.3-70b-versatile": [0.59, 0.79],
     "llama-3.1-8b-instant": [0.05, 0.08],
     "qwen/qwen3-32b": [0.29, 0.59],
@@ -4191,6 +4351,12 @@ def estimate_cost(provider_key: str, model: str,
   },
 
   "openrouter": {
+    "google/gemini-3.8-flash": [0.75, 3.75],
+    "openai/gpt-6-luna": [0.10, 0.50],
+    "openai/gpt-6-astra": [10.00, 50.00],
+    "anthropic/claude-sonnet-5.5": [2.00, 10.00],
+    "deepseek/deepseek-v4.1-flash": [0.30, 1.20],
+    "moonshotai/kimi-k3": [3.00, 15.00],
     "deepseek/deepseek-chat": [0.27, 1.10],
     "qwen/qwen-2.5-72b-instruct": [0.12, 0.39],
     "meta-llama/llama-3.3-70b-instruct": [0.12, 0.30]
@@ -10298,7 +10464,7 @@ class KeysController(Controller):
 
 ### `ui/bridge/c_agents.py`
 
-*225 строк*
+*245 строк*
 
 ````python
 """Агенты воркспейса: роли, модели, инструменты, системные промпты."""
@@ -10310,6 +10476,7 @@ from PySide6.QtCore import Property, QObject, Signal, Slot
 from app.i18n import current_language, tr
 from core.agents.roles import COMMON_RULES, TEMPLATES, by_key, title as role_title
 from core.tools.base import default_registry, expand_tool_names
+from providers.base import is_chat_model
 from providers.factory import build_provider, model_price
 from providers.presets import preset
 from ui.bridge.core import Controller, as_float, as_int, elide, error_text, status_title
@@ -10328,6 +10495,23 @@ ROLE_ICONS = {
     "critic": "scale", "documenter": "file-text", "researcher": "book-open",
     "supervisor": "shield-check", "custom": "sparkles",
 }
+
+
+def ordered_models(suggested: list[str], available: list[str]) -> list[str]:
+    """Сначала рекомендованные модели, потом остальные, что вернул провайдер.
+
+    Провайдер отдаёт список по алфавиту, и наверх попадают старые модели:
+    у Gemini это отключённые 2.0 и закрытые для новых ключей 2.5. Если
+    провайдер список прислал, рекомендованные берутся только из него: модель,
+    которой у ключа нет, предлагать незачем.
+    """
+    # Кэш мог сохраниться до того, как появился фильтр, поэтому чистим и здесь.
+    available = [m for m in available if is_chat_model(m)]
+    if not available:
+        return list(suggested)
+    have = set(available)
+    top = [m for m in suggested if m in have]
+    return top + [m for m in available if m not in set(top)]
 
 
 class AgentsController(Controller):
@@ -10428,11 +10612,12 @@ class AgentsController(Controller):
 
     @Slot(int, result="QVariantList")
     def modelsForKey(self, key_id: int) -> list[str]:  # noqa: N802
-        """Кэш последней проверки ключа, иначе популярные модели пресета."""
+        """Рекомендованные модели пресета, за ними остальные из кэша проверки ключа."""
         key = self.repos.keys.get(key_id) if self.ready and key_id >= 0 else None
         if key is None:
             return []
-        return list(key.meta.get("models") or preset(key.provider).suggested_models)
+        return ordered_models(preset(key.provider).suggested_models,
+                              key.meta.get("models") or [])
 
     @Slot(int)
     def loadModels(self, key_id: int) -> None:  # noqa: N802
@@ -10454,7 +10639,8 @@ class AgentsController(Controller):
                 # Только кэш моделей: подпись и адрес за время запроса могли
                 # поменять, и старые значения их бы затёрли.
                 self.repos.keys.update_meta(key.id, models=models[:300])
-            self.modelsLoaded.emit(key_id, models[:300], "")
+            self.modelsLoaded.emit(
+                key_id, ordered_models(preset(key.provider).suggested_models, models[:300]), "")
 
         def failed(exc: Exception) -> None:
             self.modelsLoaded.emit(key_id, [], tr("keys.test_fail", err=error_text(exc)))
@@ -20905,6 +21091,156 @@ def test_format_detection_ignores_word_fragments():
     fmt, _ = detect_format(_bundle("коротко", "Столица Франции",
                                    "Назови capital и один happy fact"))
     assert fmt != "zip"
+````
+
+### `tests/test_models.py`
+
+*143 строк*
+
+````python
+"""Выбор моделей и особенности актуальных API провайдеров (сентябрь 2026).
+
+Каждый тест закрепляет поведение, без которого модель у провайдера просто
+не работает: Gemini 2.x закрыты для новых ключей, у Gemini 3 размышления
+съедают лимит ответа, флагманы GPT-6 не вызывают инструменты через Chat
+Completions.
+"""
+
+from __future__ import annotations
+
+import json
+
+import httpx
+import pytest
+
+from providers.base import ChatMessage, ProviderError, ToolSpec, is_chat_model
+from providers.gemini_provider import THINKING_HEADROOM, GeminiProvider
+from providers.openai_compat import OpenAICompatProvider
+from providers.presets import PRESETS
+from ui.bridge.c_agents import ordered_models
+
+TOOL = ToolSpec("read_file", "читает файл", {"type": "object", "properties": {}})
+MESSAGES = [ChatMessage("system", "Ты агент."), ChatMessage("user", "задача")]
+
+
+def _sse(events: list[dict]) -> bytes:
+    return "".join(f"data: {json.dumps(e, ensure_ascii=False)}\n\n" for e in events).encode()
+
+
+def _gemini(body: bytes) -> GeminiProvider:
+    provider = GeminiProvider("k", "https://example.test/v1beta")
+    provider._client = httpx.AsyncClient(transport=httpx.MockTransport(
+        lambda request: httpx.Response(200, content=body)))
+    return provider
+
+
+# --- рекомендованные модели ------------------------------------------------------
+
+
+def test_gemini_suggestions_work_for_new_keys():
+    suggested = PRESETS["gemini"].suggested_models
+    assert suggested and suggested[0].startswith("gemini-3")
+    # 2.0 отключены, 2.5 закрыты для новых ключей: предлагать их нельзя.
+    assert not [m for m in suggested if m.startswith(("gemini-2", "gemini-1"))]
+
+
+def test_every_provider_offers_several_models():
+    for key, preset in PRESETS.items():
+        if key != "custom":
+            assert len(preset.suggested_models) >= 4, key
+
+
+def test_recommended_models_come_first_and_junk_is_hidden():
+    available = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-3.5-flash-lite",
+                 "gemini-3.8-flash", "gemini-3.8-flash-tts", "gemini-embedding-001"]
+    ordered = ordered_models(["gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-9"],
+                             available)
+    assert ordered[:2] == ["gemini-3.8-flash", "gemini-3.5-flash-lite"]
+    assert "gemini-9" not in ordered                 # у ключа такой модели нет
+    assert "gemini-3.8-flash-tts" not in ordered and "gemini-embedding-001" not in ordered
+    assert ordered_models(["a", "b"], []) == ["a", "b"]
+
+
+def test_chat_model_filter():
+    assert is_chat_model("gpt-6-luna") and is_chat_model("qwen/qwen3.8-27b")
+    for name in ("whisper-1", "gpt-4o-mini-tts", "text-embedding-3-large", "gpt-image-2",
+                 "gemini-3.8-live", "omni-moderation-latest"):
+        assert not is_chat_model(name), name
+
+
+# --- Gemini ----------------------------------------------------------------------------
+
+
+def test_gemini3_payload_leaves_room_for_thinking_and_keeps_temperature_default():
+    payload = GeminiProvider("k")._payload(MESSAGES, 0.2, 2048, None, "gemini-3.8-flash")
+    config = payload["generationConfig"]
+    assert config["maxOutputTokens"] == 2048 + THINKING_HEADROOM
+    assert config["thinkingConfig"] == {"includeThoughts": True}
+    assert "temperature" not in config               # Google: ниже 1.0 зацикливается
+
+
+def test_gemini_older_model_keeps_plain_config():
+    config = GeminiProvider("k")._payload(MESSAGES, 0.2, 2048, None,
+                                          "gemini-2.0-flash")["generationConfig"]
+    assert config == {"temperature": 0.2, "maxOutputTokens": 2048}
+
+
+async def test_gemini_empty_answer_explains_token_limit():
+    provider = _gemini(_sse([
+        {"candidates": [{"content": {"parts": [{"text": "думаю", "thought": True}]}}]},
+        {"candidates": [{"content": {"parts": []}, "finishReason": "MAX_TOKENS"}]},
+    ]))
+    with pytest.raises(ProviderError, match="лимит токенов"):
+        await provider.stream_complete("gemini-3.8-flash", MESSAGES)
+    await provider.aclose()
+
+
+async def test_gemini_blocked_prompt_is_reported():
+    provider = _gemini(_sse([{"promptFeedback": {"blockReason": "SAFETY"}}]))
+    with pytest.raises(ProviderError, match="SAFETY"):
+        await provider.stream_complete("gemini-3.8-flash", MESSAGES)
+    await provider.aclose()
+
+
+async def test_gemini_model_list_hides_non_chat_models():
+    body = json.dumps({"models": [
+        {"name": "models/gemini-3.8-flash", "supportedGenerationMethods": ["generateContent"]},
+        {"name": "models/gemini-3.8-flash-tts", "supportedGenerationMethods": ["generateContent"]},
+        {"name": "models/gemini-embedding-001", "supportedGenerationMethods": ["embedContent"]},
+    ]}).encode()
+    provider = _gemini(body)
+    assert await provider.list_models() == ["gemini-3.8-flash"]
+    await provider.aclose()
+
+
+# --- OpenAI ------------------------------------------------------------------------------
+
+
+def _openai() -> OpenAICompatProvider:
+    provider = OpenAICompatProvider("k")
+    provider.key = "openai"
+    return provider
+
+
+def test_gpt6_luna_calls_tools_without_reasoning():
+    payload = _openai()._payload("gpt-6-luna", MESSAGES, 0.7, 1000, [TOOL])
+    assert payload["reasoning_effort"] == "none"
+    assert "temperature" not in payload and payload["max_completion_tokens"] == 1000
+    plain = _openai()._payload("gpt-6-luna", MESSAGES, 0.7, 1000, None)
+    assert "reasoning_effort" not in plain           # без инструментов рассуждает как обычно
+
+
+def test_gpt6_flagship_with_tools_gets_a_clear_error():
+    with pytest.raises(ProviderError, match="Responses API"):
+        _openai()._payload("gpt-6-astra", MESSAGES, 0.7, 1000, [TOOL])
+    assert _openai()._payload("gpt-6-astra", MESSAGES, 0.7, 1000, None)["model"] == "gpt-6-astra"
+
+
+def test_reasoning_models_are_recognised_by_version():
+    for model in ("gpt-5.4-mini", "gpt-6-sol", "o3"):
+        assert "temperature" not in _openai()._payload(model, MESSAGES, 0.7, 100, None), model
+    for model in ("gpt-4.1", "gpt-4o-mini"):
+        assert _openai()._payload(model, MESSAGES, 0.7, 100, None)["temperature"] == 0.7, model
 ````
 
 ### `tests/qml_controls_check.py`

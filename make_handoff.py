@@ -144,6 +144,7 @@ FILE_ORDER = [
         "tests/smoke.py",
         "tests/test_core_fixes.py",
         "tests/test_audit_fixes.py",
+        "tests/test_models.py",
         "tests/qml_controls_check.py",
         "tests/test_ui.py",
         "tests/ui_tour.py",

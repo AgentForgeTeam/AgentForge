@@ -30,7 +30,13 @@ PRESETS: dict[str, ProviderPreset] = {
         base_url="https://api.openai.com/v1",
         api_style="openai",
         docs_url="https://platform.openai.com/api-keys",
-        suggested_models=["gpt-4o", "gpt-4o-mini", "gpt-4.1", "gpt-4.1-mini", "o4-mini"],
+        # Только модели, которые вызывают инструменты через Chat Completions.
+        # gpt-6-astra и gpt-6.1-sol умеют это лишь через Responses API: их
+        # можно вписать вручную для агентов без инструментов или взять
+        # через OpenRouter.
+        suggested_models=["gpt-5.4-mini", "gpt-5.4-nano", "gpt-5.4", "gpt-6-luna",
+                          "gpt-6-sol", "gpt-4.1", "gpt-4.1-mini", "gpt-4o-mini"],
+        notes="Запросы платные: нужен пополненный баланс в Billing.",
     ),
     "anthropic": ProviderPreset(
         key="anthropic",
@@ -39,8 +45,8 @@ PRESETS: dict[str, ProviderPreset] = {
         api_style="anthropic",
         docs_url="https://console.anthropic.com/settings/keys",
         suggested_models=[
-            "claude-sonnet-4-5", "claude-opus-4-1", "claude-3-7-sonnet-latest",
-            "claude-3-5-haiku-latest",
+            "claude-sonnet-5-5", "claude-opus-5-5", "claude-fable-5-1",
+            "claude-haiku-4-5-20251001",
         ],
     ),
     "gemini": ProviderPreset(
@@ -50,7 +56,13 @@ PRESETS: dict[str, ProviderPreset] = {
         api_style="gemini",
         free_tier=True,
         docs_url="https://aistudio.google.com/app/apikey",
-        suggested_models=["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"],
+        # Модели 2.5 Google открыл только тем, кто пользовался ими раньше,
+        # 2.0 отключены: новым ключам они отвечают ошибкой.
+        suggested_models=[
+            "gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash",
+            "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite",
+            "gemini-3.1-pro-preview", "gemini-3-flash-preview", "gemini-flash-latest",
+        ],
         notes="Есть бесплатная квота в AI Studio.",
     ),
     "groq": ProviderPreset(
@@ -61,8 +73,8 @@ PRESETS: dict[str, ProviderPreset] = {
         free_tier=True,
         docs_url="https://console.groq.com/keys",
         suggested_models=[
+            "openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b",
             "llama-3.3-70b-versatile", "llama-3.1-8b-instant",
-            "qwen/qwen3-32b", "deepseek-r1-distill-llama-70b",
         ],
         notes="Очень быстрый инференс, щедрый бесплатный лимит.",
     ),
@@ -74,8 +86,10 @@ PRESETS: dict[str, ProviderPreset] = {
         free_tier=True,
         docs_url="https://openrouter.ai/keys",
         suggested_models=[
-            "deepseek/deepseek-chat", "qwen/qwen-2.5-72b-instruct",
-            "meta-llama/llama-3.3-70b-instruct", "google/gemma-3-27b-it:free",
+            "google/gemini-3.8-flash", "openai/gpt-6-luna", "openai/gpt-6-astra",
+            "anthropic/claude-sonnet-5.5", "deepseek/deepseek-v4.1-flash",
+            "moonshotai/kimi-k3", "qwen/qwen3.8-27b:free", "google/gemma-4-31b-it:free",
+            "nvidia/nemotron-3-super-120b-a12b:free",
         ],
         notes="Единый ключ к десяткам моделей, часть из них бесплатна (суффикс :free).",
     ),
@@ -88,8 +102,8 @@ PRESETS: dict[str, ProviderPreset] = {
         free_tier=True,
         local=True,
         docs_url="https://ollama.com/download",
-        suggested_models=["qwen2.5:7b-instruct", "qwen2.5:14b-instruct",
-                          "llama3.1:8b", "mistral-nemo", "gemma3:12b"],
+        suggested_models=["qwen3.8:27b", "qwen3.6:27b", "granite4.1:8b", "lfm2.5:8b",
+                          "qwen2.5:7b-instruct", "llama3.1:8b"],
         notes="Работает офлайн. Ключ не нужен - достаточно запущенного сервера Ollama.",
     ),
     "huggingface": ProviderPreset(
@@ -99,7 +113,10 @@ PRESETS: dict[str, ProviderPreset] = {
         api_style="openai",
         free_tier=True,
         docs_url="https://huggingface.co/settings/tokens",
-        suggested_models=["Qwen/Qwen2.5-72B-Instruct", "meta-llama/Llama-3.3-70B-Instruct"],
+        suggested_models=[
+            "Qwen/Qwen3.8-27B", "deepseek-ai/DeepSeek-V4.1-Flash", "openai/gpt-oss-120b",
+            "moonshotai/Kimi-K3", "google/gemma-4-31B-it", "meta-llama/Llama-3.3-70B-Instruct",
+        ],
         notes="Router HF совместим с OpenAI API. Бесплатная квота ограничена.",
     ),
     "custom": ProviderPreset(
