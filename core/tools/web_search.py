@@ -1,0 +1,175 @@
+"""Веб-поиск и чтение страниц.
+
+Ответ на вопрос 9: по умолчанию используется DuckDuckGo (библиотека ``ddgs``) —
+она не требует ключа, поэтому поиск работает «из коробки». Если пользователь
+добавит ключ Tavily или Brave, можно переключить бэкенд в настройках воркспейса.
+
+Сетевые вызовы вынесены в поток (``asyncio.to_thread``), потому что ``ddgs``
+синхронная, и блокировать общий asyncio-луп нельзя.
+"""
+
+from __future__ import annotations
+
+import asyncio
+from typing import Any
+
+from core.tools.base import Tool, ToolContext, ToolError
+
+MAX_RESULTS = 8
+MAX_PAGE_CHARS = 20_000
+
+
+class WebSearchTool(Tool):
+    name = "web_search"
+    description = (
+        "Найти информацию в интернете. Возвращает список результатов: "
+        "заголовок, ссылка, краткое описание. Для подробностей открой ссылку "
+        "инструментом fetch_url."
+    )
+    parameters: dict[str, Any] = {
+        "type": "object",
+        "properties": {
+            "query": {"type": "string", "description": "Поисковый запрос"},
+            "max_results": {"type": "integer", "description": "Сколько результатов вернуть",
+                            "default": 5},
+        },
+        "required": ["query"],
+    }
+
+    async def run(self, ctx: ToolContext, **kwargs: Any) -> str:
+        query = (kwargs.get("query") or "").strip()
+        if not query:
+            raise ToolError("Пустой поисковый запрос")
+        n = max(1, min(int(kwargs.get("max_results") or 5), MAX_RESULTS))
+
+        backend = ctx.search_backend
+        if backend == "tavily" and ctx.search_api_key:
+            items = await _tavily(query, n, ctx.search_api_key)
+        elif backend == "brave" and ctx.search_api_key:
+            items = await _brave(query, n, ctx.search_api_key)
+        else:
+            items = await asyncio.to_thread(_duckduckgo, query, n)
+
+        if not items:
+            return f"По запросу «{query}» ничего не найдено."
+        lines = [f"Результаты поиска: {query}", ""]
+        for i, it in enumerate(items, 1):
+            lines.append(f"{i}. {it['title']}\n   {it['url']}\n   {it['snippet']}")
+        return "\n".join(lines)
+
+
+class WebFetchTool(Tool):
+    name = "fetch_url"
+    description = "Открыть веб-страницу и вернуть её основной текст без разметки."
+    parameters: dict[str, Any] = {
+        "type": "object",
+        "properties": {
+            "url": {"type": "string", "description": "Полный URL, включая https://"},
+        },
+        "required": ["url"],
+    }
+
+    async def run(self, ctx: ToolContext, **kwargs: Any) -> str:
+        url = (kwargs.get("url") or "").strip()
+        if not url.startswith(("http://", "https://")):
+            raise ToolError("URL должен начинаться с http:// или https://")
+        if not ctx.fetch_pages:
+            raise ToolError("Загрузка страниц отключена в настройках воркспейса")
+
+        import httpx
+
+        try:
+            async with httpx.AsyncClient(
+                timeout=30, follow_redirects=True,
+                headers={"User-Agent": "Mozilla/5.0 (compatible; AgentForge/1.1)"},
+            ) as client:
+                resp = await client.get(url)
+        except Exception as exc:  # noqa: BLE001
+            raise ToolError(f"Не удалось загрузить страницу: {exc}") from exc
+        if resp.status_code >= 400:
+            raise ToolError(f"HTTP {resp.status_code} при загрузке {url}")
+
+        text = await asyncio.to_thread(_extract_text, resp.text)
+        clipped = text[:MAX_PAGE_CHARS]
+        tail = "\n\n(текст обрезан)" if len(text) > MAX_PAGE_CHARS else ""
+        return f"Источник: {url}\n\n{clipped}{tail}"
+
+
+# ---------------------------------------------------------------------------
+# Бэкенды поиска
+# ---------------------------------------------------------------------------
+
+
+def _duckduckgo(query: str, n: int) -> list[dict]:
+    """Поиск без ключа. Библиотека называется ``ddgs`` (ранее duckduckgo-search)."""
+    try:
+        from ddgs import DDGS
+    except ImportError:
+        try:
+            from duckduckgo_search import DDGS  # type: ignore[no-redef]
+        except ImportError as exc:
+            raise ToolError(
+                "Веб-поиск недоступен: установите пакет «ddgs» "
+                "(pip install ddgs) или переключите бэкенд в настройках."
+            ) from exc
+    with DDGS() as ddgs:
+        rows = list(ddgs.text(query, max_results=n))
+    return [{"title": r.get("title", ""), "url": r.get("href") or r.get("link", ""),
+             "snippet": (r.get("body") or "")[:400]} for r in rows]
+
+
+async def _tavily(query: str, n: int, api_key: str) -> list[dict]:
+    import httpx
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        resp = await client.post(
+            "https://api.tavily.com/search",
+            json={"api_key": api_key, "query": query, "max_results": n},
+        )
+    if resp.status_code >= 400:
+        raise ToolError(f"Tavily: HTTP {resp.status_code}")
+    return [{"title": r.get("title", ""), "url": r.get("url", ""),
+             "snippet": (r.get("content") or "")[:400]}
+            for r in resp.json().get("results", [])]
+
+
+async def _brave(query: str, n: int, api_key: str) -> list[dict]:
+    import httpx
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        resp = await client.get(
+            "https://api.search.brave.com/res/v1/web/search",
+            params={"q": query, "count": n},
+            headers={"X-Subscription-Token": api_key, "Accept": "application/json"},
+        )
+    if resp.status_code >= 400:
+        raise ToolError(f"Brave: HTTP {resp.status_code}")
+    web = resp.json().get("web", {})
+    return [{"title": r.get("title", ""), "url": r.get("url", ""),
+             "snippet": (r.get("description") or "")[:400]}
+            for r in web.get("results", [])]
+
+
+def _extract_text(html: str) -> str:
+    """Извлекает основной текст: trafilatura → bs4 → грубый фолбэк."""
+    try:
+        import trafilatura
+
+        extracted = trafilatura.extract(html, include_comments=False, include_tables=True)
+        if extracted:
+            return extracted
+    except ImportError:
+        pass
+    try:
+        from bs4 import BeautifulSoup
+
+        soup = BeautifulSoup(html, "html.parser")
+        for tag in soup(["script", "style", "nav", "footer", "header", "noscript"]):
+            tag.decompose()
+        return "\n".join(line.strip() for line in soup.get_text("\n").splitlines()
+                         if line.strip())
+    except ImportError:
+        pass
+    import re
+
+    return re.sub(r"<[^>]+>", " ", html)
