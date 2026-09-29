@@ -19,7 +19,12 @@ from providers.base import ChatMessage, LLMProvider, ProviderError, ToolCall, To
 from providers.gemini_provider import GeminiProvider
 from providers.openai_compat import OpenAICompatProvider
 from storage.models import Subtask, Task, Workspace
+from storage.repositories import Repos, UserRepo
 from tests.fakes import SupervisorProvider, Worker, build_project, drive, patch_supervisor
+
+
+#: символы, которые миграция версии 2 заменяет в сохранённых промптах
+EM, EN = chr(0x2014), chr(0x2013)
 
 
 def _events(bus: EventBus, *types: EventType) -> list:
@@ -43,12 +48,33 @@ def test_change_password_keeps_search_api_key():
     assert repos.secrets.open(token) == "tvly-secret"
 
 
+def test_migration_normalizes_saved_prompts(tmp_path):
+    from storage.db import Database
+
+    path = tmp_path / "old.db"
+    db = Database(path)
+    session = UserRepo(db).create("prompt-owner", "password123")
+    repos = Repos(db, session)
+    ws = repos.workspaces.create(session.user_id, "W", "", {})
+    agent = repos.agents.create(ws.id, "A", "analyst", f"Ты {EM} аналитик, 2{EN}5 фактов",
+                                None, "openai", "m", {})
+    db.conn.execute("PRAGMA user_version = 1")        # база прежней версии
+    db.conn.commit()
+    db.close()
+
+    reopened = Database(path)
+    prompt = reopened.query_one("SELECT system_prompt FROM agents WHERE id = ?",
+                                (agent.id,))["system_prompt"]
+    assert prompt == "Ты - аналитик, 2-5 фактов"
+    reopened.close()
+
+
 def test_failed_statement_does_not_leave_open_transaction():
     repos, *_ = build_project()
     try:
         repos.db.execute("INSERT INTO agents(workspace_id, name, created_at) VALUES (?,?,?)",
                          (999_999, "призрак", "2026-01-01"))
-    except Exception:  # noqa: BLE001 — нарушение внешнего ключа ожидаемо
+    except Exception:  # noqa: BLE001 - нарушение внешнего ключа ожидаемо
         pass
     with repos.db.transaction() as conn:          # раньше: «transaction within a transaction»
         conn.execute("SELECT 1")
@@ -221,7 +247,7 @@ def test_docx_export_survives_terminal_output(tmp_path):
 
 
 def test_format_detection_ignores_word_fragments():
-    # «api» внутри «capital» и «app» внутри «happy» — не про код.
+    # «api» внутри «capital» и «app» внутри «happy» - не про код.
     fmt, _ = detect_format(_bundle("коротко", "Столица Франции",
                                    "Назови capital и один happy fact"))
     assert fmt != "zip"

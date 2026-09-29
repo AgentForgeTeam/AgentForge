@@ -1,6 +1,6 @@
 """Пресеты подключения к провайдерам «из коробки».
 
-Пользователю достаточно выбрать провайдера и вставить свой ключ — base URL,
+Пользователю достаточно выбрать провайдера и вставить свой ключ - base URL,
 формат API и список популярных моделей подставляются автоматически.
 """
 
@@ -90,7 +90,7 @@ PRESETS: dict[str, ProviderPreset] = {
         docs_url="https://ollama.com/download",
         suggested_models=["qwen2.5:7b-instruct", "qwen2.5:14b-instruct",
                           "llama3.1:8b", "mistral-nemo", "gemma3:12b"],
-        notes="Работает офлайн. Ключ не нужен — достаточно запущенного сервера Ollama.",
+        notes="Работает офлайн. Ключ не нужен - достаточно запущенного сервера Ollama.",
     ),
     "huggingface": ProviderPreset(
         key="huggingface",

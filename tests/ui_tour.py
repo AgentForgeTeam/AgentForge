@@ -2,9 +2,9 @@
 
 Используется двумя способами:
 
-* ``pytest tests/test_ui.py`` — проверяет, что каждый экран открывается
+* ``pytest tests/test_ui.py`` - проверяет, что каждый экран открывается
   без ошибок QML и что живой прогон с фейковыми агентами доходит до конца;
-* ``python tests/ui_tour.py [каталог]`` — то же самое, плюс сохраняет
+* ``python tests/ui_tour.py [каталог]`` - то же самое, плюс сохраняет
   скриншоты всех экранов, чтобы их можно было посмотреть глазами.
 
 Окно рисуется без экрана (``QT_QPA_PLATFORM=offscreen``), модели заменены
@@ -107,7 +107,7 @@ class Tour:
         await asyncio.sleep(seconds)
 
     def play(self, coro):
-        """Весь сценарий идёт внутри одного работающего цикла — как в приложении.
+        """Весь сценарий идёт внутри одного работающего цикла - как в приложении.
 
         Если прерывать цикл между шагами, Qt продолжает обрабатывать события
         (например, при снимке окна), и корутины агентов просыпаются вне цикла.
@@ -158,7 +158,7 @@ class Tour:
         await self.wait(0.8)
 
     async def seed(self) -> None:
-        """Проект с агентами, задачей и подзадачами — как у живого пользователя."""
+        """Проект с агентами, задачей и подзадачами - как у живого пользователя."""
         self.mark("seed")
         b = self.backend
         b.workspaces.create("Анализ рынка EdTech", "Исследование рынка онлайн-обучения для отчёта инвестору")
@@ -171,7 +171,7 @@ class Tour:
         agents = []
         for name, role in roles:
             agents.append(repos.agents.create(
-                ws_id, name, role, f"Ты — {name.lower()}.", key.id, "ollama", "qwen2.5:7b-instruct",
+                ws_id, name, role, f"Ты - {name.lower()}.", key.id, "ollama", "qwen2.5:7b-instruct",
                 {"temperature": 0.4, "max_tokens": 1024, "tools": ["web_search", "code_exec"]}))
         sup = repos.agents.create(ws_id, "Супервайзер", "supervisor", "Проверяй отчёты.", key.id,
                                   "ollama", "qwen2.5:14b-instruct", {}, is_supervisor=True)

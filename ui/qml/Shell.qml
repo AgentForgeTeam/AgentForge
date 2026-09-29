@@ -44,7 +44,7 @@ Item {
         function onNavigateRequested(key) { shell.go(key) }
     }
 
-    // Горячие клавиши: Ctrl+1…0 — страницы, Ctrl+K — палитра команд.
+    // Горячие клавиши: Ctrl+1…0 - страницы, Ctrl+K - палитра команд.
     Repeater {
         model: shell.order
         delegate: Item {

@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls.Basic as T
 
 // Переключаемая «таблетка»: для инструментов, опций, фильтров.
-// Состояние из данных — через isOn (подробности в Toggle.qml).
+// Состояние из данных - через isOn (подробности в Toggle.qml).
 T.AbstractButton {
     id: control
     property string iconName: ""

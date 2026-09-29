@@ -1,4 +1,4 @@
-"""Этап 4 — исполнитель одного агента над одной подзадачей.
+"""Этап 4 - исполнитель одного агента над одной подзадачей.
 
 Цикл ReAct: модель думает → при необходимости вызывает инструменты →
 получает их результат → продолжает. Останов по одному из условий:
@@ -183,7 +183,7 @@ class AgentRunner:
             parts += [
                 "",
                 "АНОНИМНАЯ СВОДКА ПО ПРОЕКТУ",
-                "(источник не указан намеренно — оценивай содержание, а не авторитет)",
+                "(источник не указан намеренно - оценивай содержание, а не авторитет)",
                 summary,
             ]
 
@@ -212,7 +212,7 @@ class AgentRunner:
                 continue
             dep = self.repos.tasks.get_subtask(int(token))
             if dep and dep.result:
-                chunks.append(f"— {dep.title}:\n{dep.result[:4000]}")
+                chunks.append(f"- {dep.title}:\n{dep.result[:4000]}")
         return "\n\n".join(chunks)
 
     def _latest_summary(self) -> str:
@@ -281,7 +281,7 @@ class AgentRunner:
         ensure = getattr(self.budget, "ensure_allowed", None)
         blocked = (await ensure(self.agent.id) if ensure is not None
                    else self.budget.blocking_scope(self.agent.id))
-        return f"Лимит исчерпан — {blocked.reason()}" if blocked is not None else ""
+        return f"Лимит исчерпан - {blocked.reason()}" if blocked is not None else ""
 
     async def _call_model(self, messages: list[ChatMessage], step: int,
                           tools: list | None) -> CompletionResult:
@@ -332,7 +332,7 @@ class AgentRunner:
         tool_ctx = self._tool_context()
         specs = self.registry.specs(self.tools_allowed)
 
-        system_prompt = self.agent.system_prompt.strip() or "Ты — полезный ассистент."
+        system_prompt = self.agent.system_prompt.strip() or "Ты - полезный ассистент."
         messages: list[ChatMessage] = [ChatMessage("system", system_prompt)]
         messages += self._history()
         briefing = self._briefing()
@@ -383,9 +383,9 @@ class AgentRunner:
                 if result.text:
                     # Пустое сообщение ассистента часть провайдеров отвергает.
                     messages.append(ChatMessage("assistant", result.text))
-                # Модель не обозначила финал — просим завершить.
-                nudge = ("Если подзадача выполнена — выдай итог после строки RESULT: "
-                         "и строку CONFIDENCE. Если нет — продолжай работу.")
+                # Модель не обозначила финал - просим завершить.
+                nudge = ("Если подзадача выполнена - выдай итог после строки RESULT: "
+                         "и строку CONFIDENCE. Если нет - продолжай работу.")
                 messages.append(ChatMessage("user", nudge))
                 continue
 
@@ -403,7 +403,7 @@ class AgentRunner:
 
         if last_step_used_tools:
             # Последний шаг ушёл на инструменты, итога модель не дала. Выдать
-            # промежуточное «сейчас посчитаю» за результат нельзя — просим
+            # промежуточное «сейчас посчитаю» за результат нельзя - просим
             # подвести итог одним дополнительным вызовом без инструментов.
             finalized = await self._finalize(messages, totals)
             if finalized is not None:
@@ -440,7 +440,7 @@ class AgentRunner:
             result = await self._call_model(messages, step, None)
         except asyncio.CancelledError:
             raise
-        except Exception:  # noqa: BLE001 — итог не получился, вернём что было
+        except Exception:  # noqa: BLE001 - итог не получился, вернём что было
             log.exception("Не удалось получить итог после исчерпания шагов")
             return None
         self._add_usage(totals, result)

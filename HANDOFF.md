@@ -1,4 +1,4 @@
-# Agent Forge — передача проекта
+# Agent Forge - передача проекта
 
 Единый файл для продолжения работы над проектом: цель, принятые решения,
 полный код всех файлов, команды запуска и список незакрытых задач.
@@ -7,8 +7,8 @@
 **Состояние:** все девять этапов MVP реализованы. Версия 1.1: новый интерфейс
 на Qt Quick, стриминг рассуждений агентов, исправления ядра по итогам ревью.
 Ядро покрыто смоук-тестами (37 проверок) и регрессионными pytest-тестами,
-интерфейс — туром по всем экранам с живым прогоном фейковых агентов
-(`tests/ui_tour.py`). Проверено на Windows 11. Прежнее имя проекта —
+интерфейс - туром по всем экранам с живым прогоном фейковых агентов
+(`tests/ui_tour.py`). Проверено на Windows 11. Прежнее имя проекта -
 AI Orchestrator.
 
 ---
@@ -28,7 +28,7 @@ AI Orchestrator.
    Groq, OpenRouter, Ollama, Hugging Face и произвольного
    OpenAI-совместимого endpoint. Количество агентов не ограничено.
 3. **Изоляция агентов.** Агенты не видят промптов и переписки друг друга.
-   Единственный канал обмена — анонимная сводка супервайзера, которая
+   Единственный канал обмена - анонимная сводка супервайзера, которая
    рассылается без указания авторов, чтобы не возникало «слепого доверия
    авторитету».
 4. **Супервайзер.** Проверяет отчёты по чек-листу, возвращает работу на
@@ -219,7 +219,7 @@ AI Orchestrator.
 
 ### Стек и платформа
 
-**GUI — PySide6 + Qt Quick (QML).** Нативное окно на Windows, macOS и Linux
+**GUI - PySide6 + Qt Quick (QML).** Нативное окно на Windows, macOS и Linux
 без веб-прослойки и без Node.js. Интерфейс в `ui/qml`, дизайн-система в модуле
 `Ao` (тема, иконки Lucide, компоненты). Данные отдаёт мост `ui/bridge`:
 `Backend` и по контроллеру на экран. Штатная интеграция с asyncio через
@@ -233,12 +233,12 @@ QML перестают обновляться. Роль модели списк�
 в делегате она перекрывает сам объект `model`. Оба правила проверяются
 тестами (`tests/test_ui.py`, `DictListModel`).
 
-**Параллелизм — один asyncio-луп.** Qt и asyncio объединены `qasync`, агенты
+**Параллелизм - один asyncio-луп.** Qt и asyncio объединены `qasync`, агенты
 живут в нём как обычные таски. Пятнадцать агентов не превращаются в
 пятнадцать потоков. Блокирующие операции (SQLite, библиотека поиска) уходят
-в `asyncio.to_thread`, исполнение кода — в отдельный процесс или контейнер.
+в `asyncio.to_thread`, исполнение кода - в отдельный процесс или контейнер.
 
-**Графики — средствами Qt Quick** (Canvas, Shapes), без QtCharts: ноль
+**Графики - средствами Qt Quick** (Canvas, Shapes), без QtCharts: ноль
 дополнительных зависимостей, цвета из темы, анимации отрисовки.
 
 ### Безопасность
@@ -246,14 +246,14 @@ QML перестают обновляться. Роль модели списк�
 **Шифрование ключей.** `Argon2id(пароль профиля, соль)` даёт 32-байтовый
 мастер-ключ, который живёт только в оперативной памяти. API-ключи шифруются
 `AES-256-GCM`. База остаётся обычным SQLite, но секреты в ней нечитаемы.
-Смена пароля перешифровывает все ключи. Пароль профиля и мастер-пароль —
+Смена пароля перешифровывает все ключи. Пароль профиля и мастер-пароль -
 одно и то же: одно поле при входе, и восстановления нет.
 
-**Песочница — интерфейс с двумя реализациями.** `DockerSandbox`
+**Песочница - интерфейс с двумя реализациями.** `DockerSandbox`
 (`--network none`, `--read-only`, лимиты памяти, CPU и PID, `--cap-drop ALL`)
 используется, если Docker доступен. Иначе `SubprocessSandbox`: одноразовый
 каталог, своя группа процессов, `RLIMIT_CPU/AS/FSIZE/NPROC`, вычищенное
-окружение без ключей хоста, сеть отрезана. Второй режим — барьер по
+окружение без ключей хоста, сеть отрезана. Второй режим - барьер по
 умолчанию, а не полная изоляция, и приложение говорит об этом прямо
 в настройках.
 
@@ -264,7 +264,7 @@ QML перестают обновляться. Роль модели списк�
 
 ### Логика работы
 
-**Цикл агента — ReAct.** Модель думает, вызывает инструменты, получает
+**Цикл агента - ReAct.** Модель думает, вызывает инструменты, получает
 результат, продолжает. Остановка по одному из условий: выдан блок `RESULT:`,
 кончились разрешённые шаги, исчерпан лимит токенов, пользователь нажал
 «Стоп». Из ответа разбираются блок `RESULT:` и строка `CONFIDENCE: 0..1`.
@@ -273,7 +273,7 @@ QML перестают обновляться. Роль модели списк�
 отсутствие лимита.
 
 **Супервайзер** работает либо на одном из подключённых API-ключей, либо на
-локальной модели через Ollama (по умолчанию Qwen) — второй вариант
+локальной модели через Ollama (по умолчанию Qwen) - второй вариант
 бесплатен и работает офлайн. Он может вернуть работу на доработку до
 `max_rework_rounds` раз. Сводку для команды пересказывает своими словами,
 имена агентов вычищаются пост-обработкой, а не только просьбой в промпте.
@@ -285,8 +285,8 @@ QML перестают обновляться. Роль модели списк�
 
 **Решение человека важнее настройки.** `max_rework_rounds` ограничивает
 автоматические доработки супервайзера. Когда доработку назначает человек,
-выдаётся дополнительный круг сверх лимита — до трёх таких кругов, иначе
-цикл «вернул — переделал — вернул» не заканчивался бы.
+выдаётся дополнительный круг сверх лимита - до трёх таких кругов, иначе
+цикл «вернул - переделал - вернул» не заканчивался бы.
 
 **Бюджеты проверяются до вызова модели**, а не после: узнавать о превышении
 постфактум бессмысленно, деньги уже потрачены. Через бюджет проходят и
@@ -305,7 +305,7 @@ QML перестают обновляться. Роль модели списк�
 
 **Панель решений, а не модальное окно.** Вопросов human-in-the-loop может
 быть несколько одновременно, если параллельно работают разные агенты.
-Модалка заслоняла бы прогресс и ленту — ровно то, по чему принимается
+Модалка заслоняла бы прогресс и ленту - ровно то, по чему принимается
 решение.
 
 **Локализация RU/EN** переключается на лету без пересборки окна: QML
@@ -322,14 +322,14 @@ QML перестают обновляться. Роль модели списк�
 
 ### Быстрый способ
 
-Windows — двойной щелчок по `run.bat`. Linux и macOS:
+Windows - двойной щелчок по `run.bat`. Linux и macOS:
 
 ````bash
 ./run.sh
 ````
 
 Скрипт проверит версию Python, создаст виртуальное окружение, поставит
-зависимости и запустит приложение. Первый запуск — 2–5 минут.
+зависимости и запустит приложение. Первый запуск - 2-5 минут.
 
 ### Вручную
 
@@ -363,7 +363,7 @@ python tests/smoke.py
 ````
 
 Тесты не ходят в интернет и не тратят токены: модели подменяются фейковыми
-провайдерами. Ожидаемый результат — `ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ: 37 из 37`.
+провайдерами. Ожидаемый результат - `ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ: 37 из 37`.
 Работают во временном каталоге, профиль пользователя не трогают.
 
 ### Проверка интерфейса
@@ -375,7 +375,7 @@ python tests/ui_tour.py shots     # тур со скриншотами всех 
 
 Тур создаёт профиль, два воркспейса, агентов, задачу с зависимостями,
 проходит все десять экранов и запускает прогон фейковыми агентами со
-стримингом, отвечая на вопрос human-in-the-loop. Провал — любое
+стримингом, отвечая на вопрос human-in-the-loop. Провал - любое
 предупреждение QML или незавершённая подзадача.
 
 Правило для тех, кто будет дописывать сценарий: весь тур идёт внутри одного
@@ -400,7 +400,7 @@ python make_handoff.py
 | macOS | `~/Library/Application Support/agent-forge` |
 | Linux | `~/.local/share/agent-forge` |
 
-Переопределяется переменной окружения `AGENTFORGE_HOME` — этим пользуются тесты.
+Переопределяется переменной окружения `AGENTFORGE_HOME` - этим пользуются тесты.
 Внутри: `app.db`, `logs/`, `workspaces/`, `exports/`, `settings.json`.
 
 ### Сборка в исполняемый файл
@@ -414,7 +414,7 @@ pyinstaller --name AgentForge --windowed --onedir main.py \
   --add-data "ui/assets:ui/assets"
 ````
 
-На Windows разделитель в `--add-data` — точка с запятой. Вариант `--onedir`
+На Windows разделитель в `--add-data` - точка с запятой. Вариант `--onedir`
 стартует заметно быстрее `--onefile`.
 
 ---
@@ -453,7 +453,7 @@ EventBus  ←──  Orchestrator ──┴──  Providers (HTTP к модел
 
 **Изоляция агентов держится на выборке.** История каждого агента лежит
 в `messages` и всегда выбирается с фильтром по `agent_id`. Кросс-агентных
-выборок в коде нет — это инвариант, который нельзя нарушать при доработках.
+выборок в коде нет - это инвариант, который нельзя нарушать при доработках.
 
 ### Поток выполнения одной подзадачи
 
@@ -496,7 +496,7 @@ EventBus  ←──  Orchestrator ──┴──  Providers (HTTP к модел
 
     python main.py
 
-Цикл событий Qt и asyncio объединяются через qasync — это даёт один общий
+Цикл событий Qt и asyncio объединяются через qasync - это даёт один общий
 луп, в котором живут и интерфейс, и параллельно работающие агенты.
 """
 
@@ -515,7 +515,7 @@ from app.config import APP_NAME, PATHS, AppSettings  # noqa: E402
 from app.i18n import set_language  # noqa: E402
 
 # Шрифты и геометрия Qt Quick лучше выглядят без принудительного округления
-# масштаба на дисплеях 125–175 %.
+# масштаба на дисплеях 125-175 %.
 os.environ.setdefault("QT_ENABLE_HIGHDPI_SCALING", "1")
 from utils.logging_setup import setup_logging  # noqa: E402
 
@@ -602,7 +602,7 @@ APP_SLUG = "agent-forge"
 #: каталог данных до переименования проекта (AI Orchestrator → Agent Forge)
 LEGACY_SLUG = "ai-orchestrator"
 APP_VERSION = "1.1.1"          # 1.1.1: исправления после полного прохода по коду
-SCHEMA_VERSION = 1             # версия схемы SQLite (для миграций)
+SCHEMA_VERSION = 2             # версия схемы SQLite (для миграций)
 
 
 def _default_home() -> Path:
@@ -682,7 +682,7 @@ class AppSettings:
                 data = json.loads(PATHS.config_file.read_text("utf-8"))
                 known = {f for f in cls.__dataclass_fields__}
                 return cls(**{k: v for k, v in data.items() if k in known})
-            except Exception:  # noqa: BLE001 — повреждённый конфиг не должен ронять старт
+            except Exception:  # noqa: BLE001 - повреждённый конфиг не должен ронять старт
                 pass
         return cls()
 
@@ -699,7 +699,7 @@ class AppSettings:
 
 DEFAULT_WORKSPACE_SETTINGS: dict = {
     "human_in_the_loop": True,          # паузы в критических точках
-    "hitl_confidence_threshold": 0.5,   # ниже этой самооценки агента — спросить человека
+    "hitl_confidence_threshold": 0.5,   # ниже этой самооценки агента - спросить человека
     "hitl_pause_on_milestone": False,   # пауза после каждой волны подзадач
     "summary_interval_minutes": 15,     # периодическая сводка супервайзера
     "summary_on_event": True,           # сводка при завершении подзадачи
@@ -736,7 +736,7 @@ DEFAULT_WORKSPACE_SETTINGS: dict = {
     label.setText(tr("login.title"))
 
 Строки хранятся плоскими словарями «ключ -> перевод». Отсутствующий ключ
-возвращается как есть — это заметно в UI и помогает не потерять переводы.
+возвращается как есть - это заметно в UI и помогает не потерять переводы.
 """
 
 from __future__ import annotations
@@ -748,7 +748,7 @@ _CURRENT = "ru"
 
 RU: dict[str, str] = {
     # --- общее ---
-    "app.title": "Agent Forge — оркестрация ИИ-агентов",
+    "app.title": "Agent Forge - оркестрация ИИ-агентов",
     "common.ok": "OK",
     "common.cancel": "Отмена",
     "common.save": "Сохранить",
@@ -779,26 +779,26 @@ RU: dict[str, str] = {
     "login.create": "Создать профиль",
     "login.create_title": "Новый локальный профиль",
     "login.remember": "Запомнить пароль в хранилище ОС",
-    "login.no_profiles": "Профилей пока нет — создайте первый",
+    "login.no_profiles": "Профилей пока нет - создайте первый",
     "login.bad_credentials": "Неверное имя профиля или пароль",
     "login.password_mismatch": "Пароли не совпадают",
     "login.password_short": "Пароль должен быть не короче 8 символов",
     "login.user_exists": "Профиль с таким именем уже существует",
     "login.warning": (
         "Пароль профиля используется как мастер-ключ для шифрования API-ключей. "
-        "Восстановить его невозможно — при утере ключи придётся добавить заново."
+        "Восстановить его невозможно - при утере ключи придётся добавить заново."
     ),
     # --- бюджеты (этап 9) ---
     "nav.budget": "Бюджеты",
     "bud.title": "Бюджеты и лимиты",
-    "bud.subtitle": "Лимит можно поставить на проект, задачу и каждого агента. Пустое поле — без ограничения",
+    "bud.subtitle": "Лимит можно поставить на проект, задачу и каждого агента. Пустое поле - без ограничения",
     "bud.spent": "израсходовано: {tokens} токенов · ${cost}",
     "bud.token_limit": "Лимит токенов",
     "bud.cost_limit": "Лимит стоимости, $",
     "bud.alert_at": "Алерт при",
     "bud.no_limit": "без лимита",
     "bud.used_pct": "Выбрано {pct}% бюджета",
-    "bud.exceeded": "Лимит исчерпан — новые вызовы модели заблокированы",
+    "bud.exceeded": "Лимит исчерпан - новые вызовы модели заблокированы",
     "bud.nothing": "Пока нечего ограничивать: создайте агентов и поставьте задачу.",
     # --- экспорт (этап 8) ---
     "nav.export": "Экспорт",
@@ -844,7 +844,7 @@ RU: dict[str, str] = {
     "dash.agents": "Агенты",
     "dash.feed": "Лента отчётов и сводок",
     "dash.incidents": "Инциденты",
-    "dash.no_feed": "Отчётов пока нет — запустите агентов на вкладке «Выполнение».",
+    "dash.no_feed": "Отчётов пока нет - запустите агентов на вкладке «Выполнение».",
     "dash.summary_line": "Сводка супервайзера",
     "dash.supervisor_line": "Проверки и сводки",
     "dash.unknown_agent": "Агент удалён",
@@ -864,7 +864,7 @@ RU: dict[str, str] = {
     "sup.incidents": "Инциденты",
     "sup.make_summary": "Составить сводку",
     "sup.no_summaries": "Сводок пока нет. Они появятся во время прогона или по кнопке выше.",
-    "sup.no_incidents": "Инцидентов нет — супервайзер не нашёл проблем.",
+    "sup.no_incidents": "Инцидентов нет - супервайзер не нашёл проблем.",
     "sup.resolve": "Закрыть инцидент",
     "sup.resolution": "Решение",
     "sup.delivered": "получателей: {n}",
@@ -872,10 +872,10 @@ RU: dict[str, str] = {
     "sup.by_event": "по событию",
     "sup.by_hand": "вручную",
     "sup.by_final": "итоговая",
-    "sup.model_api": "Супервайзер: {name} — {model}",
+    "sup.model_api": "Супервайзер: {name} - {model}",
     "sup.model_local": "Супервайзер: локальная модель {model} ({url})",
     "sup.not_configured": "Супервайзер не настроен. Выберите его на вкладке «Настройки».",
-    "sup.nothing_to_summarize": "Пока нечего обобщать — нет готовых результатов.",
+    "sup.nothing_to_summarize": "Пока нечего обобщать - нет готовых результатов.",
     # --- навигация ---
     "nav.workspaces": "Воркспейсы",
     "nav.keys": "API-ключи",
@@ -929,7 +929,7 @@ RU: dict[str, str] = {
     "task.title": "Постановка задачи",
     "task.name": "Название задачи",
     "task.body": "Формулировка задачи",
-    "task.placeholder": "Опишите, что нужно сделать. Чем подробнее — тем точнее разбиение на подзадачи.",
+    "task.placeholder": "Опишите, что нужно сделать. Чем подробнее - тем точнее разбиение на подзадачи.",
     "task.save": "Сохранить задачу",
     "task.subtasks": "Подзадачи",
     "task.add_subtask": "Добавить подзадачу",
@@ -973,7 +973,7 @@ RU: dict[str, str] = {
     "settings.theme": "Тема",
     "settings.hitl": "Human-in-the-loop (паузы в критических точках)",
     "settings.hitl_threshold": "Порог уверенности для паузы",
-    "settings.hitl_threshold_hint": "Если исполнитель оценил свою уверенность ниже этого значения, система остановится и спросит вас. 0 — не спрашивать никогда.",
+    "settings.hitl_threshold_hint": "Если исполнитель оценил свою уверенность ниже этого значения, система остановится и спросит вас. 0 - не спрашивать никогда.",
     "settings.hitl_milestone": "Пауза после каждого этапа работ",
     "settings.hitl_milestone_hint": "Спрашивать подтверждение перед запуском следующей волны подзадач",
     "sup.approvals": "Решения",
@@ -994,13 +994,13 @@ RU: dict[str, str] = {
     "settings.allowed_paths": "Доп. каталоги, доступные агентам",
     "settings.add_path": "Добавить каталог",
     "settings.change_password": "Сменить пароль профиля",
-    "settings.restart_note": "Язык переключается сразу. Во время прогона — после выхода и повторного входа.",
-    "settings.lang_after_run": "Идёт прогон — язык сменится после выхода и повторного входа, чтобы не прерывать агентов.",
+    "settings.restart_note": "Язык переключается сразу. Во время прогона - после выхода и повторного входа.",
+    "settings.lang_after_run": "Идёт прогон - язык сменится после выхода и повторного входа, чтобы не прерывать агентов.",
     "settings.budget": "Бюджеты и лимиты",
 }
 
 EN: dict[str, str] = {
-    "app.title": "Agent Forge — multi-agent orchestration",
+    "app.title": "Agent Forge - multi-agent orchestration",
     "common.ok": "OK",
     "common.cancel": "Cancel",
     "common.save": "Save",
@@ -1030,14 +1030,14 @@ EN: dict[str, str] = {
     "login.create": "Create profile",
     "login.create_title": "New local profile",
     "login.remember": "Remember password in OS keyring",
-    "login.no_profiles": "No profiles yet — create the first one",
+    "login.no_profiles": "No profiles yet - create the first one",
     "login.bad_credentials": "Wrong profile name or password",
     "login.password_mismatch": "Passwords do not match",
     "login.password_short": "Password must be at least 8 characters",
     "login.user_exists": "A profile with this name already exists",
     "login.warning": (
         "The profile password is also the master key that encrypts your API keys. "
-        "It cannot be recovered — if lost, keys must be re-entered."
+        "It cannot be recovered - if lost, keys must be re-entered."
     ),
     "nav.budget": "Budgets",
     "bud.title": "Budgets and limits",
@@ -1048,7 +1048,7 @@ EN: dict[str, str] = {
     "bud.alert_at": "Alert at",
     "bud.no_limit": "no limit",
     "bud.used_pct": "{pct}% of budget used",
-    "bud.exceeded": "Limit reached — further model calls are blocked",
+    "bud.exceeded": "Limit reached - further model calls are blocked",
     "bud.nothing": "Nothing to limit yet: create agents and define a task.",
     "nav.export": "Export",
     "exp.title": "Export result",
@@ -1092,7 +1092,7 @@ EN: dict[str, str] = {
     "dash.agents": "Agents",
     "dash.feed": "Reports and summaries",
     "dash.incidents": "Incidents",
-    "dash.no_feed": "No reports yet — start the agents on the Run tab.",
+    "dash.no_feed": "No reports yet - start the agents on the Run tab.",
     "dash.summary_line": "Supervisor summary",
     "dash.supervisor_line": "Supervisor checks",
     "dash.unknown_agent": "Deleted agent",
@@ -1111,7 +1111,7 @@ EN: dict[str, str] = {
     "sup.incidents": "Incidents",
     "sup.make_summary": "Create summary",
     "sup.no_summaries": "No summaries yet. They appear during a run or via the button above.",
-    "sup.no_incidents": "No incidents — the supervisor found no problems.",
+    "sup.no_incidents": "No incidents - the supervisor found no problems.",
     "sup.resolve": "Close incident",
     "sup.resolution": "Resolution",
     "sup.delivered": "recipients: {n}",
@@ -1119,10 +1119,10 @@ EN: dict[str, str] = {
     "sup.by_event": "on event",
     "sup.by_hand": "manual",
     "sup.by_final": "final",
-    "sup.model_api": "Supervisor: {name} — {model}",
+    "sup.model_api": "Supervisor: {name} - {model}",
     "sup.model_local": "Supervisor: local model {model} ({url})",
     "sup.not_configured": "Supervisor is not configured. Pick one on the Settings tab.",
-    "sup.nothing_to_summarize": "Nothing to summarize yet — no finished results.",
+    "sup.nothing_to_summarize": "Nothing to summarize yet - no finished results.",
     "nav.workspaces": "Workspaces",
     "nav.keys": "API keys",
     "nav.agents": "Agents",
@@ -1212,7 +1212,7 @@ EN: dict[str, str] = {
     "settings.theme": "Theme",
     "settings.hitl": "Human-in-the-loop (pause at critical points)",
     "settings.hitl_threshold": "Confidence threshold for pausing",
-    "settings.hitl_threshold_hint": "If an agent rates its own confidence below this, the system stops and asks you. 0 — never ask.",
+    "settings.hitl_threshold_hint": "If an agent rates its own confidence below this, the system stops and asks you. 0 - never ask.",
     "settings.hitl_milestone": "Pause after each stage",
     "settings.hitl_milestone_hint": "Ask for confirmation before starting the next wave of subtasks",
     "sup.approvals": "Decisions",
@@ -1234,7 +1234,7 @@ EN: dict[str, str] = {
     "settings.add_path": "Add folder",
     "settings.change_password": "Change profile password",
     "settings.restart_note": "Language switches immediately. During a run it applies after you log out and back in.",
-    "settings.lang_after_run": "A run is in progress — the language will change after you log out and back in, so agents are not interrupted.",
+    "settings.lang_after_run": "A run is in progress - the language will change after you log out and back in, so agents are not interrupted.",
     "settings.budget": "Budgets and limits",
 }
 
@@ -1514,13 +1514,13 @@ CREATE INDEX IF NOT EXISTS idx_usage_ws ON usage_log(workspace_id, created_at);
 
 ### `storage/db.py`
 
-*126 строк*
+*134 строк*
 
 ````python
 """Подключение к локальной SQLite-БД и применение схемы.
 
 Соединение одно на процесс (``check_same_thread=False``), запись защищена
-мьютексом — этого достаточно, потому что вся работа с БД идёт из одного
+мьютексом - этого достаточно, потому что вся работа с БД идёт из одного
 asyncio-лупа, а фоновые потоки обращаются к ней редко.
 """
 
@@ -1584,9 +1584,17 @@ class Database:
             self.conn.executescript(_SCHEMA_FILE.read_text("utf-8"))
             cur = self.conn.execute("PRAGMA user_version")
             current = cur.fetchone()[0]
+            if current < 2:
+                # Версия 2: сохранённые промпты агентов приводятся к тому же
+                # набору символов, что и шаблоны ролей.
+                long_dash, mid_dash = chr(0x2014), chr(0x2013)
+                self.conn.execute(
+                    "UPDATE agents SET system_prompt = REPLACE(REPLACE(REPLACE("
+                    "system_prompt, ?, ' - '), ?, '-'), ?, '-') "
+                    "WHERE instr(system_prompt, ?) > 0 OR instr(system_prompt, ?) > 0",
+                    (f" {long_dash} ", long_dash, mid_dash, long_dash, mid_dash),
+                )
             if current != SCHEMA_VERSION:
-                # Здесь появятся инкрементальные ALTER TABLE, когда схема
-                # поедет дальше; сейчас достаточно зафиксировать версию.
                 self.conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
             self.conn.commit()
 
@@ -1650,7 +1658,7 @@ class Database:
 *270 строк*
 
 ````python
-"""Датаклассы предметной области — типизированное представление строк БД."""
+"""Датаклассы предметной области - типизированное представление строк БД."""
 
 from __future__ import annotations
 
@@ -1704,7 +1712,7 @@ class Workspace:
 
 @dataclass
 class ApiKey:
-    """Метаданные ключа. Сам секрет в объект не попадает — только по запросу."""
+    """Метаданные ключа. Сам секрет в объект не попадает - только по запросу."""
 
     id: int
     user_id: int
@@ -1927,7 +1935,7 @@ def dumps(obj: Any) -> str:
 *759 строк*
 
 ````python
-"""Репозитории — единственная точка доступа к БД.
+"""Репозитории - единственная точка доступа к БД.
 
 UI и ядро никогда не пишут SQL напрямую: это упрощает будущую замену
 хранилища и гарантирует, что секреты шифруются в одном месте.
@@ -2018,7 +2026,7 @@ class UserRepo:
         # Сначала расшифровываем всё старым ключом (если что-то не читается,
         # исключение вылетит до первой записи), затем пишем одной транзакцией:
         # сбой посередине не должен оставить часть ключей на новом мастер-ключе
-        # при старом пароле — такие ключи было бы уже не расшифровать.
+        # при старом пароле - такие ключи было бы уже не расшифровать.
         rows = self.db.query(
             "SELECT id, secret_blob FROM api_keys WHERE user_id = ? AND secret_blob IS NOT NULL",
             (session.user_id,),
@@ -2398,7 +2406,7 @@ class IncidentRepo:
         return [Incident.from_row(r) for r in rows]
 
     def resolve_for_subtask(self, subtask_id: int, resolution: str) -> int:
-        """Закрывает открытые инциденты подзадачи — например, после доработки.
+        """Закрывает открытые инциденты подзадачи - например, после доработки.
 
         Возвращает количество закрытых записей.
         """
@@ -2437,7 +2445,7 @@ class ApprovalRepo:
         )
 
     def history(self, ws_id: int, limit: int = 100) -> list[dict]:
-        """История решений, новые сверху — для вкладки супервайзера."""
+        """История решений, новые сверху - для вкладки супервайзера."""
         rows = self.db.query(
             "SELECT * FROM approvals WHERE workspace_id = ? ORDER BY id DESC LIMIT ?",
             (ws_id, limit),
@@ -2503,7 +2511,7 @@ class BudgetRepo:
     def usage_series(self, ws_id: int, limit: int = 300) -> list[tuple[str, int, float]]:
         """Хронология вызовов: (время, токены, стоимость).
 
-        Возвращает последние ``limit`` записей в прямом порядке — из них
+        Возвращает последние ``limit`` записей в прямом порядке - из них
         дашборд строит кумулятивные кривые расхода.
         """
         rows = self.db.query(
@@ -2568,7 +2576,7 @@ class BudgetRepo:
         )
 
     def incident_counts(self, ws_id: int) -> dict[str, int]:
-        """Инциденты по статусам — для плашки «требуют решения»."""
+        """Инциденты по статусам - для плашки «требуют решения»."""
         rows = self.db.query(
             "SELECT status, COUNT(*) n FROM incidents WHERE workspace_id = ? GROUP BY status",
             (ws_id,),
@@ -2637,12 +2645,12 @@ class SecretCodec:
             return token          # старое значение, сохранённое открытым текстом
         try:
             return self.session.box.decrypt(base64.b64decode(token[len(self.PREFIX):]))
-        except Exception:  # noqa: BLE001 — повреждённый секрет равен отсутствующему
+        except Exception:  # noqa: BLE001 - повреждённый секрет равен отсутствующему
             return ""
 
 
 class Repos:
-    """Агрегатор репозиториев — удобно передавать одним объектом в UI."""
+    """Агрегатор репозиториев - удобно передавать одним объектом в UI."""
 
     def __init__(self, db: Database, session: Session) -> None:
         self.db = db
@@ -2700,17 +2708,17 @@ class Repos:
 
 Схема (ответ на вопросы 4 и 5):
 
-* Пароль профиля — единственный секрет, который вводит пользователь.
+* Пароль профиля - единственный секрет, который вводит пользователь.
 * ``Argon2id(password, salt)`` → 32-байтовый мастер-ключ. Ключ живёт только
   в оперативной памяти и никогда не пишется на диск.
-* Проверка пароля при входе — по хэшу ``Argon2id(password, verify_salt)``,
+* Проверка пароля при входе - по хэшу ``Argon2id(password, verify_salt)``,
   сравнение выполняется в постоянном времени.
 * API-ключи шифруются ``AES-256-GCM`` мастер-ключом. На диск ложится
-  ``nonce(12) || ciphertext || tag`` — сама БД остаётся обычным SQLite,
+  ``nonce(12) || ciphertext || tag`` - сама БД остаётся обычным SQLite,
   открытым для чтения инструментами, но секреты в ней нечитаемы.
 
-Зависимость только одна — ``cryptography``. Argon2id берётся из неё
-(версия ≥ 42 с поддержкой KDF), при её отсутствии — из ``argon2-cffi``.
+Зависимость только одна - ``cryptography``. Argon2id берётся из неё
+(версия ≥ 42 с поддержкой KDF), при её отсутствии - из ``argon2-cffi``.
 """
 
 from __future__ import annotations
@@ -2721,7 +2729,7 @@ from dataclasses import dataclass
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-# Параметры Argon2id: ~64 МБ памяти, 3 прохода — разумный компромисс
+# Параметры Argon2id: ~64 МБ памяти, 3 прохода - разумный компромисс
 # между стойкостью и временем отклика десктопного логина (~0.2-0.5 с).
 ARGON2_TIME_COST = 3
 ARGON2_MEMORY_KIB = 64 * 1024
@@ -2744,7 +2752,7 @@ def _derive_raw(password: bytes, salt: bytes, length: int = KEY_LENGTH) -> bytes
             memory_cost=ARGON2_MEMORY_KIB,
         )
         return kdf.derive(password)
-    except ImportError:  # pragma: no cover — путь для старых cryptography
+    except ImportError:  # pragma: no cover - путь для старых cryptography
         from argon2.low_level import Type, hash_secret_raw
 
         return hash_secret_raw(
@@ -2874,7 +2882,7 @@ def keyring_delete_password(username: str) -> None:
 
 Все провайдеры (OpenAI, Anthropic, Gemini, Groq, OpenRouter, Ollama, HF)
 приводятся к одному набору типов, чтобы ядро агентов ничего не знало
-о различиях в их HTTP-API — включая формат tool-calling.
+о различиях в их HTTP-API - включая формат tool-calling.
 """
 
 from __future__ import annotations
@@ -2884,7 +2892,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, AsyncIterator, Callable
 
-#: получатель фрагментов при потоковой генерации: (текст, вид). Вид —
+#: получатель фрагментов при потоковой генерации: (текст, вид). Вид -
 #: ``"text"`` для ответа модели или ``"reasoning"`` для рассуждения
 #: моделей, которые отдают его отдельно (DeepSeek-R1, Claude thinking и т.п.)
 DeltaHandler = Callable[[str, str], None]
@@ -2978,7 +2986,7 @@ class LLMProvider(ABC):
     """Базовый класс провайдера.
 
     Реализации обязаны быть потокобезопасными в пределах одного asyncio-лупа
-    и не хранить состояние диалога — вся история приходит в ``messages``.
+    и не хранить состояние диалога - вся история приходит в ``messages``.
     """
 
     #: строковый идентификатор пресета (см. providers/presets.py)
@@ -3015,7 +3023,7 @@ class LLMProvider(ABC):
 
         Результат тот же, что у ``complete`` (текст, вызовы инструментов,
         расход), но по ходу генерации каждый фрагмент текста передаётся в
-        ``on_delta`` — так интерфейс показывает рассуждение агента вживую.
+        ``on_delta`` - так интерфейс показывает рассуждение агента вживую.
         Реализация по умолчанию делает обычный вызов и отдаёт текст целиком:
         провайдер без стриминга просто покажет ответ разом.
         """
@@ -3037,7 +3045,7 @@ class LLMProvider(ABC):
         temperature: float = 0.7,
         max_tokens: int = 2048,
     ) -> AsyncIterator[str]:
-        """Потоковая генерация. По умолчанию — эмуляция через ``complete``."""
+        """Потоковая генерация. По умолчанию - эмуляция через ``complete``."""
         result = await self.complete(
             model, messages, temperature=temperature, max_tokens=max_tokens
         )
@@ -3058,7 +3066,7 @@ class LLMProvider(ABC):
 ````python
 """Пресеты подключения к провайдерам «из коробки».
 
-Пользователю достаточно выбрать провайдера и вставить свой ключ — base URL,
+Пользователю достаточно выбрать провайдера и вставить свой ключ - base URL,
 формат API и список популярных моделей подставляются автоматически.
 """
 
@@ -3148,7 +3156,7 @@ PRESETS: dict[str, ProviderPreset] = {
         docs_url="https://ollama.com/download",
         suggested_models=["qwen2.5:7b-instruct", "qwen2.5:14b-instruct",
                           "llama3.1:8b", "mistral-nemo", "gemma3:12b"],
-        notes="Работает офлайн. Ключ не нужен — достаточно запущенного сервера Ollama.",
+        notes="Работает офлайн. Ключ не нужен - достаточно запущенного сервера Ollama.",
     ),
     "huggingface": ProviderPreset(
         key="huggingface",
@@ -3188,7 +3196,7 @@ def preset_list() -> list[ProviderPreset]:
 """Провайдер для всех OpenAI-совместимых API.
 
 Покрывает OpenAI, Groq, OpenRouter, Ollama, Hugging Face Router и любой
-локальный сервер (LM Studio, vLLM, llama.cpp) — различается только base_url.
+локальный сервер (LM Studio, vLLM, llama.cpp) - различается только base_url.
 """
 
 from __future__ import annotations
@@ -3325,7 +3333,7 @@ class OpenAICompatProvider(LLMProvider):
         if u:
             usage = Usage(_int(u.get("prompt_tokens")), _int(u.get("completion_tokens")))
         else:
-            # Сервер не прислал расход — оценка лучше нуля, иначе вызов
+            # Сервер не прислал расход - оценка лучше нуля, иначе вызов
             # незаметно обходил бы лимиты бюджета.
             usage = Usage(sum(len(m.content or "") for m in messages) // 4,
                           estimate_tokens(text))
@@ -3348,7 +3356,7 @@ class OpenAICompatProvider(LLMProvider):
         чанках, поэтому они склеиваются по ``index`` и разбираются в конце.
         Расход токенов сервер присылает последним чанком, если попросить
         ``stream_options.include_usage``; часть совместимых серверов этот
-        параметр не знает — тогда запрос повторяется без него.
+        параметр не знает - тогда запрос повторяется без него.
         """
         payload = self._payload(model, messages, temperature, max_tokens, tools)
         payload["stream"] = True
@@ -3535,7 +3543,7 @@ def _error_text(resp: httpx.Response) -> str:
 
 Отличия от OpenAI, которые здесь скрываются:
 * системный промпт передаётся отдельным полем ``system``;
-* результат инструмента — блок ``tool_result`` внутри сообщения роли ``user``;
+* результат инструмента - блок ``tool_result`` внутри сообщения роли ``user``;
 * заголовки ``x-api-key`` и ``anthropic-version``.
 """
 
@@ -3776,7 +3784,7 @@ class AnthropicProvider(LLMProvider):
 
     async def list_models(self) -> list[str]:
         try:
-            # Список постраничный (по умолчанию 20 штук) — просим сразу все.
+            # Список постраничный (по умолчанию 20 штук) - просим сразу все.
             resp = await self._http().get(f"{self.base_url}/models", headers=self._headers(),
                                           params={"limit": 1000})
         except httpx.HTTPError as exc:
@@ -3802,7 +3810,7 @@ def _error_text(resp: httpx.Response) -> str:
 """Провайдер Google Gemini (generativeLanguage API).
 
 Особенности, скрытые внутри класса:
-* роли называются ``user``/``model``, системный промпт — ``systemInstruction``;
+* роли называются ``user``/``model``, системный промпт - ``systemInstruction``;
 * ключ передаётся заголовком ``x-goog-api-key``;
 * инструменты описываются как ``functionDeclarations``.
 """
@@ -3918,7 +3926,7 @@ class GeminiProvider(LLMProvider):
                               on_delta: DeltaHandler | None = None) -> CompletionResult:
         """``streamGenerateContent`` в режиме SSE.
 
-        Каждый чанк — полноценный ответ с частью ``parts``; вызовы функций
+        Каждый чанк - полноценный ответ с частью ``parts``; вызовы функций
         приходят целиком, а ``usageMetadata`` в последнем чанке содержит
         итоговый расход.
         """
@@ -4053,7 +4061,7 @@ def _error_text(resp: httpx.Response) -> str:
 ````python
 """Фабрика провайдеров и расчёт стоимости вызовов.
 
-Провайдеры почти никогда не возвращают цену — только токены. Поэтому
+Провайдеры почти никогда не возвращают цену - только токены. Поэтому
 стоимость считается на клиенте по таблице ``pricing.json``
 (USD за 1 млн токенов). Для локальных моделей стоимость равна нулю.
 """
@@ -4106,7 +4114,7 @@ def _pricing() -> dict:
 
 
 def reload_pricing() -> None:
-    """Сбрасывает кэш — используется после ручного редактирования таблицы цен."""
+    """Сбрасывает кэш - используется после ручного редактирования таблицы цен."""
     _pricing.cache_clear()
 
 
@@ -4313,7 +4321,7 @@ class ToolRegistry:
             return await tool.run(ctx, **kwargs)
         except ToolError as exc:
             return f"ОШИБКА ИНСТРУМЕНТА: {exc}"
-        except Exception as exc:  # noqa: BLE001 — модель должна узнать о сбое
+        except Exception as exc:  # noqa: BLE001 - модель должна узнать о сбое
             return f"ОШИБКА ИНСТРУМЕНТА ({type(exc).__name__}): {exc}"
 
 
@@ -4361,7 +4369,7 @@ def default_registry() -> ToolRegistry:
     * ``setsid`` + убийство всей группы процессов по таймауту;
     * POSIX: ``RLIMIT_CPU``, ``RLIMIT_AS``, ``RLIMIT_FSIZE``, ``RLIMIT_NPROC``;
     * вычищенное окружение (нет API-ключей и прочих переменных хоста);
-    * сеть по умолчанию отключается подстановкой недоступного прокси —
+    * сеть по умолчанию отключается подстановкой недоступного прокси -
       это не жёсткая изоляция, а барьер «по умолчанию».
 
 ``DockerSandbox`` (если найден работающий Docker)
@@ -4389,7 +4397,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 # Языки, которые разрешено исполнять. Shell намеренно не включён в Docker-режиме
-# по умолчанию — он нужен реже, а рисков даёт больше.
+# по умолчанию - он нужен реже, а рисков даёт больше.
 LANG_COMMANDS: dict[str, list[str]] = {
     "python": [sys.executable or "python3", "-I", "{file}"],
     "bash": ["bash", "{file}"],
@@ -4434,7 +4442,7 @@ class Sandbox(ABC):
 # ---------------------------------------------------------------------------
 
 
-def _preexec(memory_mb: int, cpu_seconds: int):  # pragma: no cover — POSIX-only
+def _preexec(memory_mb: int, cpu_seconds: int):  # pragma: no cover - POSIX-only
     """Ограничения ресурсов для дочернего процесса (POSIX)."""
     import resource
 
@@ -4616,7 +4624,7 @@ async def _docker_kill(name: str) -> None:
             stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL,
         )
         await asyncio.wait_for(proc.wait(), timeout=10)
-    except Exception:  # noqa: BLE001 — контейнер мог уже завершиться сам
+    except Exception:  # noqa: BLE001 - контейнер мог уже завершиться сам
         pass
 
 
@@ -4697,7 +4705,7 @@ class CodeExecTool(Tool):
         code = (kwargs.get("code") or "").strip()
         language = (kwargs.get("language") or "python").lower()
         if not code:
-            raise ToolError("Пустой код — нечего исполнять")
+            raise ToolError("Пустой код - нечего исполнять")
         if language not in LANG_COMMANDS:
             raise ToolError(f"Язык «{language}» не поддерживается")
 
@@ -4755,7 +4763,7 @@ class FileReadTool(Tool):
     async def run(self, ctx: ToolContext, **kwargs: Any) -> str:
         path = ctx.resolve(str(kwargs.get("path", "")), must_exist=True)
         if path.is_dir():
-            raise ToolError(f"«{path.name}» — каталог, используй list_dir")
+            raise ToolError(f"«{path.name}» - каталог, используй list_dir")
         try:
             limit = min(max(1, int(kwargs.get("max_bytes") or MAX_READ_BYTES)), MAX_READ_BYTES)
         except (TypeError, ValueError):
@@ -4816,7 +4824,7 @@ class ListDirTool(Tool):
     async def run(self, ctx: ToolContext, **kwargs: Any) -> str:
         path = ctx.resolve(str(kwargs.get("path") or "."), must_exist=True)
         if not path.is_dir():
-            raise ToolError(f"«{path.name}» — не каталог")
+            raise ToolError(f"«{path.name}» - не каталог")
         lines: list[str] = []
         for item in sorted(path.iterdir(), key=lambda p: (p.is_file(), p.name.lower())):
             if item.name.startswith("."):
@@ -4845,7 +4853,7 @@ def _human(path: Path) -> str:
 ````python
 """Веб-поиск и чтение страниц.
 
-Ответ на вопрос 9: по умолчанию используется DuckDuckGo (библиотека ``ddgs``) —
+Ответ на вопрос 9: по умолчанию используется DuckDuckGo (библиотека ``ddgs``) -
 она не требует ключа, поэтому поиск работает «из коробки». Если пользователь
 добавит ключ Tavily или Brave, можно переключить бэкенд в настройках воркспейса.
 
@@ -4939,7 +4947,7 @@ class WebFetchTool(Tool):
                     kind = resp.headers.get("content-type", "").split(";")[0].strip().lower()
                     if kind and not (kind.startswith("text/") or "html" in kind
                                      or "xml" in kind or "json" in kind):
-                        raise ToolError(f"По ссылке не страница, а файл ({kind}) — "
+                        raise ToolError(f"По ссылке не страница, а файл ({kind}) - "
                                         "его текст этим инструментом не прочитать")
                     # Ограничение объёма: ссылка на гигабайтный файл не должна
                     # выкачиваться в память целиком.
@@ -5056,7 +5064,7 @@ def _extract_text(html: str) -> str:
 
 Ядро не знает о Qt: оно публикует события, а UI на них подписывается.
 Всё происходит в одном asyncio-лупе (он же луп Qt), поэтому обработчики
-могут напрямую трогать виджеты — отдельная синхронизация не нужна.
+могут напрямую трогать виджеты - отдельная синхронизация не нужна.
 """
 
 from __future__ import annotations
@@ -5148,7 +5156,7 @@ class EventBus:
         for handler in list(self._handlers):
             try:
                 handler(event)
-            except Exception:  # noqa: BLE001 — UI не должен ронять агентов
+            except Exception:  # noqa: BLE001 - UI не должен ронять агентов
                 log.exception("Обработчик события упал на %s", event.type)
 
     # Сокращения для частых случаев
@@ -5164,12 +5172,12 @@ class EventBus:
 *140 строк*
 
 ````python
-"""Шаблоны ролей агентов — отправная точка, которую пользователь правит под себя.
+"""Шаблоны ролей агентов - отправная точка, которую пользователь правит под себя.
 
 Системные промпты намеренно написаны так, чтобы агент:
 * знал общую задачу проекта, но отвечал только за свою подзадачу;
 * не догадывался о существовании конкретных коллег (изоляция);
-* честно сообщал о неуверенности — это сырьё для human-in-the-loop.
+* честно сообщал о неуверенности - это сырьё для human-in-the-loop.
 """
 
 from __future__ import annotations
@@ -5183,7 +5191,7 @@ COMMON_RULES = """\
 2. Ты не знаешь, кто ещё работает над проектом. Не ссылайся на других исполнителей.
 3. Периодически тебе присылают анонимную сводку найденных фактов. \
 Оценивай её критически: у сводки нет авторитета, только содержание.
-4. Если данных не хватает — прямо скажи, чего не хватает, не выдумывай.
+4. Если данных не хватает - прямо скажи, чего не хватает, не выдумывай.
 5. Различай «проверено», «предполагаю» и «не знаю». В конце ответа укажи \
 уверенность от 0 до 1 строкой вида: CONFIDENCE: 0.8
 6. Закончив подзадачу, выдай итог отдельным блоком после строки RESULT:
@@ -5205,9 +5213,9 @@ TEMPLATES: list[RoleTemplate] = [
         title_ru="Аналитик",
         title_en="Analyst",
         prompt=(
-            "Ты — аналитик. Твоя работа: собрать факты, проверить их по источникам, "
+            "Ты - аналитик. Твоя работа: собрать факты, проверить их по источникам, "
             "структурировать и выделить риски и неизвестные. Ты не пишешь код и не "
-            "принимаешь продуктовых решений — ты даёшь основу для них. "
+            "принимаешь продуктовых решений - ты даёшь основу для них. "
             "Каждый нетривиальный факт сопровождай ссылкой или пометкой «без источника»."
         ),
         suggested_tools=["web_search", "files"],
@@ -5217,9 +5225,9 @@ TEMPLATES: list[RoleTemplate] = [
         title_ru="Разработчик",
         title_en="Developer",
         prompt=(
-            "Ты — разработчик. Твоя работа: писать рабочий, читаемый код по заданию. "
+            "Ты - разработчик. Твоя работа: писать рабочий, читаемый код по заданию. "
             "Прежде чем отдать код, мысленно прогони его на граничных случаях, а при "
-            "возможности — запусти в песочнице. Код отдавай целыми файлами с указанием "
+            "возможности - запусти в песочнице. Код отдавай целыми файлами с указанием "
             "пути, а не фрагментами без контекста."
         ),
         suggested_tools=["code_exec", "files", "web_search"],
@@ -5229,7 +5237,7 @@ TEMPLATES: list[RoleTemplate] = [
         title_ru="Тестировщик",
         title_en="Tester",
         prompt=(
-            "Ты — тестировщик. Твоя работа: находить, где решение ломается. "
+            "Ты - тестировщик. Твоя работа: находить, где решение ломается. "
             "Составляй сценарии проверки, включая граничные и негативные, запускай их "
             "в песочнице и фиксируй воспроизводимые шаги. Отчёт о найденном дефекте "
             "должен содержать: шаги, ожидаемое, фактическое."
@@ -5241,7 +5249,7 @@ TEMPLATES: list[RoleTemplate] = [
         title_ru="Критик",
         title_en="Critic",
         prompt=(
-            "Ты — критик. Твоя работа: искать слабые места в предложенном решении: "
+            "Ты - критик. Твоя работа: искать слабые места в предложенном решении: "
             "логические дыры, непроверенные допущения, преувеличения, пропущенные "
             "альтернативы. Критикуй содержание, а не исполнителя. На каждое замечание "
             "предлагай конкретное улучшение, иначе замечание бесполезно."
@@ -5253,10 +5261,10 @@ TEMPLATES: list[RoleTemplate] = [
         title_ru="Документатор",
         title_en="Documenter",
         prompt=(
-            "Ты — технический писатель. Твоя работа: превращать сырые материалы в "
+            "Ты - технический писатель. Твоя работа: превращать сырые материалы в "
             "понятный документ: структура, однозначные формулировки, примеры. "
             "Не добавляй фактов, которых нет в исходных материалах; если чего-то "
-            "не хватает — оставь пометку TODO с точным вопросом."
+            "не хватает - оставь пометку TODO с точным вопросом."
         ),
         suggested_tools=["files"],
     ),
@@ -5265,7 +5273,7 @@ TEMPLATES: list[RoleTemplate] = [
         title_ru="Исследователь",
         title_en="Researcher",
         prompt=(
-            "Ты — исследователь. Твоя работа: находить первоисточники, сравнивать "
+            "Ты - исследователь. Твоя работа: находить первоисточники, сравнивать "
             "противоречащие данные и явно помечать расхождения. Предпочитай "
             "официальную документацию и первичные публикации пересказам."
         ),
@@ -5276,10 +5284,10 @@ TEMPLATES: list[RoleTemplate] = [
         title_ru="Супервайзер",
         title_en="Supervisor",
         prompt=(
-            "Ты — супервайзер команды исполнителей. Ты проверяешь их отчёты по чек-листу: "
+            "Ты - супервайзер команды исполнителей. Ты проверяешь их отчёты по чек-листу: "
             "(1) соответствие исходному заданию; (2) внутренняя логическая "
             "непротиворечивость; (3) фактические ошибки и выдумки; (4) противоречия "
-            "между отчётами разных исполнителей. Ты не переписываешь работу за них — "
+            "между отчётами разных исполнителей. Ты не переписываешь работу за них - "
             "ты выносишь вердикт и формулируешь, что именно нужно исправить. "
             "Сводку для команды пиши своими словами, без указания авторов."
         ),
@@ -5311,7 +5319,7 @@ def title(template: RoleTemplate, lang: str) -> str:
 *499 строк*
 
 ````python
-"""Этап 4 — исполнитель одного агента над одной подзадачей.
+"""Этап 4 - исполнитель одного агента над одной подзадачей.
 
 Цикл ReAct: модель думает → при необходимости вызывает инструменты →
 получает их результат → продолжает. Останов по одному из условий:
@@ -5496,7 +5504,7 @@ class AgentRunner:
             parts += [
                 "",
                 "АНОНИМНАЯ СВОДКА ПО ПРОЕКТУ",
-                "(источник не указан намеренно — оценивай содержание, а не авторитет)",
+                "(источник не указан намеренно - оценивай содержание, а не авторитет)",
                 summary,
             ]
 
@@ -5525,7 +5533,7 @@ class AgentRunner:
                 continue
             dep = self.repos.tasks.get_subtask(int(token))
             if dep and dep.result:
-                chunks.append(f"— {dep.title}:\n{dep.result[:4000]}")
+                chunks.append(f"- {dep.title}:\n{dep.result[:4000]}")
         return "\n\n".join(chunks)
 
     def _latest_summary(self) -> str:
@@ -5594,7 +5602,7 @@ class AgentRunner:
         ensure = getattr(self.budget, "ensure_allowed", None)
         blocked = (await ensure(self.agent.id) if ensure is not None
                    else self.budget.blocking_scope(self.agent.id))
-        return f"Лимит исчерпан — {blocked.reason()}" if blocked is not None else ""
+        return f"Лимит исчерпан - {blocked.reason()}" if blocked is not None else ""
 
     async def _call_model(self, messages: list[ChatMessage], step: int,
                           tools: list | None) -> CompletionResult:
@@ -5645,7 +5653,7 @@ class AgentRunner:
         tool_ctx = self._tool_context()
         specs = self.registry.specs(self.tools_allowed)
 
-        system_prompt = self.agent.system_prompt.strip() or "Ты — полезный ассистент."
+        system_prompt = self.agent.system_prompt.strip() or "Ты - полезный ассистент."
         messages: list[ChatMessage] = [ChatMessage("system", system_prompt)]
         messages += self._history()
         briefing = self._briefing()
@@ -5696,9 +5704,9 @@ class AgentRunner:
                 if result.text:
                     # Пустое сообщение ассистента часть провайдеров отвергает.
                     messages.append(ChatMessage("assistant", result.text))
-                # Модель не обозначила финал — просим завершить.
-                nudge = ("Если подзадача выполнена — выдай итог после строки RESULT: "
-                         "и строку CONFIDENCE. Если нет — продолжай работу.")
+                # Модель не обозначила финал - просим завершить.
+                nudge = ("Если подзадача выполнена - выдай итог после строки RESULT: "
+                         "и строку CONFIDENCE. Если нет - продолжай работу.")
                 messages.append(ChatMessage("user", nudge))
                 continue
 
@@ -5716,7 +5724,7 @@ class AgentRunner:
 
         if last_step_used_tools:
             # Последний шаг ушёл на инструменты, итога модель не дала. Выдать
-            # промежуточное «сейчас посчитаю» за результат нельзя — просим
+            # промежуточное «сейчас посчитаю» за результат нельзя - просим
             # подвести итог одним дополнительным вызовом без инструментов.
             finalized = await self._finalize(messages, totals)
             if finalized is not None:
@@ -5753,7 +5761,7 @@ class AgentRunner:
             result = await self._call_model(messages, step, None)
         except asyncio.CancelledError:
             raise
-        except Exception:  # noqa: BLE001 — итог не получился, вернём что было
+        except Exception:  # noqa: BLE001 - итог не получился, вернём что было
             log.exception("Не удалось получить итог после исчерпания шагов")
             return None
         self._add_usage(totals, result)
@@ -5817,11 +5825,11 @@ class TokenBudget:
 *850 строк*
 
 ````python
-"""Этап 4 — оркестратор выполнения задачи.
+"""Этап 4 - оркестратор выполнения задачи.
 
 Отвечает за расписание: какие подзадачи можно запускать сейчас, какие ждут
 предшественников, сколько агентов работают параллельно. Каждый агент
-выполняет свои подзадачи последовательно (лок на агента), разные агенты —
+выполняет свои подзадачи последовательно (лок на агента), разные агенты -
 параллельно, все в одном asyncio-лупе.
 
 Оркестратор ведёт весь жизненный цикл: статусы, отчёты, расход, паузы и
@@ -5897,7 +5905,7 @@ class Orchestrator:
         self._confidence_threshold: float = 0.0
         self._semaphore: asyncio.Semaphore | None = None
         self._workspace_id: int | None = None
-        #: id подзадач текущей задачи — зависимости на прочие id игнорируются
+        #: id подзадач текущей задачи - зависимости на прочие id игнорируются
         self._known_ids: set[int] | None = None
 
     # -- управление ----------------------------------------------------------
@@ -6059,7 +6067,7 @@ class Orchestrator:
             for subtask, outcome in zip(ready, results):
                 pending.pop(subtask.id, None)
                 # CancelledError наследуется от BaseException, а не от Exception,
-                # поэтому проверяем именно BaseException — иначе отменённая
+                # поэтому проверяем именно BaseException - иначе отменённая
                 # подзадача была бы ошибочно засчитана как выполненная.
                 if isinstance(outcome, asyncio.CancelledError):
                     continue
@@ -6071,7 +6079,7 @@ class Orchestrator:
 
             # Завершён этап работ: если пользователь просил останавливаться
             # на контрольных точках, спрашиваем перед следующей волной.
-            # На последней волне вопрос не задаём — спрашивать «продолжать?»,
+            # На последней волне вопрос не задаём - спрашивать «продолжать?»,
             # когда продолжать уже нечего, бессмысленно.
             if (pending and self._gate is not None and not self._stop.is_set()
                     and settings.get("hitl_pause_on_milestone")):
@@ -6115,7 +6123,7 @@ class Orchestrator:
             ))
 
     def _wave_summary(self, task: Task, done_ids: set[int]) -> str:
-        """Короткая сводка по завершённой волне — чтобы решать осознанно."""
+        """Короткая сводка по завершённой волне - чтобы решать осознанно."""
         lines: list[str] = []
         for subtask in self.repos.tasks.subtasks(task.id):
             if subtask.id not in done_ids:
@@ -6245,8 +6253,8 @@ class Orchestrator:
         """Сохраняет результат и проводит его через супервайзера.
 
         Возвращает ``(итог, замечания, доработку назначил человек)``:
-        итог ``True``/``False`` — подзадача закрыта успешно или с ошибкой,
-        ``None`` — назначена доработка. Третий флаг говорит вызывающему коду,
+        итог ``True``/``False`` - подзадача закрыта успешно или с ошибкой,
+        ``None`` - назначена доработка. Третий флаг говорит вызывающему коду,
         что круг доработки нужно выдать сверх автоматического лимита.
         """
         finished = self._finish_subtask(workspace_id, task, subtask, agent, result)
@@ -6285,7 +6293,7 @@ class Orchestrator:
                 self.bus.log(f"закрыто замечаний после доработки: {closed}",
                              workspace_id=workspace_id, subtask_id=subtask.id,
                              agent_name="Супервайзер")
-            # Супервайзер доволен, но сам исполнитель — нет. Это как раз тот
+            # Супервайзер доволен, но сам исполнитель - нет. Это как раз тот
             # случай, когда дешевле спросить человека, чем нести сомнительный
             # результат дальше по цепочке подзадач.
             if (self._gate is not None and report.confidence is not None
@@ -6304,7 +6312,7 @@ class Orchestrator:
                     return await self._apply_decision(
                         workspace_id, task, subtask, agent, answer, None
                     )
-                # Пользователь подтвердил результат — возвращаем статусы,
+                # Пользователь подтвердил результат - возвращаем статусы,
                 # которые были сняты на время ожидания ответа.
                 self.repos.tasks.update_subtask(subtask.id, status="done")
                 self.repos.agents.set_status(agent.id, "idle")
@@ -6326,7 +6334,7 @@ class Orchestrator:
             ))
             return None, verdict.notes, False
 
-        # Доработки исчерпаны либо это конфликт — фиксируем инцидент
+        # Доработки исчерпаны либо это конфликт - фиксируем инцидент
         # и, если human-in-the-loop включён, останавливаемся и спрашиваем.
         incident_id = self.repos.incidents.add(
             workspace_id,
@@ -6344,7 +6352,7 @@ class Orchestrator:
     async def _handle_unverified(self, workspace_id: int, task: Task, subtask: Subtask,
                                  agent: Agent, report: Report, verdict
                                  ) -> tuple[bool | None, str, bool]:
-        """Супервайзер не смог проверить отчёт — решение за человеком."""
+        """Супервайзер не смог проверить отчёт - решение за человеком."""
         incident_id = self.repos.incidents.add(
             workspace_id, kind="unverified",
             description=verdict.notes or "Результат не прошёл проверку супервайзера",
@@ -6406,7 +6414,7 @@ class Orchestrator:
                               ) -> tuple[bool | None, str, bool]:
         """Применяет решение пользователя к подзадаче.
 
-        Третий элемент кортежа — признак того, что круг доработки назначил
+        Третий элемент кортежа - признак того, что круг доработки назначил
         человек, а значит его надо выдать сверх автоматического лимита.
         """
         if incident_id is not None:
@@ -6465,7 +6473,7 @@ class Orchestrator:
         """Лимит исчерпан посреди прогона: спросить, поднимать ли его.
 
         Возвращает ``True``, если пользователь разрешил продолжить (лимит
-        поднимает сам ``BudgetGuard``). Остановка прогона — отдельное
+        поднимает сам ``BudgetGuard``). Остановка прогона - отдельное
         решение: тогда заблокированные вызовы завершаются ошибкой.
         """
         gate = self._gate
@@ -6529,7 +6537,7 @@ class Orchestrator:
             ))
             return False
 
-        # Отчёт — это то, что увидит супервайзер.
+        # Отчёт - это то, что увидит супервайзер.
         report_id = self.repos.reports.add_report(
             workspace_id, task.id, subtask.id, agent.id,
             content=result.result_text, confidence=result.confidence,
@@ -6604,7 +6612,7 @@ class Orchestrator:
         if not settings.get("human_in_the_loop", True):
             self._gate = None
             self._confidence_threshold = 0.0
-            self.bus.log("Human-in-the-loop выключен — система не будет останавливаться",
+            self.bus.log("Human-in-the-loop выключен - система не будет останавливаться",
                          workspace_id=workspace_id)
             return
         self._gate = ApprovalGate(self.repos, self.bus, workspace_id)
@@ -6617,12 +6625,12 @@ class Orchestrator:
 
     @property
     def gate(self) -> ApprovalGate | None:
-        """Ворота согласования — интерфейс отдаёт через них решения пользователя."""
+        """Ворота согласования - интерфейс отдаёт через них решения пользователя."""
         return self._gate
 
     @property
     def budget(self) -> BudgetGuard | None:
-        """Бюджет текущего прогона — для живых индикаторов в интерфейсе."""
+        """Бюджет текущего прогона - для живых индикаторов в интерфейсе."""
         return self._budget
 
     def _count_supervisor_usage(self, tokens: int, cost: float) -> None:
@@ -6637,7 +6645,7 @@ class Orchestrator:
                                 on_usage=self._count_supervisor_usage)
         if not supervisor.available():
             self._supervisor = None
-            self.bus.log("Супервайзер не настроен — отчёты принимаются без проверки",
+            self.bus.log("Супервайзер не настроен - отчёты принимаются без проверки",
                          workspace_id=workspace_id, task_id=task.id)
             return
         self._supervisor = supervisor
@@ -6649,7 +6657,7 @@ class Orchestrator:
             self._gate = None
         # Прогон окончен: агенты, остановленные посреди работы или
         # ожидавшие решения, больше не «работают» и не «на паузе».
-        # Статус подзадачи (paused) сохраняется — по нему видно, что
+        # Статус подзадачи (paused) сохраняется - по нему видно, что
         # её можно продолжить следующим запуском.
         if self._workspace_id is not None:
             for agent in self.repos.agents.list(self._workspace_id):
@@ -6676,8 +6684,8 @@ class Orchestrator:
 ````python
 """Автоматическое разбиение задачи на подзадачи через ИИ (этап 3).
 
-Планировщик — обычный вызов модели с требованием вернуть строгий JSON.
-Модель берётся у агента-супервайзера, а если он не назначен — у первого
+Планировщик - обычный вызов модели с требованием вернуть строгий JSON.
+Модель берётся у агента-супервайзера, а если он не назначен - у первого
 доступного агента воркспейса.
 """
 
@@ -6696,7 +6704,7 @@ from storage.repositories import Repos
 log = logging.getLogger("aiorc.planner")
 
 PLANNER_SYSTEM = """\
-Ты — планировщик работ. Тебе дают формулировку задачи и список доступных \
+Ты - планировщик работ. Тебе дают формулировку задачи и список доступных \
 исполнителей с их ролями. Разбей задачу на 3-8 последовательных подзадач.
 
 Требования к разбиению:
@@ -6750,7 +6758,7 @@ async def plan_subtasks(repos: Repos, workspace_id: int,
     agent = choose_planner_agent(repos, workspace_id)
     if agent is None:
         raise RuntimeError(
-            "Нет ни одного агента с моделью и ключом — некому планировать. "
+            "Нет ни одного агента с моделью и ключом - некому планировать. "
             "Создайте агента на вкладке «Агенты»."
         )
 
@@ -6773,7 +6781,7 @@ async def plan_subtasks(repos: Repos, workspace_id: int,
                         task.id if task else None, task.token_limit if task else None)
     blocked = guard.blocking_scope(agent.id)
     if blocked is not None:
-        raise RuntimeError(f"Планирование не запущено: лимит исчерпан — {blocked.reason()}")
+        raise RuntimeError(f"Планирование не запущено: лимит исчерпан - {blocked.reason()}")
 
     secret = repos.keys.reveal(agent.api_key_id) if agent.api_key_id else ""
     key = repos.keys.get(agent.api_key_id) if agent.api_key_id else None
@@ -6788,7 +6796,7 @@ async def plan_subtasks(repos: Repos, workspace_id: int,
     finally:
         await provider.aclose()
 
-    # Учёт расхода — планирование тоже стоит денег.
+    # Учёт расхода - планирование тоже стоит денег.
     cost = estimate_cost(agent.provider, agent.model,
                          result.usage.input_tokens, result.usage.output_tokens)
     repos.budgets.log_call(workspace_id, task.id if task else None, None, agent.id,
@@ -6803,7 +6811,7 @@ async def plan_subtasks(repos: Repos, workspace_id: int,
         raise RuntimeError("Модель вернула ответ не в формате JSON. "
                            "Попробуйте ещё раз или выберите другую модель.") from exc
 
-    # Некоторые модели отвечают голым списком вместо объекта — принимаем и так.
+    # Некоторые модели отвечают голым списком вместо объекта - принимаем и так.
     if isinstance(data, list):
         items = data
     elif isinstance(data, dict) and isinstance(data.get("subtasks"), list):
@@ -6844,7 +6852,7 @@ def match_agent_by_role(repos: Repos, workspace_id: int, role: str | None) -> in
 *316 строк*
 
 ````python
-"""Этап 5 — промпты супервайзера и разбор его ответов.
+"""Этап 5 - промпты супервайзера и разбор его ответов.
 
 Ключевая идея анонимизации: супервайзер видит отчёты как «Исполнитель A/B/C»,
 а не по именам агентов, и сводку для команды пересказывает своими словами.
@@ -6864,26 +6872,26 @@ from typing import Any
 # ---------------------------------------------------------------------------
 
 REVIEW_SYSTEM = """\
-Ты — супервайзер команды исполнителей. Ты не переписываешь работу за них:
+Ты - супервайзер команды исполнителей. Ты не переписываешь работу за них:
 ты выносишь вердикт и формулируешь, что именно нужно исправить.
 
 Проверь отчёт строго по чек-листу:
-1. СООТВЕТСТВИЕ ЗАДАНИЮ — отчёт отвечает именно на поставленную подзадачу,
+1. СООТВЕТСТВИЕ ЗАДАНИЮ - отчёт отвечает именно на поставленную подзадачу,
    ничего из требуемого не пропущено, лишнего не добавлено.
-2. ЛОГИЧЕСКАЯ НЕПРОТИВОРЕЧИВОСТЬ — выводы следуют из приведённых данных,
+2. ЛОГИЧЕСКАЯ НЕПРОТИВОРЕЧИВОСТЬ - выводы следуют из приведённых данных,
    внутри отчёта нет взаимоисключающих утверждений.
-3. ФАКТИЧЕСКИЕ ОШИБКИ — проверяемые утверждения верны, нет выдуманных
+3. ФАКТИЧЕСКИЕ ОШИБКИ - проверяемые утверждения верны, нет выдуманных
    источников, цифр, API, цитат и ссылок.
-4. СОГЛАСОВАННОСТЬ С ПРОЕКТОМ — отчёт не противоречит ранее принятым
+4. СОГЛАСОВАННОСТЬ С ПРОЕКТОМ - отчёт не противоречит ранее принятым
    результатам других подзадач.
 
 Будь требователен, но конкретен: замечание без указания, что именно исправить,
 бесполезно. Не придирайся к стилю и оформлению, если суть верна.
 
 Вердикты:
-- "ok"       — работа принимается;
-- "rework"   — есть исправимые недостатки, нужна доработка;
-- "conflict" — отчёт противоречит другим результатам проекта, нужен разбор.
+- "ok"       - работа принимается;
+- "rework"   - есть исправимые недостатки, нужна доработка;
+- "conflict" - отчёт противоречит другим результатам проекта, нужен разбор.
 
 Ответь СТРОГО одним JSON-объектом без markdown и пояснений:
 {
@@ -6917,7 +6925,7 @@ REVIEW_USER = """\
 # ---------------------------------------------------------------------------
 
 SUMMARY_SYSTEM = """\
-Ты — супервайзер проекта. Составь краткую сводку хода работ для всех
+Ты - супервайзер проекта. Составь краткую сводку хода работ для всех
 исполнителей.
 
 Жёсткие требования:
@@ -6928,7 +6936,7 @@ SUMMARY_SYSTEM = """\
 - отдельно перечисли открытые вопросы, которые мешают двигаться дальше;
 - не более 250 слов, без вступлений и заключений.
 
-Формат ответа — обычный текст с тремя разделами:
+Формат ответа - обычный текст с тремя разделами:
 ФАКТЫ:
 РАСХОЖДЕНИЯ:
 ОТКРЫТЫЕ ВОПРОСЫ:
@@ -6947,14 +6955,14 @@ SUMMARY_USER = """\
 # ---------------------------------------------------------------------------
 
 CONFLICT_SYSTEM = """\
-Ты — супервайзер. Сравни результаты разных подзадач одного проекта и найди
+Ты - супервайзер. Сравни результаты разных подзадач одного проекта и найди
 ПРЯМЫЕ противоречия: взаимоисключающие утверждения, несовпадающие числа,
 разные ответы на один и тот же вопрос.
 
 Не считай противоречием: разный уровень детализации, разный ракурс на одну
 тему, дополняющие друг друга сведения.
 
-Для каждого противоречия оцени, можно ли решить его автоматически — то есть
+Для каждого противоречия оцени, можно ли решить его автоматически - то есть
 существует ли объективный признак, по которому одна из версий очевидно верна
 (свежая дата, первичный источник, арифметическая проверка).
 
@@ -6968,7 +6976,7 @@ CONFLICT_SYSTEM = """\
      "resolution": "какая версия верна и почему; пусто если решить нельзя"}
   ]
 }
-Если противоречий нет — верни {"conflicts": []}.
+Если противоречий нет - верни {"conflicts": []}.
 """
 
 
@@ -7057,7 +7065,7 @@ def parse_verdict(text: str) -> Verdict:
             raw=text,
         )
 
-    # Ответ без вердикта (пустой объект, список вместо объекта) — это не
+    # Ответ без вердикта (пустой объект, список вместо объекта) - это не
     # «принято»: по той же логике, что и нечитаемый ответ, отправляем на
     # доработку, а не пропускаем непроверенным.
     verdict = str(data.get("verdict") or "").lower().strip()
@@ -7149,7 +7157,7 @@ class Anonymizer:
         return self._labels[agent_id]
 
     def scrub(self, text: str, names: dict[int, str]) -> str:
-        """Вычищает имена агентов из готового текста — страховка на случай,
+        """Вычищает имена агентов из готового текста - страховка на случай,
         если модель всё-таки назвала кого-то по имени."""
         result = text or ""
         # Длинные имена первыми: «Аналитик Пётр» не должно превратиться в
@@ -7167,7 +7175,7 @@ class Anonymizer:
 *399 строк*
 
 ````python
-"""Этап 5 — служба супервайзера.
+"""Этап 5 - служба супервайзера.
 
 Обязанности:
 * проверять отчёты агентов по чек-листу и выносить вердикт;
@@ -7178,7 +7186,7 @@ class Anonymizer:
 
 Модель супервайзера выбирается в настройках воркспейса: либо один из
 подключённых агентов со своим API-ключом, либо локальная модель через
-OpenAI-совместимый endpoint (Ollama, по умолчанию Qwen) — она работает
+OpenAI-совместимый endpoint (Ollama, по умолчанию Qwen) - она работает
 офлайн и ничего не стоит.
 """
 
@@ -7237,7 +7245,7 @@ class Supervisor:
         self.bus = bus
         self.workspace_id = workspace_id
         self.settings = settings
-        #: лимиты прогона: проверки супервайзера — самая дорогая часть
+        #: лимиты прогона: проверки супервайзера - самая дорогая часть
         #: системы, поэтому они обязаны проходить через тот же бюджет
         self.budget = budget
         self.on_usage = on_usage
@@ -7247,10 +7255,10 @@ class Supervisor:
         self._model: SupervisorModel | None = None
         self._summary_task: asyncio.Task | None = None
         self._stop = asyncio.Event()
-        #: текст последней ошибки сводки — чтобы интерфейс не выдавал её за
+        #: текст последней ошибки сводки - чтобы интерфейс не выдавал её за
         #: «нечего пересказывать»
         self.last_error = ""
-        #: задача текущего прогона — для привязки событий к нему
+        #: задача текущего прогона - для привязки событий к нему
         self._task_id: int | None = None
 
     def _label(self, agent_id: int | None) -> str:
@@ -7331,7 +7339,7 @@ class Supervisor:
         if self.budget is not None:
             blocked = await self.budget.ensure_allowed(None)
             if blocked is not None:
-                raise BudgetBlocked(f"лимит исчерпан — {blocked.reason()}")
+                raise BudgetBlocked(f"лимит исчерпан - {blocked.reason()}")
         result = await model.provider.complete(
             model.model,
             [ChatMessage("system", system), ChatMessage("user", user)],
@@ -7368,7 +7376,7 @@ class Supervisor:
         """Проверяет отчёт по чек-листу и возвращает вердикт.
 
         Если проверить не удалось (сеть, лимит, модель не настроена),
-        вердикт — ``unverified``: такой результат не считается принятым и
+        вердикт - ``unverified``: такой результат не считается принятым и
         не уходит дальше по конвейеру, пока его не посмотрит человек.
         """
         self._task_id = task.id
@@ -7390,7 +7398,7 @@ class Supervisor:
             raw = await self._ask(REVIEW_SYSTEM, user, task.id)
         except asyncio.CancelledError:
             raise
-        except Exception as exc:  # noqa: BLE001 — любая причина равна «не проверено»
+        except Exception as exc:  # noqa: BLE001 - любая причина равна «не проверено»
             log.warning("Супервайзер не смог проверить отчёт: %s", exc)
             # Раньше непроверенный отчёт молча принимался. Это опаснее, чем
             # остановиться: ошибка ушла бы в зависимые подзадачи без следа.
@@ -7427,7 +7435,7 @@ class Supervisor:
         for st in self.repos.tasks.subtasks(task_id):
             if st.id == exclude_subtask or not st.result:
                 continue
-            # Только принятое: статус review — это отчёт, который ещё
+            # Только принятое: статус review - это отчёт, который ещё
             # проверяется или ждёт человека, мерить им другие рано.
             if st.status != "done":
                 continue
@@ -7460,7 +7468,7 @@ class Supervisor:
             )
         except asyncio.CancelledError:
             raise
-        except Exception as exc:  # noqa: BLE001 — сводка не повод ронять прогон
+        except Exception as exc:  # noqa: BLE001 - сводка не повод ронять прогон
             self._emit(EventType.ERROR, f"сводка не составлена: {exc}")
             self.last_error = str(exc)
             return ""
@@ -7518,7 +7526,7 @@ class Supervisor:
         """Ищет прямые противоречия между результатами подзадач.
 
         Противоречие требует как минимум двух результатов, поэтому при одном
-        готовом результате вызов модели пропускается — это экономит токены,
+        готовом результате вызов модели пропускается - это экономит токены,
         а не срезает проверку.
         """
         self._task_id = task.id
@@ -7573,9 +7581,9 @@ class Supervisor:
 *225 строк*
 
 ````python
-"""Этап 7 — human-in-the-loop: реальная пауза в критических точках.
+"""Этап 7 - human-in-the-loop: реальная пауза в критических точках.
 
-Ядро не спрашивает пользователя напрямую — оно публикует запрос в шину и
+Ядро не спрашивает пользователя напрямую - оно публикует запрос в шину и
 останавливается на ``asyncio.Future``. Интерфейс показывает вопрос, человек
 нажимает кнопку, и ядро продолжает с его решением. Запрос и ответ пишутся
 в таблицу ``approvals``, поэтому история решений сохраняется.
@@ -7694,7 +7702,7 @@ class ApprovalGate:
                   default: Decision = Decision.APPROVE) -> Answer:
         """Публикует вопрос и ждёт ответа.
 
-        Если прогон уже остановлен, вопрос не задаётся — возвращается
+        Если прогон уже остановлен, вопрос не задаётся - возвращается
         ``ABORT``, чтобы вызывающий код свернул работу.
         """
         if self._aborted:
@@ -7747,7 +7755,7 @@ class ApprovalGate:
             EventType.APPROVAL_RESOLVED, workspace_id=self.workspace_id,
             task_id=task_id, subtask_id=subtask_id, agent_name="Пользователь",
             message=f"решение: {DECISION_TITLES.get(answer.decision, answer.decision.value)}"
-                    + (f" — {answer.comment[:120]}" if answer.comment else ""),
+                    + (f" - {answer.comment[:120]}" if answer.comment else ""),
             payload={"approval_id": approval_id, "decision": answer.decision.value},
         ))
         if answer.is_abort:
@@ -7775,7 +7783,7 @@ class ApprovalGate:
         return True
 
     def cancel_all(self) -> None:
-        """Снимает все ожидания — нужно при остановке прогона."""
+        """Снимает все ожидания - нужно при остановке прогона."""
         self._aborted = True
         for approval_id, future in list(self._waiters.items()):
             if not future.done():
@@ -7784,7 +7792,7 @@ class ApprovalGate:
         self._open.clear()
 
     def pending(self) -> list[ApprovalRequest]:
-        """Список открытых вопросов — интерфейс рисует их карточками."""
+        """Список открытых вопросов - интерфейс рисует их карточками."""
         return sorted(self._open.values(), key=lambda r: r.id)
 
     def has_pending(self) -> bool:
@@ -7805,7 +7813,7 @@ def parse_payload(raw: str) -> dict:
 *362 строк*
 
 ````python
-"""Этап 9 — бюджеты, лимиты и алерты.
+"""Этап 9 - бюджеты, лимиты и алерты.
 
 Лимит можно поставить на трёх уровнях: весь воркспейс, текущая задача и
 отдельный агент. Каждый уровень ограничивается и по токенам, и по деньгам.
@@ -7813,9 +7821,9 @@ def parse_payload(raw: str) -> dict:
 Две важные детали реализации:
 
 * Проверка идёт **перед** вызовом модели, а не после. Иначе лимит узнавался бы
-  постфактум — деньги уже потрачены, а сказать об этом нечем.
+  постфактум - деньги уже потрачены, а сказать об этом нечем.
 * Фактический расход берётся из ``usage_log``, а не из накопительных счётчиков
-  в таблице ``budgets``. Журнал вызовов — единственный источник правды, и при
+  в таблице ``budgets``. Журнал вызовов - единственный источник правды, и при
   перезапуске приложения лимит не «обнуляется» сам собой.
 """
 
@@ -7885,7 +7893,7 @@ class ScopeState:
     exceeded_reported: bool = False
 
     def ratio(self) -> float:
-        """Доля израсходованного — максимум из токенов и денег."""
+        """Доля израсходованного - максимум из токенов и денег."""
         parts: list[float] = []
         if self.limit.token_limit:
             parts.append(self.tokens / self.limit.token_limit)
@@ -7926,7 +7934,7 @@ class BudgetGuard:
         self._scopes: dict[tuple[str, int], ScopeState] = {}
         #: лимит на уровне задачи взят из формы задачи, а не из таблицы budgets
         self._task_limit_from_form = False
-        #: кто решает, что делать при исчерпании лимита; ``None`` — блокировать
+        #: кто решает, что делать при исчерпании лимита; ``None`` - блокировать
         self.on_blocked: Callable[[ScopeState], Awaitable[bool]] | None = None
         #: один вопрос на уровень: параллельные агенты ждут общего ответа
         self._pending: dict[tuple[str, int], asyncio.Future] = {}
@@ -8002,7 +8010,7 @@ class BudgetGuard:
         """Возвращает уровень, лимит которого исчерпан, или ``None``.
 
         Проверка идёт от общего к частному: сначала воркспейс, потом задача,
-        потом конкретный агент — так сообщение получается по самой
+        потом конкретный агент - так сообщение получается по самой
         «дорогой» причине.
         """
         for key in (("workspace", self.workspace_id),
@@ -8041,7 +8049,7 @@ class BudgetGuard:
                 future.add_done_callback(lambda _f, k=key: self._pending.pop(k, None))
             if not await asyncio.shield(future):
                 return blocked
-            # лимит поднят — проверяем все уровни заново: мог упереться другой
+            # лимит поднят - проверяем все уровни заново: мог упереться другой
 
     async def _ask_extension(self, state: ScopeState) -> bool:
         assert self.on_blocked is not None
@@ -8059,7 +8067,7 @@ class BudgetGuard:
             limit.cost_limit = round(max(limit.cost_limit, state.cost) * factor, 6)
         state.alerted = False
         if state.scope == "task" and self._task_limit_from_form:
-            # Лимит задан в форме задачи — там его и обновляем.
+            # Лимит задан в форме задачи - там его и обновляем.
             self.repos.tasks.update(state.scope_id, token_limit=limit.token_limit)
         else:
             self.repos.budgets.upsert(state.scope, state.scope_id, limit.token_limit,
@@ -8070,7 +8078,7 @@ class BudgetGuard:
             EventType.BUDGET_EXTENDED, workspace_id=self.workspace_id,
             task_id=self.task_id,
             message=(f"лимит поднят: {SCOPE_TITLES.get(state.scope, state.scope)} "
-                     f"«{state.name}» — {self.describe_limit(state)}"),
+                     f"«{state.name}» - {self.describe_limit(state)}"),
             payload={"scope": state.scope, "scope_id": state.scope_id},
         ))
 
@@ -8104,9 +8112,9 @@ class BudgetGuard:
                 self._maybe_alert(state)
 
     def _maybe_alert(self, state: ScopeState) -> None:
-        """Каждый алерт срабатывает один раз на уровень — иначе это шум.
+        """Каждый алерт срабатывает один раз на уровень - иначе это шум.
 
-        «Подходим к порогу» и «лимит исчерпан» — разные события, поэтому у
+        «Подходим к порогу» и «лимит исчерпан» - разные события, поэтому у
         них отдельные флаги: предупреждение о пороге не должно глушить
         сообщение о превышении, и наоборот.
         """
@@ -8118,7 +8126,7 @@ class BudgetGuard:
             self.bus.emit(Event(
                 EventType.BUDGET_EXCEEDED, workspace_id=self.workspace_id,
                 task_id=self.task_id,
-                message=f"лимит исчерпан — {state.reason()}",
+                message=f"лимит исчерпан - {state.reason()}",
                 payload={"scope": state.scope, "scope_id": state.scope_id,
                          "ratio": state.ratio()},
             ))
@@ -8131,7 +8139,7 @@ class BudgetGuard:
             self.bus.emit(Event(
                 EventType.BUDGET_ALERT, workspace_id=self.workspace_id,
                 task_id=self.task_id,
-                message=(f"бюджет на {percent:.0f}% — "
+                message=(f"бюджет на {percent:.0f}% - "
                          f"{SCOPE_TITLES.get(state.scope, state.scope)} "
                          f"«{state.name}»"),
                 payload={"scope": state.scope, "scope_id": state.scope_id,
@@ -8140,7 +8148,7 @@ class BudgetGuard:
 
     # -- отчётность ----------------------------------------------------------
     def snapshot(self) -> list[ScopeState]:
-        """Состояние всех уровней — для дашборда и страницы бюджетов."""
+        """Состояние всех уровней - для дашборда и страницы бюджетов."""
         order = {"workspace": 0, "task": 1, "agent": 2}
         return sorted(self._scopes.values(),
                       key=lambda s: (order.get(s.scope, 3), s.name))
@@ -8161,7 +8169,7 @@ class BudgetGuard:
 
 
 def load_states(repos: Repos, workspace_id: int) -> list[ScopeState]:
-    """Состояние бюджетов вне прогона — для страницы настройки лимитов."""
+    """Состояние бюджетов вне прогона - для страницы настройки лимитов."""
     task = repos.tasks.current(workspace_id)
     guard = BudgetGuard(repos, EventBus(), workspace_id,
                         task.id if task else None,
@@ -8177,11 +8185,11 @@ def load_states(repos: Repos, workspace_id: int) -> list[ScopeState]:
 *394 строк*
 
 ````python
-"""Этап 8 — сборка результата проекта.
+"""Этап 8 - сборка результата проекта.
 
 Формат результата зависит от задачи, поэтому экспорт устроен в два слоя:
 
-1. Из базы и рабочего каталога собирается ``ResultBundle`` — всё, что
+1. Из базы и рабочего каталога собирается ``ResultBundle`` - всё, что
    наработал проект.
 2. Из него строится **единая модель документа** (список блоков), и уже её
    рендерят четыре формата. Благодаря этому Markdown, DOCX и PDF получаются
@@ -8264,7 +8272,7 @@ def divider() -> Block:
 
 @dataclass
 class ExportOptions:
-    """Что включать в выгрузку. Значения по умолчанию — «полезное без шума»."""
+    """Что включать в выгрузку. Значения по умолчанию - «полезное без шума»."""
 
     include_results: bool = True       # результаты подзадач (суть работы)
     include_reports: bool = False      # полные отчёты агентов
@@ -8394,7 +8402,7 @@ def detect_format(bundle: ResultBundle) -> tuple[str, str]:
                        f"Архив сохранит структуру каталогов.")
 
     if len(bundle.files) > 3:
-        return "zip", (f"В рабочем каталоге {len(bundle.files)} файлов — "
+        return "zip", (f"В рабочем каталоге {len(bundle.files)} файлов - "
                        f"архив удобнее одного документа.")
 
     haystack = " ".join(filter(None, [
@@ -8408,14 +8416,14 @@ def detect_format(bundle: ResultBundle) -> tuple[str, str]:
         return any(re.search(rf"(?<!\w){re.escape(w)}", haystack) for w in words)
 
     if mentions(CODE_HINTS):
-        return "zip", "Формулировка задачи говорит о коде — собираем архив."
+        return "zip", "Формулировка задачи говорит о коде - собираем архив."
     if mentions(DOC_HINTS):
         return "docx", "Формулировка задачи говорит о документе."
 
     total = sum(len(s.result) for s in bundle.subtasks)
     if total > 20_000:
-        return "docx", "Результат объёмный — документ Word удобнее читать."
-    return "markdown", "Результат текстовый и компактный — подойдёт Markdown."
+        return "docx", "Результат объёмный - документ Word удобнее читать."
+    return "markdown", "Результат текстовый и компактный - подойдёт Markdown."
 
 
 # ---------------------------------------------------------------------------
@@ -8490,7 +8498,7 @@ def build_document(bundle: ResultBundle, options: ExportOptions) -> list[Block]:
         for row in reversed(bundle.decisions):
             payload = parse_payload(row.get("payload_json", "{}"))
             decision = row.get("decision") or "ожидает решения"
-            comment = f" — {row['comment']}" if row.get("comment") else ""
+            comment = f" - {row['comment']}" if row.get("comment") else ""
             rows.append(f"{payload.get('question', '')} → {decision}{comment}")
         blocks.append(bullets(rows))
 
@@ -8521,7 +8529,7 @@ def _body_blocks(raw: str) -> list[Block]:
     """Разбивает текст результата на абзацы и блоки кода.
 
     Полноценный парсер Markdown здесь не нужен: единственное, что важно
-    не испортить, — ограждённые блоки кода.
+    не испортить, - ограждённые блоки кода.
     """
     blocks: list[Block] = []
     buffer: list[str] = []
@@ -8557,7 +8565,7 @@ def _status_title(status: str) -> str:
 
 
 def _when(raw: str) -> str:
-    # В базе время в UTC; в документе — местное, как и «Сформировано».
+    # В базе время в UTC; в документе - местное, как и «Сформировано».
     return local_time(raw, "%d.%m.%Y %H:%M") if raw else ""
 
 
@@ -8583,7 +8591,7 @@ def _human_size(path: Path) -> str:
 Все экспортёры получают одну и ту же модель блоков из ``bundle.py``,
 поэтому содержание Markdown, DOCX и PDF совпадает по построению.
 
-Отдельная история — кириллица в PDF: встроенные шрифты reportlab её не
+Отдельная история - кириллица в PDF: встроенные шрифты reportlab её не
 знают, поэтому приходится искать в системе TrueType-шрифт. Если не нашли,
 экспорт не молчит и не выдаёт кракозябры, а честно говорит об этом.
 """
@@ -8668,13 +8676,13 @@ def export_docx(bundle: ResultBundle, options: ExportOptions,
     blocks = [_clean_block(b) for b in build_document(bundle, options)]
     document = Document()
 
-    # Моноширинный стиль для кода — в стандартном шаблоне его нет.
+    # Моноширинный стиль для кода - в стандартном шаблоне его нет.
     styles = document.styles
     try:
         code_style = styles.add_style("AiorcCode", WD_STYLE_TYPE.PARAGRAPH)
         code_style.font.name = "Consolas"
         code_style.font.size = Pt(9)
-    except Exception:  # noqa: BLE001 — стиль уже есть
+    except Exception:  # noqa: BLE001 - стиль уже есть
         code_style = styles["AiorcCode"]
 
     for block in blocks:
@@ -8727,7 +8735,7 @@ MONO_CANDIDATES = [
 
 
 def find_font(candidates: list[str]) -> Path | None:
-    """Ищет шрифт в системе, а если не нашёл — в пакете matplotlib.
+    """Ищет шрифт в системе, а если не нашёл - в пакете matplotlib.
 
     matplotlib кладёт рядом с собой DejaVu, и это частый способ получить
     кириллический шрифт на машине, где системных TTF нет.
@@ -8777,7 +8785,7 @@ def export_pdf(bundle: ResultBundle, options: ExportOptions,
     if regular is None:
         raise ExportError(
             "Не найден шрифт с поддержкой кириллицы, а встроенные шрифты PDF "
-            "её не знают — текст получился бы нечитаемым.\n\n"
+            "её не знают - текст получился бы нечитаемым.\n\n"
             "Установите шрифты DejaVu (Linux: пакет fonts-dejavu) либо "
             "выберите экспорт в DOCX или Markdown."
         )
@@ -8925,7 +8933,7 @@ def export_zip(bundle: ResultBundle, options: ExportOptions,
                          json.dumps(manifest, ensure_ascii=False, indent=2))
 
     note = (f"В архив добавлено файлов: {written}" if written
-            else "Файлов в рабочем каталоге не было — в архиве только отчёт.")
+            else "Файлов в рабочем каталоге не было - в архиве только отчёт.")
     return ExportResult(path, "zip", path.stat().st_size, note)
 
 
@@ -9098,7 +9106,7 @@ def apply_dark_titlebar(window) -> None:
         # DWMWA_CAPTION_COLOR (Windows 11): цвет заголовка = цвет фона (BGR)
         caption = ctypes.c_int(0x0F0809)
         dwm.DwmSetWindowAttribute(hwnd, 35, ctypes.byref(caption), ctypes.sizeof(caption))
-    except Exception:  # noqa: BLE001 — косметика, не повод падать
+    except Exception:  # noqa: BLE001 - косметика, не повод падать
         log.debug("Тёмный заголовок окна недоступен", exc_info=True)
 
 
@@ -9403,7 +9411,7 @@ class DictListModel(QAbstractListModel):
         return -1
 
     def update_row(self, key_value: Any, **changes: Any) -> None:
-        """Точечная правка одной строки — без пересборки списка."""
+        """Точечная правка одной строки - без пересборки списка."""
         row = self.find(key_value)
         if row < 0:
             return
@@ -9456,7 +9464,7 @@ class DictListModel(QAbstractListModel):
                 del self._items[row]
                 self.endRemoveRows()
 
-        # 2. если порядок оставшихся изменился — проще пересобрать целиком
+        # 2. если порядок оставшихся изменился - проще пересобрать целиком
         kept = [it.get(self._key) for it in self._items]
         if kept != [k for k in new_keys if k in set(kept)]:
             self._reset(new_items)
@@ -9495,7 +9503,7 @@ class DictListModel(QAbstractListModel):
 
 Словарь строк текущего языка отдаётся в QML свойством ``t``; биндинги вида
 ``text: i18n.t["login.title"]`` зависят от этого свойства, поэтому при смене
-языка весь интерфейс перерисовывается сам — без пересборки окна, как было
+языка весь интерфейс перерисовывается сам - без пересборки окна, как было
 в версии на виджетах.
 """
 
@@ -9518,7 +9526,7 @@ class I18n(QObject):
         catalog.on_language_changed(self._on_catalog_changed)
 
     def _rebuild(self) -> None:
-        # Русский словарь — базовый: если в английском чего-то нет, строка
+        # Русский словарь - базовый: если в английском чего-то нет, строка
         # всё равно не пропадёт из интерфейса.
         merged = dict(catalog.RU)
         merged.update(catalog.catalog_for(catalog.current_language()))
@@ -9608,7 +9616,7 @@ class Backend(StateObject):
     toast = Signal(str, str, str)
     #: завершилась попытка входа или регистрации: ok, текст ошибки
     authFinished = Signal(bool, str)
-    #: ядро прислало событие — для страниц, которым нужна живая лента
+    #: ядро прислало событие - для страниц, которым нужна живая лента
     coreEvent = Signal("QVariantMap")
     #: просьба интерфейсу открыть страницу
     navigateRequested = Signal(str)
@@ -9662,7 +9670,7 @@ class Backend(StateObject):
 
     motionLevel = Property(int, _motion_level, notify=changed)
 
-    def _const(value):  # noqa: N805 — фабрика константных свойств
+    def _const(value):  # noqa: N805 - фабрика константных свойств
         return Property(str, lambda self: value, constant=True)
 
     appName = _const(APP_NAME)
@@ -9712,7 +9720,7 @@ class Backend(StateObject):
         self._set(authBusy=True)
 
         async def job() -> Session | None:
-            # Argon2id занимает десятые доли секунды — в отдельном потоке,
+            # Argon2id занимает десятые доли секунды - в отдельном потоке,
             # чтобы индикатор на кнопке не замирал.
             return await asyncio.to_thread(self.users.authenticate, username, password)
 
@@ -9869,7 +9877,7 @@ class Backend(StateObject):
         for controller in self._controllers.values():
             try:
                 controller.on_workspace_changed()
-            except Exception:  # noqa: BLE001 — одна страница не должна ломать остальные
+            except Exception:  # noqa: BLE001 - одна страница не должна ломать остальные
                 log.exception("Контроллер %s не обновился", type(controller).__name__)
 
     def _update_workspace_name(self) -> None:
@@ -10009,7 +10017,7 @@ class Backend(StateObject):
 *31 строк*
 
 ````python
-"""Сборка контроллеров страниц — в одном месте, чтобы Backend не знал деталей."""
+"""Сборка контроллеров страниц - в одном месте, чтобы Backend не знал деталей."""
 
 from __future__ import annotations
 
@@ -10670,7 +10678,7 @@ class TaskController(Controller):
         else:
             self.repos.tasks.update(task.id, title=title, description=body,
                                     result_format=fmt, token_limit=token_limit)
-            # Лимит задачи поменяли посреди прогона — он действует сразу.
+            # Лимит задачи поменяли посреди прогона - он действует сразу.
             orch = self.backend.orchestrator
             if orch is not None and orch.state.running and orch.budget is not None:
                 orch.budget.reload_limits()
@@ -11290,7 +11298,7 @@ class RunController(Controller):
 
     @Slot(int, result=str)
     def fullText(self, agent_id: int) -> str:  # noqa: N802
-        """Текст рассуждения без разметки — для копирования в буфер."""
+        """Текст рассуждения без разметки - для копирования в буфер."""
         return "".join(t for _, t in self._streams[agent_id].segments)
 ````
 
@@ -11433,7 +11441,7 @@ class SupervisorController(Controller):
 
     @Slot()
     def makeSummary(self) -> None:  # noqa: N802
-        """Сводка вручную — удобно освежить контекст агентов вне прогона."""
+        """Сводка вручную - удобно освежить контекст агентов вне прогона."""
         if self.ws_id is None:
             return
         task = self.repos.tasks.current(self.ws_id)
@@ -11467,7 +11475,7 @@ class SupervisorController(Controller):
             if content:
                 self.toast("success", tr("toast.summary_done"), "")
             elif supervisor.last_error:
-                # Ошибка — это не «нечего пересказывать».
+                # Ошибка - это не «нечего пересказывать».
                 self.toast("error", tr("toast.summary_failed"), supervisor.last_error)
             else:
                 self.toast("info", tr("sup.nothing_to_summarize"), "")
@@ -11776,7 +11784,7 @@ class BudgetController(Controller):
             self._set(alert=event.message, alertTone=tone)
             self.refresh()
         elif event.type in (EventType.RUN_FINISHED, EventType.USAGE):
-            # расход меняется во время прогона — но не чаще, чем пересчитает дашборд
+            # расход меняется во время прогона - но не чаще, чем пересчитает дашборд
             if event.type is EventType.RUN_FINISHED:
                 self.refresh()
 
@@ -11792,13 +11800,13 @@ class BudgetController(Controller):
             return tr("bud.bad_cost")
         threshold = min(max(float(threshold or 0.8), 0.1), 1.0)
         if scope == "task":
-            # Лимит токенов задачи живёт и в форме задачи — держим их в согласии.
+            # Лимит токенов задачи живёт и в форме задачи - держим их в согласии.
             self.repos.tasks.update(scope_id, token_limit=tokens)
         if tokens is None and cost is None:
             self.repos.budgets.delete_limit(scope, scope_id)
         else:
             self.repos.budgets.upsert(scope, scope_id, tokens, cost, round(threshold, 2))
-        # Идёт прогон — новый лимит действует сразу, а не со следующего запуска.
+        # Идёт прогон - новый лимит действует сразу, а не со следующего запуска.
         orch = self.backend.orchestrator
         if orch is not None and orch.state.running and orch.budget is not None:
             orch.budget.reload_limits()
@@ -11964,7 +11972,7 @@ class ExportController(Controller):
 
         def job():
             # Данные собираются заново: с момента открытия экрана агенты
-            # могли дописать результаты. Сборка DOCX/PDF занимает секунды —
+            # могли дописать результаты. Сборка DOCX/PDF занимает секунды -
             # в отдельном потоке, чтобы окно не замирало.
             bundle = collect(repos, ws_id)
             return export(bundle, options, fmt, target)
@@ -12068,7 +12076,7 @@ class PrefsController(Controller):
 
     @staticmethod
     def _groups(names: list[str]) -> list[str]:
-        """Настройка хранит смесь групп и имён инструментов — приводим к группам."""
+        """Настройка хранит смесь групп и имён инструментов - приводим к группам."""
         groups = []
         for group in TOOL_SWITCHES:
             members = TOOL_GROUPS.get(group, [group])
@@ -12283,7 +12291,7 @@ RU_UI: dict[str, str] = {
     "run.k_tokens": "токенов",
     "run.k_cost": "стоимость",
     "run.live": "Рассуждения агентов",
-    "run.live_hint": "Текст модели появляется по мере генерации; курсивом — внутреннее рассуждение, голубым — вызовы инструментов",
+    "run.live_hint": "Текст модели появляется по мере генерации; курсивом - внутреннее рассуждение, голубым - вызовы инструментов",
     "run.graph": "Граф подзадач",
     "run.graph_empty": "Подзадач пока нет",
     "run.feed_empty": "Событий пока нет",
@@ -12812,7 +12820,7 @@ import QtQuick.Controls.Basic as T
 import QtQuick.Layouts
 import Ao
 
-// Экран входа: слева — знак и суть продукта, справа — карточка входа или
+// Экран входа: слева - знак и суть продукта, справа - карточка входа или
 // создания профиля с индикатором надёжности пароля.
 Item {
     id: root
@@ -13163,7 +13171,7 @@ Item {
         function onNavigateRequested(key) { shell.go(key) }
     }
 
-    // Горячие клавиши: Ctrl+1…0 — страницы, Ctrl+K — палитра команд.
+    // Горячие клавиши: Ctrl+1…0 - страницы, Ctrl+K - палитра команд.
     Repeater {
         model: shell.order
         delegate: Item {
@@ -13623,7 +13631,7 @@ import QtQuick
 import QtQuick.Layouts
 import Ao
 
-// Воркспейсы: параллельные проекты. Активный подсвечен, клик — сделать активным.
+// Воркспейсы: параллельные проекты. Активный подсвечен, клик - сделать активным.
 Page {
     id: page
     title: i18n.t["ws.title"]
@@ -14249,7 +14257,7 @@ Page {
 
                     RowLayout {
                         spacing: 6
-                        Badge { text: model.modelName !== "" ? model.modelName : "—"; tone: "accent"; icon: "cpu" }
+                        Badge { text: model.modelName !== "" ? model.modelName : "-"; tone: "accent"; icon: "cpu" }
                         Badge { visible: model.price !== ""; text: model.price; tone: "muted"; icon: "coins" }
                     }
 
@@ -14703,7 +14711,7 @@ Page {
                 }
             }
 
-            // Пока ИИ планирует — «скелет» будущих карточек.
+            // Пока ИИ планирует - «скелет» будущих карточек.
             Repeater {
                 model: page.ctl.planning ? 3 : 0
                 delegate: Card {
@@ -14996,16 +15004,16 @@ Page {
                 size: 64
                 thickness: 6
                 value: page.ctl.progress
-                label: page.ctl.total > 0 ? Math.round(page.ctl.progress * 100) + "%" : "—"
+                label: page.ctl.total > 0 ? Math.round(page.ctl.progress * 100) + "%" : "-"
             }
             Kpi { caption: i18n.t["run.k_done"]; value: page.ctl.done + " / " + page.ctl.total; tint: Theme.success }
             Kpi { caption: i18n.t["run.k_review"]; value: page.ctl.review; tint: page.ctl.review ? Theme.violetSoft : Theme.text }
             Kpi { caption: i18n.t["run.k_errors"]; value: page.ctl.errors; tint: page.ctl.errors ? Theme.danger : Theme.text }
-            Kpi { caption: i18n.t["run.k_time"]; value: backend.runElapsed !== "" ? backend.runElapsed : "—" }
-            Kpi { caption: i18n.t["run.k_tokens"]; value: backend.running ? backend.runTokens : "—" }
-            Kpi { caption: i18n.t["run.k_cost"]; value: backend.running ? backend.runCost : "—"; tint: Theme.teal }
+            Kpi { caption: i18n.t["run.k_time"]; value: backend.runElapsed !== "" ? backend.runElapsed : "-" }
+            Kpi { caption: i18n.t["run.k_tokens"]; value: backend.running ? backend.runTokens : "-" }
+            Kpi { caption: i18n.t["run.k_cost"]; value: backend.running ? backend.runCost : "-"; tint: Theme.teal }
             Item { Layout.fillWidth: true }
-            // Почему нельзя запустить — сразу видно, без попытки.
+            // Почему нельзя запустить - сразу видно, без попытки.
             RowLayout {
                 visible: !backend.running && page.ctl.blocker !== ""
                 spacing: 8
@@ -15404,7 +15412,7 @@ Page {
         readonly property bool isLive: model.live
     }
 
-    // «Печатает…» — три прыгающие точки.
+    // «Печатает…» - три прыгающие точки.
     component TypingDots: Row {
         spacing: 4
         Repeater {
@@ -16144,7 +16152,7 @@ Page {
         }
     }
 
-    // Как работает бюджет — коротко, один раз.
+    // Как работает бюджет - коротко, один раз.
     Card {
         Layout.fillWidth: true
         padding: 16
@@ -16307,7 +16315,7 @@ import QtQuick.Layouts
 import Ao
 
 // Экспорт: формат выбирается плиткой (рекомендованный отмечен и объяснён),
-// состав документа — переключателями, путь — полем с кнопкой «Обзор».
+// состав документа - переключателями, путь - полем с кнопкой «Обзор».
 Page {
     id: page
     title: i18n.t["exp.title"]
@@ -16927,14 +16935,14 @@ pragma Singleton
 import QtQuick
 
 // Дизайн-система: палитра, типографика, отступы, радиусы и анимации.
-// Основа — глубокий чернильно-фиолетовый фон; акцент — фиолетовый,
-// второй акцент — сине-зелёный (teal → cyan). Все длительности анимаций
+// Основа - глубокий чернильно-фиолетовый фон; акцент - фиолетовый,
+// второй акцент - сине-зелёный (teal → cyan). Все длительности анимаций
 // проходят через dur(), поэтому уровень «движения» из настроек
 // одним переключателем делает интерфейс спокойнее или выключает анимации.
 QtObject {
     id: theme
 
-    // --- движение: 2 — полное, 1 — сдержанное, 0 — без анимаций ---------
+    // --- движение: 2 - полное, 1 - сдержанное, 0 - без анимаций ---------
     property int motion: 2
     readonly property bool rich: motion >= 2
     function dur(ms) { return motion === 0 ? 0 : (motion === 1 ? Math.round(ms * 0.6) : ms) }
@@ -17266,7 +17274,7 @@ T.AbstractButton {
                 GradientStop { position: 1; color: control.hot ? "#7C7FFB" : Theme.indigo }
             }
         }
-        // Бегущий блик — только на основной кнопке и только при полном движении.
+        // Бегущий блик - только на основной кнопке и только при полном движении.
         Rectangle {
             id: shine
             visible: control.primary && Theme.rich
@@ -17403,7 +17411,7 @@ Rectangle {
     property color glowColor: Theme.violet
     property alias hovered: hover.hovered
     readonly property bool lifted: hoverable && hover.hovered
-    // порядковый номер для каскадного появления списка; -1 — без анимации
+    // порядковый номер для каскадного появления списка; -1 - без анимации
     property int stagger: -1
     property real enter: stagger >= 0 && Theme.motion > 0 ? 0 : 1
 
@@ -17425,7 +17433,7 @@ Rectangle {
     Behavior on color { ColorAnimation { duration: Theme.normal } }
     Behavior on border.color { ColorAnimation { duration: Theme.normal } }
 
-    // Мягкий блик по верхней кромке — ощущение объёма стекла.
+    // Мягкий блик по верхней кромке - ощущение объёма стекла.
     Rectangle {
         anchors { left: parent.left; right: parent.right; top: parent.top; margins: 1 }
         height: parent.radius * 2
@@ -17467,7 +17475,7 @@ import QtQuick.Controls.Basic as T
 import QtQuick.Layouts
 
 // Шаблон страницы: заголовок с действиями и прокручиваемое содержимое.
-// fill: true — содержимое растягивается на всю высоту без прокрутки
+// fill: true - содержимое растягивается на всю высоту без прокрутки
 // (страницы с собственными прокручиваемыми панелями, как «Выполнение»).
 Item {
     id: page
@@ -17613,7 +17621,7 @@ import QtQuick.Controls.Basic as T
 import QtQuick.Layouts
 
 // Поле ввода с подписью, иконкой, ошибкой и светящимся фокусом.
-// password: true — скрытый ввод с кнопкой «показать».
+// password: true - скрытый ввод с кнопкой «показать».
 ColumnLayout {
     id: root
     property alias text: input.text
@@ -17999,7 +18007,7 @@ import QtQuick.Layouts
 //
 // Состояние из данных задаётся через isOn, а не через checked. Щелчок
 // переключает checked (обработчики onToggled видят новое значение), а затем
-// переключатель снова показывает isOn — то, что реально сохранено. Кнопка,
+// переключатель снова показывает isOn - то, что реально сохранено. Кнопка,
 // которой задали checked напрямую, после щелчка, не изменившего данные
 // (сохранение не прошло, щелчок по уже выбранному пункту), показывала бы
 // состояние, которого на самом деле нет.
@@ -18079,7 +18087,7 @@ import QtQuick
 import QtQuick.Controls.Basic as T
 
 // Переключаемая «таблетка»: для инструментов, опций, фильтров.
-// Состояние из данных — через isOn (подробности в Toggle.qml).
+// Состояние из данных - через isOn (подробности в Toggle.qml).
 T.AbstractButton {
     id: control
     property string iconName: ""
@@ -18277,7 +18285,7 @@ ColumnLayout {
         snapMode: T.Slider.SnapAlways
         hoverEnabled: true
         onPressedChanged: if (!pressed) root.committed(value)
-        // Стрелки и колёсико двигают ползунок без нажатия — применяем сразу.
+        // Стрелки и колёсико двигают ползунок без нажатия - применяем сразу.
         onMoved: if (!pressed) root.committed(value)
 
         background: Rectangle {
@@ -18368,7 +18376,7 @@ Rectangle {
 ````qml
 import QtQuick
 
-// Точка статуса; для «работает» — расходящиеся круги пульса.
+// Точка статуса; для «работает» - расходящиеся круги пульса.
 Item {
     id: root
     property string status: "idle"
@@ -18636,7 +18644,7 @@ import QtQuick.Controls.Basic as T
 import QtQuick.Layouts
 
 // Модальное окно внутри приложения: затемнение, «всплытие» с пружиной,
-// закрытие по Esc и клику мимо. Содержимое — в default-свойство.
+// закрытие по Esc и клику мимо. Содержимое - в default-свойство.
 T.Popup {
     id: sheet
     property string title: ""
@@ -18818,7 +18826,7 @@ import QtQuick.Layouts
 import QtQuick.Effects
 
 // Стопка уведомлений в правом верхнем углу. Каждое въезжает справа,
-// показывает полосу оставшегося времени и уходит само (наведение — пауза).
+// показывает полосу оставшегося времени и уходит само (наведение - пауза).
 Item {
     id: host
     width: 380
@@ -19029,7 +19037,7 @@ Item {
 import QtQuick
 import QtQuick.Layouts
 
-// Полоса прогресса по статусам: сегменты растут плавно, а под полосой — легенда.
+// Полоса прогресса по статусам: сегменты растут плавно, а под полосой - легенда.
 ColumnLayout {
     id: root
     property var segments: []      // [{status, title, count}]
@@ -19356,7 +19364,7 @@ import QtQuick.Shapes
 
 // Живой фон: крупные размытые «сияния» фиолетового, бирюзового и голубого
 // медленно дрейфуют под интерфейсом. На сдержанном уровне движения замирают,
-// оставаясь мягким градиентом; при выключенных анимациях — неподвижны.
+// оставаясь мягким градиентом; при выключенных анимациях - неподвижны.
 Item {
     id: root
     property real intensity: 1.0
@@ -19440,7 +19448,7 @@ import QtQuick
 import QtQuick.Shapes
 
 // Знак приложения: центральный узел-«оркестратор» и спутники-агенты на
-// орбитах, связанные с центром. Вращение — только при полном движении.
+// орбитах, связанные с центром. Вращение - только при полном движении.
 Item {
     id: root
     property int size: 40
@@ -19528,10 +19536,10 @@ Item {
 """Мост между Qt и asyncio.
 
 Ответ на вопрос 2: в приложении ОДИН asyncio-луп, который qasync делает
-общим с циклом событий Qt. Агенты — это корутины/таски в этом лупе, поэтому
+общим с циклом событий Qt. Агенты - это корутины/таски в этом лупе, поэтому
 15+ параллельных агентов не превращаются в 15 потоков. Блокирующие вызовы
 (sqlite, ddgs, чтение файлов) уводятся в пул потоков через ``asyncio.to_thread``,
-исполнение кода — в отдельный процесс.
+исполнение кода - в отдельный процесс.
 """
 
 from __future__ import annotations
@@ -19737,7 +19745,7 @@ class Worker(LLMProvider):
 
 
 class SupervisorProvider(LLMProvider):
-    """Проверяющий: вердикты задаются списком, остальное — заглушки."""
+    """Проверяющий: вердикты задаются списком, остальное - заглушки."""
 
     def __init__(self, verdicts: list[str] | None = None,
                  conflicts: str = '{"conflicts": []}',
@@ -19865,7 +19873,7 @@ async def drive(orch: Orchestrator, workspace_id: int, task_id: int,
 Модели подменяются фейковыми провайдерами, поэтому тесты не ходят в интернет,
 не тратят токены и выполняются за секунды. Проверяется именно логика ядра:
 шифрование, изоляция агентов, конвейер выполнения, супервайзер, паузы,
-экспорт и бюджеты. Интерфейс сюда не входит — его надо смотреть глазами.
+экспорт и бюджеты. Интерфейс сюда не входит - его надо смотреть глазами.
 """
 
 from __future__ import annotations
@@ -19899,7 +19907,7 @@ _failed: list[str] = []
 def check(name: str, condition: bool, detail: str = "") -> None:
     """Печатает результат одной проверки и копит статистику."""
     mark = "OK  " if condition else "FAIL"
-    print(f"  [{mark}] {name}" + (f" — {detail}" if detail else ""))
+    print(f"  [{mark}] {name}" + (f" - {detail}" if detail else ""))
     (_passed if condition else _failed).append(name)
 
 
@@ -20137,7 +20145,7 @@ async def test_export() -> None:
         try:
             __import__(module)
         except ImportError:
-            print(f"  [SKIP] {optional} — пакет {module} не установлен")
+            print(f"  [SKIP] {optional} - пакет {module} не установлен")
             continue
         result = export(bundle, options, optional,
                         out / suggest_filename(bundle, optional))
@@ -20419,7 +20427,7 @@ async def test_supervisor_spend_counts_toward_task_limit():
     state = await drive(orch, ws.id, task.id)
 
     # Без учёта супервайзера лимит 600 пропустил бы обе подзадачи
-    # (2 × 280 = 560). С учётом — вторая упирается в лимит.
+    # (2 × 280 = 560). С учётом - вторая упирается в лимит.
     assert worker.calls == 1
     assert state.tokens >= 280 + 400
     assert repos.tasks.subtasks(task.id)[1].status == "error"
@@ -20465,7 +20473,7 @@ async def test_steps_exhausted_on_tools_gets_a_real_summary():
     orch._provider_for = lambda agent: worker
     await drive(orch, ws.id, task.id)
     subtask = repos.tasks.subtasks(task.id)[0]
-    # Два шага ушли на инструменты, третий вызов — подведение итога.
+    # Два шага ушли на инструменты, третий вызов - подведение итога.
     assert worker.calls == 3
     assert subtask.result.startswith("Результат от A")
     assert "Посчитаю в песочнице" not in subtask.result
@@ -20641,7 +20649,7 @@ async def test_gemini_stream_skips_thoughts_in_text():
 
 ### `tests/test_audit_fixes.py`
 
-*227 строк*
+*253 строк*
 
 ````python
 """Регрессионные тесты на ошибки, найденные при полном проходе по коду.
@@ -20665,7 +20673,12 @@ from providers.base import ChatMessage, LLMProvider, ProviderError, ToolCall, To
 from providers.gemini_provider import GeminiProvider
 from providers.openai_compat import OpenAICompatProvider
 from storage.models import Subtask, Task, Workspace
+from storage.repositories import Repos, UserRepo
 from tests.fakes import SupervisorProvider, Worker, build_project, drive, patch_supervisor
+
+
+#: символы, которые миграция версии 2 заменяет в сохранённых промптах
+EM, EN = chr(0x2014), chr(0x2013)
 
 
 def _events(bus: EventBus, *types: EventType) -> list:
@@ -20689,12 +20702,33 @@ def test_change_password_keeps_search_api_key():
     assert repos.secrets.open(token) == "tvly-secret"
 
 
+def test_migration_normalizes_saved_prompts(tmp_path):
+    from storage.db import Database
+
+    path = tmp_path / "old.db"
+    db = Database(path)
+    session = UserRepo(db).create("prompt-owner", "password123")
+    repos = Repos(db, session)
+    ws = repos.workspaces.create(session.user_id, "W", "", {})
+    agent = repos.agents.create(ws.id, "A", "analyst", f"Ты {EM} аналитик, 2{EN}5 фактов",
+                                None, "openai", "m", {})
+    db.conn.execute("PRAGMA user_version = 1")        # база прежней версии
+    db.conn.commit()
+    db.close()
+
+    reopened = Database(path)
+    prompt = reopened.query_one("SELECT system_prompt FROM agents WHERE id = ?",
+                                (agent.id,))["system_prompt"]
+    assert prompt == "Ты - аналитик, 2-5 фактов"
+    reopened.close()
+
+
 def test_failed_statement_does_not_leave_open_transaction():
     repos, *_ = build_project()
     try:
         repos.db.execute("INSERT INTO agents(workspace_id, name, created_at) VALUES (?,?,?)",
                          (999_999, "призрак", "2026-01-01"))
-    except Exception:  # noqa: BLE001 — нарушение внешнего ключа ожидаемо
+    except Exception:  # noqa: BLE001 - нарушение внешнего ключа ожидаемо
         pass
     with repos.db.transaction() as conn:          # раньше: «transaction within a transaction»
         conn.execute("SELECT 1")
@@ -20867,7 +20901,7 @@ def test_docx_export_survives_terminal_output(tmp_path):
 
 
 def test_format_detection_ignores_word_fragments():
-    # «api» внутри «capital» и «app» внутри «happy» — не про код.
+    # «api» внутри «capital» и «app» внутри «happy» - не про код.
     fmt, _ = detect_format(_bundle("коротко", "Столица Франции",
                                    "Назови capital и один happy fact"))
     assert fmt != "zip"
@@ -20881,7 +20915,7 @@ def test_format_detection_ignores_word_fragments():
 """Переключатели Ao (Toggle, Chip) держатся за данные и после щелчка.
 
 Отдельный процесс, как и тур: Qt нужен собственный цикл событий. Код
-возврата 0 — всё в порядке, иначе в stdout описание расхождения.
+возврата 0 - всё в порядке, иначе в stdout описание расхождения.
 
 Ошибка, которую ловит проверка: checkable-кнопка сама переключает
 ``checked``, и если щелчок не изменил данные (сохранение не прошло, щелчок
@@ -20957,9 +20991,9 @@ def main() -> int:
         root.setProperty("saves", False)
         root.setProperty("store", False)
         control.click()
-        expect(False, "владелец не сохранил щелчок — показываем сохранённое")
+        expect(False, "владелец не сохранил щелчок - показываем сохранённое")
         root.setProperty("store", True)
-        expect(True, "данные изменились извне — переключатель следует за ними")
+        expect(True, "данные изменились извне - переключатель следует за ними")
 
         root.setProperty("saves", True)
         control.click()
@@ -21067,9 +21101,9 @@ def test_ui_tour_runs_without_qml_errors(tmp_path):
 
 Используется двумя способами:
 
-* ``pytest tests/test_ui.py`` — проверяет, что каждый экран открывается
+* ``pytest tests/test_ui.py`` - проверяет, что каждый экран открывается
   без ошибок QML и что живой прогон с фейковыми агентами доходит до конца;
-* ``python tests/ui_tour.py [каталог]`` — то же самое, плюс сохраняет
+* ``python tests/ui_tour.py [каталог]`` - то же самое, плюс сохраняет
   скриншоты всех экранов, чтобы их можно было посмотреть глазами.
 
 Окно рисуется без экрана (``QT_QPA_PLATFORM=offscreen``), модели заменены
@@ -21172,7 +21206,7 @@ class Tour:
         await asyncio.sleep(seconds)
 
     def play(self, coro):
-        """Весь сценарий идёт внутри одного работающего цикла — как в приложении.
+        """Весь сценарий идёт внутри одного работающего цикла - как в приложении.
 
         Если прерывать цикл между шагами, Qt продолжает обрабатывать события
         (например, при снимке окна), и корутины агентов просыпаются вне цикла.
@@ -21223,7 +21257,7 @@ class Tour:
         await self.wait(0.8)
 
     async def seed(self) -> None:
-        """Проект с агентами, задачей и подзадачами — как у живого пользователя."""
+        """Проект с агентами, задачей и подзадачами - как у живого пользователя."""
         self.mark("seed")
         b = self.backend
         b.workspaces.create("Анализ рынка EdTech", "Исследование рынка онлайн-обучения для отчёта инвестору")
@@ -21236,7 +21270,7 @@ class Tour:
         agents = []
         for name, role in roles:
             agents.append(repos.agents.create(
-                ws_id, name, role, f"Ты — {name.lower()}.", key.id, "ollama", "qwen2.5:7b-instruct",
+                ws_id, name, role, f"Ты - {name.lower()}.", key.id, "ollama", "qwen2.5:7b-instruct",
                 {"temperature": 0.4, "max_tokens": 1024, "tools": ["web_search", "code_exec"]}))
         sup = repos.agents.create(ws_id, "Супервайзер", "supervisor", "Проверяй отчёты.", key.id,
                                   "ollama", "qwen2.5:14b-instruct", {}, is_supervisor=True)
@@ -21367,7 +21401,7 @@ asyncio_default_fixture_loop_scope = function
 
 ````text
 # ============================================================================
-#  Agent Forge — зависимости
+#  Agent Forge - зависимости
 #  Установка:  pip install -r requirements.txt
 # ============================================================================
 
@@ -21797,7 +21831,7 @@ shots/
 ## Функциональные доработки
 
 **Фильтр графиков по прогонам.** Дашборд показывает всю историю воркспейса
-без разделения по запускам. В `usage_log` нет идентификатора прогона —
+без разделения по запускам. В `usage_log` нет идентификатора прогона -
 его нужно добавить и прокинуть через `BudgetRepo.log_call`.
 
 **Граф зависимостей от планировщика.** ИИ-планировщик пока не расставляет
@@ -21809,14 +21843,14 @@ shots/
 лимиту сообщений. Для длинных задач нужна сворачивающая суммаризация при
 приближении к контекстному окну модели.
 
-**Инструменты через MCP и RAG по документам проекта** — в плане курса.
+**Инструменты через MCP и RAG по документам проекта** - в плане курса.
 
 **Шаблоны воркспейсов.** Готовые наборы «аналитик + разработчик +
 тестировщик» с настроенными промптами, чтобы не собирать команду заново
 под каждый проект.
 
 **Повторный запуск подзадач** уже есть (кнопка на карточке подзадачи);
-следующий шаг — перезапуск одной подзадачи без прогона всей задачи.
+следующий шаг - перезапуск одной подзадачи без прогона всей задачи.
 
 ## Технический долг
 
@@ -21825,28 +21859,28 @@ shots/
 и предупреждение в интерфейсе, если она старше нескольких месяцев.
 
 **Защита `fetch_url` от обращений в локальную сеть** и фильтр prompt
-injection для содержимого страниц — в плане курса (зона платформы).
+injection для содержимого страниц - в плане курса (зона платформы).
 
 **`TokenBudget` в `core/agents/runner.py`** остался как совместимая обёртка
-после появления `BudgetGuard`. Используется только в тестах — можно убрать,
+после появления `BudgetGuard`. Используется только в тестах - можно убрать,
 когда в нём отпадёт нужда.
 
 **Обработка ошибок провайдеров** сводится к тексту исключения. Полезно
 различать исчерпание квоты, неверный ключ и временную недоступность:
-на первое стоит останавливать агента, на третье — повторять с задержкой.
+на первое стоит останавливать агента, на третье - повторять с задержкой.
 
 **Ретраи при сетевых сбоях** не реализованы вовсе. Одна оборвавшаяся
 HTTP-сессия роняет подзадачу.
 
 ## Известные ограничения по замыслу
 
-Это не баги, а осознанные решения — менять их стоит только вместе с
+Это не баги, а осознанные решения - менять их стоит только вместе с
 пониманием последствий:
 
 - Пароль профиля невосстановим: механизма «забыли пароль» нет, иначе
   шифрование ключей теряло бы смысл.
 - Режим `subprocess` в песочнице ограничивает ресурсы и окружение, но не
   изолирует файловую систему. Для строгой изоляции нужен Docker.
-- Супервайзер — самая дорогая часть системы по токенам: на тестовом прогоне
+- Супервайзер - самая дорогая часть системы по токенам: на тестовом прогоне
   из трёх подзадач он израсходовал около двух третей бюджета. Это следствие
   того, что он читает каждый отчёт.

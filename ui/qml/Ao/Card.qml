@@ -11,7 +11,7 @@ Rectangle {
     property color glowColor: Theme.violet
     property alias hovered: hover.hovered
     readonly property bool lifted: hoverable && hover.hovered
-    // порядковый номер для каскадного появления списка; -1 — без анимации
+    // порядковый номер для каскадного появления списка; -1 - без анимации
     property int stagger: -1
     property real enter: stagger >= 0 && Theme.motion > 0 ? 0 : 1
 
@@ -33,7 +33,7 @@ Rectangle {
     Behavior on color { ColorAnimation { duration: Theme.normal } }
     Behavior on border.color { ColorAnimation { duration: Theme.normal } }
 
-    // Мягкий блик по верхней кромке — ощущение объёма стекла.
+    // Мягкий блик по верхней кромке - ощущение объёма стекла.
     Rectangle {
         anchors { left: parent.left; right: parent.right; top: parent.top; margins: 1 }
         height: parent.radius * 2

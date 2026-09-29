@@ -143,7 +143,7 @@ class TaskController(Controller):
         else:
             self.repos.tasks.update(task.id, title=title, description=body,
                                     result_format=fmt, token_limit=token_limit)
-            # Лимит задачи поменяли посреди прогона — он действует сразу.
+            # Лимит задачи поменяли посреди прогона - он действует сразу.
             orch = self.backend.orchestrator
             if orch is not None and orch.state.running and orch.budget is not None:
                 orch.budget.reload_limits()

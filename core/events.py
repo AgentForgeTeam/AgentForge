@@ -2,7 +2,7 @@
 
 Ядро не знает о Qt: оно публикует события, а UI на них подписывается.
 Всё происходит в одном asyncio-лупе (он же луп Qt), поэтому обработчики
-могут напрямую трогать виджеты — отдельная синхронизация не нужна.
+могут напрямую трогать виджеты - отдельная синхронизация не нужна.
 """
 
 from __future__ import annotations
@@ -94,7 +94,7 @@ class EventBus:
         for handler in list(self._handlers):
             try:
                 handler(event)
-            except Exception:  # noqa: BLE001 — UI не должен ронять агентов
+            except Exception:  # noqa: BLE001 - UI не должен ронять агентов
                 log.exception("Обработчик события упал на %s", event.type)
 
     # Сокращения для частых случаев

@@ -109,7 +109,7 @@ class ToolRegistry:
             return await tool.run(ctx, **kwargs)
         except ToolError as exc:
             return f"ОШИБКА ИНСТРУМЕНТА: {exc}"
-        except Exception as exc:  # noqa: BLE001 — модель должна узнать о сбое
+        except Exception as exc:  # noqa: BLE001 - модель должна узнать о сбое
             return f"ОШИБКА ИНСТРУМЕНТА ({type(exc).__name__}): {exc}"
 
 

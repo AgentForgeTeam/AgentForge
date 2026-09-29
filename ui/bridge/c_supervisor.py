@@ -132,7 +132,7 @@ class SupervisorController(Controller):
 
     @Slot()
     def makeSummary(self) -> None:  # noqa: N802
-        """Сводка вручную — удобно освежить контекст агентов вне прогона."""
+        """Сводка вручную - удобно освежить контекст агентов вне прогона."""
         if self.ws_id is None:
             return
         task = self.repos.tasks.current(self.ws_id)
@@ -166,7 +166,7 @@ class SupervisorController(Controller):
             if content:
                 self.toast("success", tr("toast.summary_done"), "")
             elif supervisor.last_error:
-                # Ошибка — это не «нечего пересказывать».
+                # Ошибка - это не «нечего пересказывать».
                 self.toast("error", tr("toast.summary_failed"), supervisor.last_error)
             else:
                 self.toast("info", tr("sup.nothing_to_summarize"), "")

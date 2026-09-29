@@ -1,6 +1,6 @@
-"""Этап 7 — human-in-the-loop: реальная пауза в критических точках.
+"""Этап 7 - human-in-the-loop: реальная пауза в критических точках.
 
-Ядро не спрашивает пользователя напрямую — оно публикует запрос в шину и
+Ядро не спрашивает пользователя напрямую - оно публикует запрос в шину и
 останавливается на ``asyncio.Future``. Интерфейс показывает вопрос, человек
 нажимает кнопку, и ядро продолжает с его решением. Запрос и ответ пишутся
 в таблицу ``approvals``, поэтому история решений сохраняется.
@@ -119,7 +119,7 @@ class ApprovalGate:
                   default: Decision = Decision.APPROVE) -> Answer:
         """Публикует вопрос и ждёт ответа.
 
-        Если прогон уже остановлен, вопрос не задаётся — возвращается
+        Если прогон уже остановлен, вопрос не задаётся - возвращается
         ``ABORT``, чтобы вызывающий код свернул работу.
         """
         if self._aborted:
@@ -172,7 +172,7 @@ class ApprovalGate:
             EventType.APPROVAL_RESOLVED, workspace_id=self.workspace_id,
             task_id=task_id, subtask_id=subtask_id, agent_name="Пользователь",
             message=f"решение: {DECISION_TITLES.get(answer.decision, answer.decision.value)}"
-                    + (f" — {answer.comment[:120]}" if answer.comment else ""),
+                    + (f" - {answer.comment[:120]}" if answer.comment else ""),
             payload={"approval_id": approval_id, "decision": answer.decision.value},
         ))
         if answer.is_abort:
@@ -200,7 +200,7 @@ class ApprovalGate:
         return True
 
     def cancel_all(self) -> None:
-        """Снимает все ожидания — нужно при остановке прогона."""
+        """Снимает все ожидания - нужно при остановке прогона."""
         self._aborted = True
         for approval_id, future in list(self._waiters.items()):
             if not future.done():
@@ -209,7 +209,7 @@ class ApprovalGate:
         self._open.clear()
 
     def pending(self) -> list[ApprovalRequest]:
-        """Список открытых вопросов — интерфейс рисует их карточками."""
+        """Список открытых вопросов - интерфейс рисует их карточками."""
         return sorted(self._open.values(), key=lambda r: r.id)
 
     def has_pending(self) -> bool:

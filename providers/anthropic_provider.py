@@ -2,7 +2,7 @@
 
 Отличия от OpenAI, которые здесь скрываются:
 * системный промпт передаётся отдельным полем ``system``;
-* результат инструмента — блок ``tool_result`` внутри сообщения роли ``user``;
+* результат инструмента - блок ``tool_result`` внутри сообщения роли ``user``;
 * заголовки ``x-api-key`` и ``anthropic-version``.
 """
 
@@ -243,7 +243,7 @@ class AnthropicProvider(LLMProvider):
 
     async def list_models(self) -> list[str]:
         try:
-            # Список постраничный (по умолчанию 20 штук) — просим сразу все.
+            # Список постраничный (по умолчанию 20 штук) - просим сразу все.
             resp = await self._http().get(f"{self.base_url}/models", headers=self._headers(),
                                           params={"limit": 1000})
         except httpx.HTTPError as exc:

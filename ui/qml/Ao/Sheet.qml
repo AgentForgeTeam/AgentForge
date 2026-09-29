@@ -3,7 +3,7 @@ import QtQuick.Controls.Basic as T
 import QtQuick.Layouts
 
 // Модальное окно внутри приложения: затемнение, «всплытие» с пружиной,
-// закрытие по Esc и клику мимо. Содержимое — в default-свойство.
+// закрытие по Esc и клику мимо. Содержимое - в default-свойство.
 T.Popup {
     id: sheet
     property string title: ""

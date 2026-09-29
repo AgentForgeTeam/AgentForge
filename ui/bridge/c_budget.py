@@ -86,7 +86,7 @@ class BudgetController(Controller):
             self._set(alert=event.message, alertTone=tone)
             self.refresh()
         elif event.type in (EventType.RUN_FINISHED, EventType.USAGE):
-            # расход меняется во время прогона — но не чаще, чем пересчитает дашборд
+            # расход меняется во время прогона - но не чаще, чем пересчитает дашборд
             if event.type is EventType.RUN_FINISHED:
                 self.refresh()
 
@@ -102,13 +102,13 @@ class BudgetController(Controller):
             return tr("bud.bad_cost")
         threshold = min(max(float(threshold or 0.8), 0.1), 1.0)
         if scope == "task":
-            # Лимит токенов задачи живёт и в форме задачи — держим их в согласии.
+            # Лимит токенов задачи живёт и в форме задачи - держим их в согласии.
             self.repos.tasks.update(scope_id, token_limit=tokens)
         if tokens is None and cost is None:
             self.repos.budgets.delete_limit(scope, scope_id)
         else:
             self.repos.budgets.upsert(scope, scope_id, tokens, cost, round(threshold, 2))
-        # Идёт прогон — новый лимит действует сразу, а не со следующего запуска.
+        # Идёт прогон - новый лимит действует сразу, а не со следующего запуска.
         orch = self.backend.orchestrator
         if orch is not None and orch.state.running and orch.budget is not None:
             orch.budget.reload_limits()

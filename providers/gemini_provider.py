@@ -1,7 +1,7 @@
 """Провайдер Google Gemini (generativeLanguage API).
 
 Особенности, скрытые внутри класса:
-* роли называются ``user``/``model``, системный промпт — ``systemInstruction``;
+* роли называются ``user``/``model``, системный промпт - ``systemInstruction``;
 * ключ передаётся заголовком ``x-goog-api-key``;
 * инструменты описываются как ``functionDeclarations``.
 """
@@ -117,7 +117,7 @@ class GeminiProvider(LLMProvider):
                               on_delta: DeltaHandler | None = None) -> CompletionResult:
         """``streamGenerateContent`` в режиме SSE.
 
-        Каждый чанк — полноценный ответ с частью ``parts``; вызовы функций
+        Каждый чанк - полноценный ответ с частью ``parts``; вызовы функций
         приходят целиком, а ``usageMetadata`` в последнем чанке содержит
         итоговый расход.
         """

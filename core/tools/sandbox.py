@@ -7,7 +7,7 @@
     * ``setsid`` + убийство всей группы процессов по таймауту;
     * POSIX: ``RLIMIT_CPU``, ``RLIMIT_AS``, ``RLIMIT_FSIZE``, ``RLIMIT_NPROC``;
     * вычищенное окружение (нет API-ключей и прочих переменных хоста);
-    * сеть по умолчанию отключается подстановкой недоступного прокси —
+    * сеть по умолчанию отключается подстановкой недоступного прокси -
       это не жёсткая изоляция, а барьер «по умолчанию».
 
 ``DockerSandbox`` (если найден работающий Docker)
@@ -35,7 +35,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 # Языки, которые разрешено исполнять. Shell намеренно не включён в Docker-режиме
-# по умолчанию — он нужен реже, а рисков даёт больше.
+# по умолчанию - он нужен реже, а рисков даёт больше.
 LANG_COMMANDS: dict[str, list[str]] = {
     "python": [sys.executable or "python3", "-I", "{file}"],
     "bash": ["bash", "{file}"],
@@ -80,7 +80,7 @@ class Sandbox(ABC):
 # ---------------------------------------------------------------------------
 
 
-def _preexec(memory_mb: int, cpu_seconds: int):  # pragma: no cover — POSIX-only
+def _preexec(memory_mb: int, cpu_seconds: int):  # pragma: no cover - POSIX-only
     """Ограничения ресурсов для дочернего процесса (POSIX)."""
     import resource
 
@@ -262,7 +262,7 @@ async def _docker_kill(name: str) -> None:
             stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL,
         )
         await asyncio.wait_for(proc.wait(), timeout=10)
-    except Exception:  # noqa: BLE001 — контейнер мог уже завершиться сам
+    except Exception:  # noqa: BLE001 - контейнер мог уже завершиться сам
         pass
 
 

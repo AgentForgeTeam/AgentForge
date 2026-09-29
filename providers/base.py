@@ -2,7 +2,7 @@
 
 Все провайдеры (OpenAI, Anthropic, Gemini, Groq, OpenRouter, Ollama, HF)
 приводятся к одному набору типов, чтобы ядро агентов ничего не знало
-о различиях в их HTTP-API — включая формат tool-calling.
+о различиях в их HTTP-API - включая формат tool-calling.
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, AsyncIterator, Callable
 
-#: получатель фрагментов при потоковой генерации: (текст, вид). Вид —
+#: получатель фрагментов при потоковой генерации: (текст, вид). Вид -
 #: ``"text"`` для ответа модели или ``"reasoning"`` для рассуждения
 #: моделей, которые отдают его отдельно (DeepSeek-R1, Claude thinking и т.п.)
 DeltaHandler = Callable[[str, str], None]
@@ -106,7 +106,7 @@ class LLMProvider(ABC):
     """Базовый класс провайдера.
 
     Реализации обязаны быть потокобезопасными в пределах одного asyncio-лупа
-    и не хранить состояние диалога — вся история приходит в ``messages``.
+    и не хранить состояние диалога - вся история приходит в ``messages``.
     """
 
     #: строковый идентификатор пресета (см. providers/presets.py)
@@ -143,7 +143,7 @@ class LLMProvider(ABC):
 
         Результат тот же, что у ``complete`` (текст, вызовы инструментов,
         расход), но по ходу генерации каждый фрагмент текста передаётся в
-        ``on_delta`` — так интерфейс показывает рассуждение агента вживую.
+        ``on_delta`` - так интерфейс показывает рассуждение агента вживую.
         Реализация по умолчанию делает обычный вызов и отдаёт текст целиком:
         провайдер без стриминга просто покажет ответ разом.
         """
@@ -165,7 +165,7 @@ class LLMProvider(ABC):
         temperature: float = 0.7,
         max_tokens: int = 2048,
     ) -> AsyncIterator[str]:
-        """Потоковая генерация. По умолчанию — эмуляция через ``complete``."""
+        """Потоковая генерация. По умолчанию - эмуляция через ``complete``."""
         result = await self.complete(
             model, messages, temperature=temperature, max_tokens=max_tokens
         )

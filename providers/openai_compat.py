@@ -1,7 +1,7 @@
 """Провайдер для всех OpenAI-совместимых API.
 
 Покрывает OpenAI, Groq, OpenRouter, Ollama, Hugging Face Router и любой
-локальный сервер (LM Studio, vLLM, llama.cpp) — различается только base_url.
+локальный сервер (LM Studio, vLLM, llama.cpp) - различается только base_url.
 """
 
 from __future__ import annotations
@@ -138,7 +138,7 @@ class OpenAICompatProvider(LLMProvider):
         if u:
             usage = Usage(_int(u.get("prompt_tokens")), _int(u.get("completion_tokens")))
         else:
-            # Сервер не прислал расход — оценка лучше нуля, иначе вызов
+            # Сервер не прислал расход - оценка лучше нуля, иначе вызов
             # незаметно обходил бы лимиты бюджета.
             usage = Usage(sum(len(m.content or "") for m in messages) // 4,
                           estimate_tokens(text))
@@ -161,7 +161,7 @@ class OpenAICompatProvider(LLMProvider):
         чанках, поэтому они склеиваются по ``index`` и разбираются в конце.
         Расход токенов сервер присылает последним чанком, если попросить
         ``stream_options.include_usage``; часть совместимых серверов этот
-        параметр не знает — тогда запрос повторяется без него.
+        параметр не знает - тогда запрос повторяется без него.
         """
         payload = self._payload(model, messages, temperature, max_tokens, tools)
         payload["stream"] = True

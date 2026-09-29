@@ -2,17 +2,17 @@
 
 Схема (ответ на вопросы 4 и 5):
 
-* Пароль профиля — единственный секрет, который вводит пользователь.
+* Пароль профиля - единственный секрет, который вводит пользователь.
 * ``Argon2id(password, salt)`` → 32-байтовый мастер-ключ. Ключ живёт только
   в оперативной памяти и никогда не пишется на диск.
-* Проверка пароля при входе — по хэшу ``Argon2id(password, verify_salt)``,
+* Проверка пароля при входе - по хэшу ``Argon2id(password, verify_salt)``,
   сравнение выполняется в постоянном времени.
 * API-ключи шифруются ``AES-256-GCM`` мастер-ключом. На диск ложится
-  ``nonce(12) || ciphertext || tag`` — сама БД остаётся обычным SQLite,
+  ``nonce(12) || ciphertext || tag`` - сама БД остаётся обычным SQLite,
   открытым для чтения инструментами, но секреты в ней нечитаемы.
 
-Зависимость только одна — ``cryptography``. Argon2id берётся из неё
-(версия ≥ 42 с поддержкой KDF), при её отсутствии — из ``argon2-cffi``.
+Зависимость только одна - ``cryptography``. Argon2id берётся из неё
+(версия ≥ 42 с поддержкой KDF), при её отсутствии - из ``argon2-cffi``.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ from dataclasses import dataclass
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-# Параметры Argon2id: ~64 МБ памяти, 3 прохода — разумный компромисс
+# Параметры Argon2id: ~64 МБ памяти, 3 прохода - разумный компромисс
 # между стойкостью и временем отклика десктопного логина (~0.2-0.5 с).
 ARGON2_TIME_COST = 3
 ARGON2_MEMORY_KIB = 64 * 1024
@@ -46,7 +46,7 @@ def _derive_raw(password: bytes, salt: bytes, length: int = KEY_LENGTH) -> bytes
             memory_cost=ARGON2_MEMORY_KIB,
         )
         return kdf.derive(password)
-    except ImportError:  # pragma: no cover — путь для старых cryptography
+    except ImportError:  # pragma: no cover - путь для старых cryptography
         from argon2.low_level import Type, hash_secret_raw
 
         return hash_secret_raw(

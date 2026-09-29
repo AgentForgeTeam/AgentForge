@@ -1,7 +1,7 @@
 """Подключение к локальной SQLite-БД и применение схемы.
 
 Соединение одно на процесс (``check_same_thread=False``), запись защищена
-мьютексом — этого достаточно, потому что вся работа с БД идёт из одного
+мьютексом - этого достаточно, потому что вся работа с БД идёт из одного
 asyncio-лупа, а фоновые потоки обращаются к ней редко.
 """
 
@@ -65,9 +65,17 @@ class Database:
             self.conn.executescript(_SCHEMA_FILE.read_text("utf-8"))
             cur = self.conn.execute("PRAGMA user_version")
             current = cur.fetchone()[0]
+            if current < 2:
+                # Версия 2: сохранённые промпты агентов приводятся к тому же
+                # набору символов, что и шаблоны ролей.
+                long_dash, mid_dash = chr(0x2014), chr(0x2013)
+                self.conn.execute(
+                    "UPDATE agents SET system_prompt = REPLACE(REPLACE(REPLACE("
+                    "system_prompt, ?, ' - '), ?, '-'), ?, '-') "
+                    "WHERE instr(system_prompt, ?) > 0 OR instr(system_prompt, ?) > 0",
+                    (f" {long_dash} ", long_dash, mid_dash, long_dash, mid_dash),
+                )
             if current != SCHEMA_VERSION:
-                # Здесь появятся инкрементальные ALTER TABLE, когда схема
-                # поедет дальше; сейчас достаточно зафиксировать версию.
                 self.conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
             self.conn.commit()
 
