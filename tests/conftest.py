@@ -17,7 +17,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 _HOME = Path(tempfile.mkdtemp(prefix="aiorc_pytest_"))
-os.environ["AIORC_HOME"] = str(_HOME)
+os.environ["AGENTFORGE_HOME"] = str(_HOME)
 
 
 def pytest_sessionfinish(session, exitstatus):  # noqa: ARG001

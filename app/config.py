@@ -1,7 +1,8 @@
 """Глобальная конфигурация приложения: пути, константы, настройки по умолчанию.
 
 Все пользовательские данные хранятся ЛОКАЛЬНО в домашнем каталоге пользователя.
-Каталог можно переопределить переменной окружения ``AIORC_HOME``.
+Каталог можно переопределить переменной окружения ``AGENTFORGE_HOME``
+(старое имя ``AIORC_HOME`` тоже понимается).
 """
 
 from __future__ import annotations
@@ -12,15 +13,17 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-APP_NAME = "AI Orchestrator"
-APP_SLUG = "ai-orchestrator"
+APP_NAME = "Agent Forge"
+APP_SLUG = "agent-forge"
+#: каталог данных до переименования проекта (AI Orchestrator → Agent Forge)
+LEGACY_SLUG = "ai-orchestrator"
 APP_VERSION = "1.1.0"          # 1.1: новый интерфейс на Qt Quick, стриминг агентов
 SCHEMA_VERSION = 1             # версия схемы SQLite (для миграций)
 
 
 def _default_home() -> Path:
     """Возвращает корневой каталог данных приложения для текущей ОС."""
-    env = os.environ.get("AIORC_HOME")
+    env = os.environ.get("AGENTFORGE_HOME") or os.environ.get("AIORC_HOME")
     if env:
         return Path(env).expanduser()
     if sys.platform == "win32":
@@ -29,6 +32,11 @@ def _default_home() -> Path:
         base = Path.home() / "Library" / "Application Support"
     else:
         base = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
+    # Профили, созданные до переименования, продолжают работать: если нового
+    # каталога ещё нет, а старый есть, используем старый.
+    legacy = base / LEGACY_SLUG
+    if not (base / APP_SLUG).exists() and legacy.exists():
+        return legacy
     return base / APP_SLUG
 
 

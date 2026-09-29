@@ -1,6 +1,6 @@
 @echo off
 REM ===========================================================
-REM  AI Orchestrator - launcher for Windows
+REM  Agent Forge - launcher for Windows
 REM  Creates a virtual environment on first run, then starts.
 REM  Messages are in Latin script on purpose: the Windows
 REM  console uses a legacy code page and would garble UTF-8.
@@ -54,6 +54,6 @@ if not exist ".venv" (
 if errorlevel 1 (
     echo.
     echo  The application exited with an error.
-    echo  See the log: %%APPDATA%%\ai-orchestrator\logs\app.log
+    echo  See the log: %%APPDATA%%\agent-forge\logs\app.log
     pause
 )

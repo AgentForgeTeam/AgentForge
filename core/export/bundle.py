@@ -120,8 +120,12 @@ class ResultBundle:
             return "Супервайзер"
         if anonymize:
             ordered = sorted(self.agent_names)
-            index = ordered.index(agent_id) if agent_id in ordered else 0
-            return f"Исполнитель {chr(ord('A') + index)}"
+            if agent_id not in ordered:
+                # Удалённый агент не должен получить чужую метку «A».
+                return "Исполнитель ?"
+            index = ordered.index(agent_id)
+            suffix = chr(ord("A") + index) if index < 26 else str(index + 1)
+            return f"Исполнитель {suffix}"
         return self.agent_names.get(agent_id, "Агент удалён")
 
     def has_code(self) -> bool:
@@ -136,15 +140,21 @@ def collect(repos: Repos, workspace_id: int) -> ResultBundle:
 
     task = repos.tasks.current(workspace_id)
     subtasks = repos.tasks.subtasks(task.id) if task else []
-    tokens, cost = repos.budgets.workspace_totals(workspace_id)
+    # В воркспейсе может быть несколько задач подряд: в документ идёт только
+    # текущая, иначе отчёты и расход прошлых задач смешались бы с новыми.
+    tokens, cost = (repos.budgets.task_totals(task.id) if task
+                    else repos.budgets.workspace_totals(workspace_id))
+
+    def of_task(items):
+        return [i for i in items if task is None or i.task_id in (task.id, None)]
 
     bundle = ResultBundle(
         workspace=workspace,
         task=task,
         subtasks=subtasks,
-        reports=repos.reports.list_reports(workspace_id, limit=500),
-        summaries=repos.reports.list_summaries(workspace_id, limit=100),
-        incidents=repos.incidents.list(workspace_id, limit=500),
+        reports=of_task(repos.reports.list_reports(workspace_id, limit=500)),
+        summaries=of_task(repos.reports.list_summaries(workspace_id, limit=100)),
+        incidents=of_task(repos.incidents.list(workspace_id, limit=500)),
         decisions=repos.approvals.history(workspace_id, limit=200),
         agent_names={a.id: a.name for a in repos.agents.list(workspace_id)},
         files=scan_files(PATHS.workspace_dir(workspace_id)),

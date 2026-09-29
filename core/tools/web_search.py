@@ -81,7 +81,7 @@ class WebFetchTool(Tool):
         try:
             async with httpx.AsyncClient(
                 timeout=30, follow_redirects=True,
-                headers={"User-Agent": "Mozilla/5.0 (compatible; AI-Orchestrator/1.0)"},
+                headers={"User-Agent": "Mozilla/5.0 (compatible; AgentForge/1.1)"},
             ) as client:
                 resp = await client.get(url)
         except Exception as exc:  # noqa: BLE001

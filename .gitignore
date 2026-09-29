@@ -217,10 +217,13 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-# AI Orchestrator
+# Agent Forge
 *.db
 *.db-wal
 *.db-shm
 logs/
 exports/
 .DS_Store
+
+# скриншоты тура по интерфейсу
+shots/

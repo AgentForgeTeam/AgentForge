@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Запуск AI Orchestrator на Linux и macOS.
+# Запуск Agent Forge на Linux и macOS.
 # При первом запуске создаёт виртуальное окружение и ставит зависимости.
 set -euo pipefail
 cd "$(dirname "$0")"

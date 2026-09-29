@@ -15,6 +15,7 @@ import asyncio
 import logging
 import re
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from app.config import PATHS
 from core.events import Event, EventBus, EventType
@@ -23,6 +24,9 @@ from providers.base import ChatMessage, CompletionResult, LLMProvider, ProviderE
 from providers.factory import estimate_cost
 from storage.models import Agent, Subtask, Task
 from storage.repositories import Repos
+
+if TYPE_CHECKING:  # pragma: no cover
+    from core.budget import BudgetGuard
 
 log = logging.getLogger("aiorc.runner")
 
@@ -126,8 +130,10 @@ class AgentRunner:
         self.max_steps = int(workspace_settings.get("agent_max_steps", 10))
         # Шаблоны и старые настройки хранят групповые имена («files»),
         # поэтому обе стороны разворачиваются до реальных инструментов.
-        enabled = expand_tool_names(workspace_settings.get("tools_enabled")) \
-            or registry.names()
+        # Пустой список значит «все инструменты выключены», а не «все включены».
+        raw_enabled = workspace_settings.get("tools_enabled")
+        enabled = (expand_tool_names(raw_enabled) if raw_enabled is not None
+                   else registry.names())
         self.tools_allowed = [
             name for name in expand_tool_names(agent.tools)
             if name in registry.names() and name in enabled

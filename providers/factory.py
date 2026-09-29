@@ -37,8 +37,8 @@ def build_provider(provider_key: str, api_key: str = "",
     extra: dict[str, str] = {}
     if provider_key == "openrouter":
         # OpenRouter просит идентифицировать приложение.
-        extra = {"HTTP-Referer": "https://localhost/ai-orchestrator",
-                 "X-Title": "AI Orchestrator"}
+        extra = {"HTTP-Referer": "https://localhost/agent-forge",
+                 "X-Title": "Agent Forge"}
     prov = OpenAICompatProvider(api_key, url, timeout, extra_headers=extra)
     prov.key = provider_key
     return prov

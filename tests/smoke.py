@@ -24,7 +24,7 @@ sys.path.insert(0, str(ROOT))
 
 # Изолированный каталог данных, чтобы не трогать реальный профиль.
 _TEMP_HOME = Path(tempfile.mkdtemp(prefix="aiorc_smoke_"))
-os.environ["AIORC_HOME"] = str(_TEMP_HOME)
+os.environ["AGENTFORGE_HOME"] = str(_TEMP_HOME)
 
 from app.config import PATHS  # noqa: E402
 from core.budget import load_states  # noqa: E402
@@ -313,7 +313,7 @@ async def test_export() -> None:
 
 async def main() -> int:
     print("=" * 66)
-    print("Смоук-тесты AI Orchestrator (без сети, без GUI)")
+    print("Смоук-тесты Agent Forge (без сети, без GUI)")
     print(f"Временный каталог данных: {_TEMP_HOME}")
     print("=" * 66)
 

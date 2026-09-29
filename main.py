@@ -1,4 +1,4 @@
-"""Точка входа AI Orchestrator.
+"""Точка входа Agent Forge.
 
 Запуск::
 
@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -20,6 +21,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from app.config import APP_NAME, PATHS, AppSettings  # noqa: E402
 from app.i18n import set_language  # noqa: E402
+
+# Шрифты и геометрия Qt Quick лучше выглядят без принудительного округления
+# масштаба на дисплеях 125–175 %.
+os.environ.setdefault("QT_ENABLE_HIGHDPI_SCALING", "1")
 from utils.logging_setup import setup_logging  # noqa: E402
 
 log = logging.getLogger("aiorc.main")
@@ -40,55 +45,15 @@ def _check_dependencies() -> None:
         sys.exit(1)
 
 
-def start_ui(db, settings: AppSettings) -> dict[str, object]:
-    """Связывает окна: вход → главное окно → выход или смена языка.
-
-    Возвращает словарь с текущими окнами (ключи ``login`` и ``main``) —
-    по нему смоук-тест интерфейса ходит по тому же пути, что и приложение.
-    """
-    from ui.login_window import LoginWindow
-    from ui.main_window import MainWindow
-
-    windows: dict[str, object] = {}
-
-    def show_login() -> None:
-        login = LoginWindow(db, settings)
-        login.logged_in.connect(lambda session: on_login(login, session))
-        windows["login"] = login
-        login.show()
-
-    def open_main(session, page: int = 0) -> None:
-        window = MainWindow(db, session, settings)
-        window.logged_out.connect(show_login)
-        window.rebuild_requested.connect(lambda index: rebuild_main(window, index))
-        windows["main"] = window
-        window.select_page(page)
-        window.show()
-
-    def rebuild_main(old: MainWindow, page: int) -> None:
-        """Пересобирает главное окно после смены языка, сохраняя сессию."""
-        geometry = old.saveGeometry()
-        open_main(old.session, page)
-        windows["main"].restoreGeometry(geometry)
-        old.close()
-        old.deleteLater()
-
-    def on_login(login: LoginWindow, session) -> None:
-        login.close()
-        open_main(session)
-
-    show_login()
-    return windows
-
-
 def main() -> int:
     _check_dependencies()
 
     import qasync
+    from PySide6.QtCore import Qt
     from PySide6.QtWidgets import QApplication
 
     from storage.db import Database
-    from ui.theme import stylesheet
+    from ui.app import UiApp
 
     setup_logging()
     PATHS.ensure()
@@ -97,17 +62,23 @@ def main() -> int:
     settings = AppSettings.load()
     set_language(settings.language)
 
+    # QApplication, а не QGuiApplication: системные диалоги выбора файлов
+    # и папок (экспорт, разрешённые каталоги) живут в QtWidgets.
+    QApplication.setHighDpiScaleFactorRoundingPolicy(
+        Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
     app = QApplication(sys.argv)
     app.setApplicationName(APP_NAME)
-    app.setStyleSheet(stylesheet(settings.theme))
+    app.setOrganizationName("AgentForge")
 
     loop = qasync.QEventLoop(app)
     asyncio.set_event_loop(loop)
 
-    windows = start_ui(Database(), settings)  # noqa: F841 — держит окна живыми
+    ui = UiApp(settings, Database())
 
     with loop:
-        return loop.run_forever() or 0
+        code = loop.run_forever() or 0
+        ui.dispose()
+    return code
 
 
 if __name__ == "__main__":

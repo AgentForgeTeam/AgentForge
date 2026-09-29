@@ -1,13 +1,15 @@
-# AI Orchestrator — передача проекта
+# Agent Forge — передача проекта
 
 Единый файл для продолжения работы над проектом: цель, принятые решения,
 полный код всех файлов, команды запуска и список незакрытых задач.
 
-**Версия:** 1.0.0 · **Python:** 3.11+ · **Объём:** ~12 100 строк в 62 модулях
-**Состояние:** все девять этапов MVP реализованы. Ядро покрыто смоук-тестами
-(37 проверок), интерфейс — сквозным сценарием на реальных виджетах
-(34 проверки, 	ests/ui_smoke.py). Сценарий проверен на Windows 11,
-PySide6 6.11, в том числе на HiDPI.
+**Версия:** 1.1.0 · **Python:** 3.11+ · **Интерфейс:** PySide6 6.11, Qt Quick
+**Состояние:** все девять этапов MVP реализованы. Версия 1.1: новый интерфейс
+на Qt Quick, стриминг рассуждений агентов, исправления ядра по итогам ревью.
+Ядро покрыто смоук-тестами (37 проверок) и регрессионными pytest-тестами,
+интерфейс — туром по всем экранам с живым прогоном фейковых агентов
+(`tests/ui_tour.py`). Проверено на Windows 11. Прежнее имя проекта —
+AI Orchestrator.
 
 ---
 
@@ -95,31 +97,91 @@ PySide6 6.11, в том числе на HiDPI.
 - `core/export/bundle.py`
 - `core/export/exporters.py`
 
-**Интерфейс**
+**Интерфейс: мост Python и QML**
 
-- `ui/theme.py`
-- `ui/widgets/common.py`
-- `ui/widgets/charts.py`
-- `ui/widgets/approval_panel.py`
-- `ui/login_window.py`
-- `ui/main_window.py`
-- `ui/pages/workspaces_page.py`
-- `ui/pages/keys_page.py`
-- `ui/pages/agents_page.py`
-- `ui/pages/task_page.py`
-- `ui/pages/run_page.py`
-- `ui/pages/supervisor_page.py`
-- `ui/pages/dashboard_page.py`
-- `ui/pages/budget_page.py`
-- `ui/pages/export_page.py`
-- `ui/pages/settings_page.py`
+- `ui/app.py`
+- `ui/bridge/core.py`
+- `ui/bridge/listmodel.py`
+- `ui/bridge/i18n_bridge.py`
+- `ui/bridge/backend.py`
+- `ui/bridge/pages.py`
+- `ui/bridge/c_workspaces.py`
+- `ui/bridge/c_keys.py`
+- `ui/bridge/c_agents.py`
+- `ui/bridge/c_task.py`
+- `ui/bridge/c_run.py`
+- `ui/bridge/c_supervisor.py`
+- `ui/bridge/c_dashboard.py`
+- `ui/bridge/c_budget.py`
+- `ui/bridge/c_export.py`
+- `ui/bridge/c_prefs.py`
+- `app/i18n_ui.py`
 
-**Служебное**
+**Интерфейс: QML**
+
+- `ui/qml/Main.qml`
+- `ui/qml/Login.qml`
+- `ui/qml/Shell.qml`
+- `ui/qml/pages/Workspaces.qml`
+- `ui/qml/pages/Keys.qml`
+- `ui/qml/pages/Agents.qml`
+- `ui/qml/pages/Task.qml`
+- `ui/qml/pages/Run.qml`
+- `ui/qml/pages/Supervisor.qml`
+- `ui/qml/pages/Dashboard.qml`
+- `ui/qml/pages/Budget.qml`
+- `ui/qml/pages/Export.qml`
+- `ui/qml/pages/Settings.qml`
+
+**Интерфейс: дизайн-система Ao**
+
+- `ui/qml/Ao/qmldir`
+- `ui/qml/Ao/Theme.qml`
+- `ui/qml/Ao/Icons.qml`
+- `ui/qml/Ao/AText.qml`
+- `ui/qml/Ao/Icon.qml`
+- `ui/qml/Ao/Button.qml`
+- `ui/qml/Ao/IconButton.qml`
+- `ui/qml/Ao/Card.qml`
+- `ui/qml/Ao/Page.qml`
+- `ui/qml/Ao/PageHeader.qml`
+- `ui/qml/Ao/SectionTitle.qml`
+- `ui/qml/Ao/Field.qml`
+- `ui/qml/Ao/TextBox.qml`
+- `ui/qml/Ao/Select.qml`
+- `ui/qml/Ao/Toggle.qml`
+- `ui/qml/Ao/Chip.qml`
+- `ui/qml/Ao/Segmented.qml`
+- `ui/qml/Ao/RangeSlider.qml`
+- `ui/qml/Ao/Badge.qml`
+- `ui/qml/Ao/StatusDot.qml`
+- `ui/qml/Ao/Spinner.qml`
+- `ui/qml/Ao/Skeleton.qml`
+- `ui/qml/Ao/Tip.qml`
+- `ui/qml/Ao/ScrollBar.qml`
+- `ui/qml/Ao/EmptyState.qml`
+- `ui/qml/Ao/Sheet.qml`
+- `ui/qml/Ao/Confirm.qml`
+- `ui/qml/Ao/Toasts.qml`
+- `ui/qml/Ao/ProgressRing.qml`
+- `ui/qml/Ao/SegmentBar.qml`
+- `ui/qml/Ao/LineChart.qml`
+- `ui/qml/Ao/BarList.qml`
+- `ui/qml/Ao/Ticker.qml`
+- `ui/qml/Ao/Aurora.qml`
+- `ui/qml/Ao/OrbitLogo.qml`
+
+**Служебное и тесты**
 
 - `utils/asyncutils.py`
 - `utils/logging_setup.py`
+- `tests/conftest.py`
+- `tests/fakes.py`
 - `tests/smoke.py`
-- `tests/ui_smoke.py`
+- `tests/test_core_fixes.py`
+- `tests/test_ui.py`
+- `tests/ui_tour.py`
+- `pytest.ini`
 
 **Сборка и запуск**
 
@@ -130,246 +192,6 @@ PySide6 6.11, в том числе на HiDPI.
 
 Файлы `__init__.py` содержат только строку документации и здесь не приводятся:
 
-- `.venv\Lib\site-packages\PIL\__init__.py`
-- `.venv\Lib\site-packages\PySide6\QtAsyncio\__init__.py`
-- `.venv\Lib\site-packages\PySide6\__init__.py`
-- `.venv\Lib\site-packages\PySide6\scripts\__init__.py`
-- `.venv\Lib\site-packages\PySide6\scripts\deploy_lib\__init__.py`
-- `.venv\Lib\site-packages\PySide6\scripts\project_lib\__init__.py`
-- `.venv\Lib\site-packages\PySide6\support\__init__.py`
-- `.venv\Lib\site-packages\_distutils_hack\__init__.py`
-- `.venv\Lib\site-packages\anyio\__init__.py`
-- `.venv\Lib\site-packages\anyio\_backends\__init__.py`
-- `.venv\Lib\site-packages\anyio\_core\__init__.py`
-- `.venv\Lib\site-packages\anyio\abc\__init__.py`
-- `.venv\Lib\site-packages\anyio\streams\__init__.py`
-- `.venv\Lib\site-packages\babel\__init__.py`
-- `.venv\Lib\site-packages\babel\localtime\__init__.py`
-- `.venv\Lib\site-packages\babel\messages\__init__.py`
-- `.venv\Lib\site-packages\backports\__init__.py`
-- `.venv\Lib\site-packages\backports\tarfile\__init__.py`
-- `.venv\Lib\site-packages\backports\tarfile\compat\__init__.py`
-- `.venv\Lib\site-packages\bs4\__init__.py`
-- `.venv\Lib\site-packages\bs4\builder\__init__.py`
-- `.venv\Lib\site-packages\certifi\__init__.py`
-- `.venv\Lib\site-packages\certifi\tests\__init__.py`
-- `.venv\Lib\site-packages\cffi\__init__.py`
-- `.venv\Lib\site-packages\charset_normalizer\__init__.py`
-- `.venv\Lib\site-packages\charset_normalizer\cli\__init__.py`
-- `.venv\Lib\site-packages\click\__init__.py`
-- `.venv\Lib\site-packages\courlan\__init__.py`
-- `.venv\Lib\site-packages\cryptography\__init__.py`
-- `.venv\Lib\site-packages\cryptography\hazmat\__init__.py`
-- `.venv\Lib\site-packages\cryptography\hazmat\asn1\__init__.py`
-- `.venv\Lib\site-packages\cryptography\hazmat\backends\__init__.py`
-- `.venv\Lib\site-packages\cryptography\hazmat\backends\openssl\__init__.py`
-- `.venv\Lib\site-packages\cryptography\hazmat\bindings\__init__.py`
-- `.venv\Lib\site-packages\cryptography\hazmat\bindings\openssl\__init__.py`
-- `.venv\Lib\site-packages\cryptography\hazmat\decrepit\__init__.py`
-- `.venv\Lib\site-packages\cryptography\hazmat\decrepit\ciphers\__init__.py`
-- `.venv\Lib\site-packages\cryptography\hazmat\primitives\__init__.py`
-- `.venv\Lib\site-packages\cryptography\hazmat\primitives\asymmetric\__init__.py`
-- `.venv\Lib\site-packages\cryptography\hazmat\primitives\ciphers\__init__.py`
-- `.venv\Lib\site-packages\cryptography\hazmat\primitives\kdf\__init__.py`
-- `.venv\Lib\site-packages\cryptography\hazmat\primitives\serialization\__init__.py`
-- `.venv\Lib\site-packages\cryptography\hazmat\primitives\twofactor\__init__.py`
-- `.venv\Lib\site-packages\cryptography\x509\__init__.py`
-- `.venv\Lib\site-packages\dateparser\__init__.py`
-- `.venv\Lib\site-packages\dateparser\calendars\__init__.py`
-- `.venv\Lib\site-packages\dateparser\custom_language_detection\__init__.py`
-- `.venv\Lib\site-packages\dateparser\data\__init__.py`
-- `.venv\Lib\site-packages\dateparser\data\date_translation_data\__init__.py`
-- `.venv\Lib\site-packages\dateparser\languages\__init__.py`
-- `.venv\Lib\site-packages\dateparser\search\__init__.py`
-- `.venv\Lib\site-packages\dateparser\utils\__init__.py`
-- `.venv\Lib\site-packages\dateparser_cli\__init__.py`
-- `.venv\Lib\site-packages\dateparser_data\__init__.py`
-- `.venv\Lib\site-packages\dateparser_scripts\__init__.py`
-- `.venv\Lib\site-packages\dateutil\__init__.py`
-- `.venv\Lib\site-packages\dateutil\parser\__init__.py`
-- `.venv\Lib\site-packages\dateutil\tz\__init__.py`
-- `.venv\Lib\site-packages\dateutil\zoneinfo\__init__.py`
-- `.venv\Lib\site-packages\ddgs\__init__.py`
-- `.venv\Lib\site-packages\ddgs\api_server\__init__.py`
-- `.venv\Lib\site-packages\ddgs\engines\__init__.py`
-- `.venv\Lib\site-packages\docx\__init__.py`
-- `.venv\Lib\site-packages\docx\dml\__init__.py`
-- `.venv\Lib\site-packages\docx\drawing\__init__.py`
-- `.venv\Lib\site-packages\docx\enum\__init__.py`
-- `.venv\Lib\site-packages\docx\image\__init__.py`
-- `.venv\Lib\site-packages\docx\opc\__init__.py`
-- `.venv\Lib\site-packages\docx\opc\parts\__init__.py`
-- `.venv\Lib\site-packages\docx\oxml\__init__.py`
-- `.venv\Lib\site-packages\docx\oxml\text\__init__.py`
-- `.venv\Lib\site-packages\docx\parts\__init__.py`
-- `.venv\Lib\site-packages\docx\styles\__init__.py`
-- `.venv\Lib\site-packages\docx\text\__init__.py`
-- `.venv\Lib\site-packages\h11\__init__.py`
-- `.venv\Lib\site-packages\htmldate\__init__.py`
-- `.venv\Lib\site-packages\httpcore\__init__.py`
-- `.venv\Lib\site-packages\httpcore\_async\__init__.py`
-- `.venv\Lib\site-packages\httpcore\_backends\__init__.py`
-- `.venv\Lib\site-packages\httpcore\_sync\__init__.py`
-- `.venv\Lib\site-packages\httpx\__init__.py`
-- `.venv\Lib\site-packages\httpx\_transports\__init__.py`
-- `.venv\Lib\site-packages\idna\__init__.py`
-- `.venv\Lib\site-packages\importlib_metadata\__init__.py`
-- `.venv\Lib\site-packages\importlib_metadata\compat\__init__.py`
-- `.venv\Lib\site-packages\jaraco\classes\__init__.py`
-- `.venv\Lib\site-packages\jaraco\context\__init__.py`
-- `.venv\Lib\site-packages\jaraco\functools\__init__.py`
-- `.venv\Lib\site-packages\justext\__init__.py`
-- `.venv\Lib\site-packages\keyring\__init__.py`
-- `.venv\Lib\site-packages\keyring\backends\__init__.py`
-- `.venv\Lib\site-packages\keyring\backends\macOS\__init__.py`
-- `.venv\Lib\site-packages\keyring\compat\__init__.py`
-- `.venv\Lib\site-packages\keyring\testing\__init__.py`
-- `.venv\Lib\site-packages\keyring\util\__init__.py`
-- `.venv\Lib\site-packages\lxml\__init__.py`
-- `.venv\Lib\site-packages\lxml\html\__init__.py`
-- `.venv\Lib\site-packages\lxml\includes\__init__.py`
-- `.venv\Lib\site-packages\lxml\includes\extlibs\__init__.py`
-- `.venv\Lib\site-packages\lxml\includes\libexslt\__init__.py`
-- `.venv\Lib\site-packages\lxml\includes\libxml\__init__.py`
-- `.venv\Lib\site-packages\lxml\includes\libxslt\__init__.py`
-- `.venv\Lib\site-packages\lxml\isoschematron\__init__.py`
-- `.venv\Lib\site-packages\lxml_html_clean\__init__.py`
-- `.venv\Lib\site-packages\more_itertools\__init__.py`
-- `.venv\Lib\site-packages\pip\__init__.py`
-- `.venv\Lib\site-packages\pip\_internal\__init__.py`
-- `.venv\Lib\site-packages\pip\_internal\build_env\__init__.py`
-- `.venv\Lib\site-packages\pip\_internal\cli\__init__.py`
-- `.venv\Lib\site-packages\pip\_internal\commands\__init__.py`
-- `.venv\Lib\site-packages\pip\_internal\distributions\__init__.py`
-- `.venv\Lib\site-packages\pip\_internal\index\__init__.py`
-- `.venv\Lib\site-packages\pip\_internal\locations\__init__.py`
-- `.venv\Lib\site-packages\pip\_internal\metadata\__init__.py`
-- `.venv\Lib\site-packages\pip\_internal\metadata\importlib\__init__.py`
-- `.venv\Lib\site-packages\pip\_internal\models\__init__.py`
-- `.venv\Lib\site-packages\pip\_internal\network\__init__.py`
-- `.venv\Lib\site-packages\pip\_internal\operations\__init__.py`
-- `.venv\Lib\site-packages\pip\_internal\operations\build\__init__.py`
-- `.venv\Lib\site-packages\pip\_internal\operations\install\__init__.py`
-- `.venv\Lib\site-packages\pip\_internal\req\__init__.py`
-- `.venv\Lib\site-packages\pip\_internal\resolution\__init__.py`
-- `.venv\Lib\site-packages\pip\_internal\resolution\legacy\__init__.py`
-- `.venv\Lib\site-packages\pip\_internal\resolution\resolvelib\__init__.py`
-- `.venv\Lib\site-packages\pip\_internal\utils\__init__.py`
-- `.venv\Lib\site-packages\pip\_internal\vcs\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\cachecontrol\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\cachecontrol\caches\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\certifi\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\distlib\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\distro\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\idna\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\msgpack\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\packaging\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\packaging\licenses\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\pkg_resources\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\platformdirs\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\pygments\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\pygments\filters\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\pygments\formatters\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\pygments\lexers\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\pygments\styles\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\pyproject_hooks\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\pyproject_hooks\_in_process\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\requests\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\resolvelib\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\resolvelib\resolvers\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\rich\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\tomli\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\tomli_w\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\truststore\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\urllib3\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\urllib3\contrib\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\urllib3\contrib\emscripten\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\urllib3\http2\__init__.py`
-- `.venv\Lib\site-packages\pip\_vendor\urllib3\util\__init__.py`
-- `.venv\Lib\site-packages\pkg_resources\__init__.py`
-- `.venv\Lib\site-packages\pkg_resources\_vendor\__init__.py`
-- `.venv\Lib\site-packages\pkg_resources\_vendor\importlib_resources\__init__.py`
-- `.venv\Lib\site-packages\pkg_resources\_vendor\jaraco\__init__.py`
-- `.venv\Lib\site-packages\pkg_resources\_vendor\jaraco\text\__init__.py`
-- `.venv\Lib\site-packages\pkg_resources\_vendor\more_itertools\__init__.py`
-- `.venv\Lib\site-packages\pkg_resources\_vendor\packaging\__init__.py`
-- `.venv\Lib\site-packages\pkg_resources\_vendor\pyparsing\__init__.py`
-- `.venv\Lib\site-packages\pkg_resources\_vendor\pyparsing\diagram\__init__.py`
-- `.venv\Lib\site-packages\pkg_resources\extern\__init__.py`
-- `.venv\Lib\site-packages\primp\__init__.py`
-- `.venv\Lib\site-packages\pycparser\__init__.py`
-- `.venv\Lib\site-packages\pytz\__init__.py`
-- `.venv\Lib\site-packages\qasync\__init__.py`
-- `.venv\Lib\site-packages\regex\__init__.py`
-- `.venv\Lib\site-packages\reportlab\__init__.py`
-- `.venv\Lib\site-packages\reportlab\graphics\__init__.py`
-- `.venv\Lib\site-packages\reportlab\graphics\barcode\__init__.py`
-- `.venv\Lib\site-packages\reportlab\graphics\charts\__init__.py`
-- `.venv\Lib\site-packages\reportlab\graphics\samples\__init__.py`
-- `.venv\Lib\site-packages\reportlab\graphics\widgets\__init__.py`
-- `.venv\Lib\site-packages\reportlab\lib\__init__.py`
-- `.venv\Lib\site-packages\reportlab\pdfbase\__init__.py`
-- `.venv\Lib\site-packages\reportlab\pdfgen\__init__.py`
-- `.venv\Lib\site-packages\reportlab\platypus\__init__.py`
-- `.venv\Lib\site-packages\setuptools\__init__.py`
-- `.venv\Lib\site-packages\setuptools\_distutils\__init__.py`
-- `.venv\Lib\site-packages\setuptools\_distutils\command\__init__.py`
-- `.venv\Lib\site-packages\setuptools\_vendor\__init__.py`
-- `.venv\Lib\site-packages\setuptools\_vendor\importlib_metadata\__init__.py`
-- `.venv\Lib\site-packages\setuptools\_vendor\importlib_resources\__init__.py`
-- `.venv\Lib\site-packages\setuptools\_vendor\jaraco\__init__.py`
-- `.venv\Lib\site-packages\setuptools\_vendor\jaraco\text\__init__.py`
-- `.venv\Lib\site-packages\setuptools\_vendor\more_itertools\__init__.py`
-- `.venv\Lib\site-packages\setuptools\_vendor\packaging\__init__.py`
-- `.venv\Lib\site-packages\setuptools\_vendor\pyparsing\__init__.py`
-- `.venv\Lib\site-packages\setuptools\_vendor\pyparsing\diagram\__init__.py`
-- `.venv\Lib\site-packages\setuptools\_vendor\tomli\__init__.py`
-- `.venv\Lib\site-packages\setuptools\command\__init__.py`
-- `.venv\Lib\site-packages\setuptools\config\__init__.py`
-- `.venv\Lib\site-packages\setuptools\config\_validate_pyproject\__init__.py`
-- `.venv\Lib\site-packages\setuptools\extern\__init__.py`
-- `.venv\Lib\site-packages\shiboken6\__init__.py`
-- `.venv\Lib\site-packages\soupsieve\__init__.py`
-- `.venv\Lib\site-packages\tld\__init__.py`
-- `.venv\Lib\site-packages\tld\tests\__init__.py`
-- `.venv\Lib\site-packages\trafilatura\__init__.py`
-- `.venv\Lib\site-packages\tzdata\__init__.py`
-- `.venv\Lib\site-packages\tzdata\zoneinfo\Africa\__init__.py`
-- `.venv\Lib\site-packages\tzdata\zoneinfo\America\Argentina\__init__.py`
-- `.venv\Lib\site-packages\tzdata\zoneinfo\America\Indiana\__init__.py`
-- `.venv\Lib\site-packages\tzdata\zoneinfo\America\Kentucky\__init__.py`
-- `.venv\Lib\site-packages\tzdata\zoneinfo\America\North_Dakota\__init__.py`
-- `.venv\Lib\site-packages\tzdata\zoneinfo\America\__init__.py`
-- `.venv\Lib\site-packages\tzdata\zoneinfo\Antarctica\__init__.py`
-- `.venv\Lib\site-packages\tzdata\zoneinfo\Arctic\__init__.py`
-- `.venv\Lib\site-packages\tzdata\zoneinfo\Asia\__init__.py`
-- `.venv\Lib\site-packages\tzdata\zoneinfo\Atlantic\__init__.py`
-- `.venv\Lib\site-packages\tzdata\zoneinfo\Australia\__init__.py`
-- `.venv\Lib\site-packages\tzdata\zoneinfo\Brazil\__init__.py`
-- `.venv\Lib\site-packages\tzdata\zoneinfo\Canada\__init__.py`
-- `.venv\Lib\site-packages\tzdata\zoneinfo\Chile\__init__.py`
-- `.venv\Lib\site-packages\tzdata\zoneinfo\Etc\__init__.py`
-- `.venv\Lib\site-packages\tzdata\zoneinfo\Europe\__init__.py`
-- `.venv\Lib\site-packages\tzdata\zoneinfo\Indian\__init__.py`
-- `.venv\Lib\site-packages\tzdata\zoneinfo\Mexico\__init__.py`
-- `.venv\Lib\site-packages\tzdata\zoneinfo\Pacific\__init__.py`
-- `.venv\Lib\site-packages\tzdata\zoneinfo\US\__init__.py`
-- `.venv\Lib\site-packages\tzdata\zoneinfo\__init__.py`
-- `.venv\Lib\site-packages\tzlocal\__init__.py`
-- `.venv\Lib\site-packages\urllib3\__init__.py`
-- `.venv\Lib\site-packages\urllib3\contrib\__init__.py`
-- `.venv\Lib\site-packages\urllib3\contrib\emscripten\__init__.py`
-- `.venv\Lib\site-packages\urllib3\http2\__init__.py`
-- `.venv\Lib\site-packages\urllib3\util\__init__.py`
-- `.venv\Lib\site-packages\win32ctypes\__init__.py`
-- `.venv\Lib\site-packages\win32ctypes\core\__init__.py`
-- `.venv\Lib\site-packages\win32ctypes\core\cffi\__init__.py`
-- `.venv\Lib\site-packages\win32ctypes\core\ctypes\__init__.py`
-- `.venv\Lib\site-packages\win32ctypes\pywin32\__init__.py`
-- `.venv\Lib\site-packages\win32ctypes\tests\__init__.py`
-- `.venv\Lib\site-packages\zipp\__init__.py`
-- `.venv\Lib\site-packages\zipp\compat\__init__.py`
 - `app\__init__.py`
 - `core\__init__.py`
 - `core\agents\__init__.py`
@@ -381,8 +203,7 @@ PySide6 6.11, в том числе на HiDPI.
 - `storage\__init__.py`
 - `tests\__init__.py`
 - `ui\__init__.py`
-- `ui\pages\__init__.py`
-- `ui\widgets\__init__.py`
+- `ui\bridge\__init__.py`
 - `utils\__init__.py`
 
 ---
@@ -395,19 +216,27 @@ PySide6 6.11, в том числе на HiDPI.
 
 ### Стек и платформа
 
-**GUI — PySide6 (Qt).** Нативное окно на Windows, macOS и Linux без
-веб-прослойки. Зрелые виджеты под плотные таблицы и дашборды, штатная
-интеграция с asyncio через `qasync`, нормальная упаковка через PyInstaller.
-Лицензия LGPL допускает закрытую дистрибуцию при динамической линковке.
+**GUI — PySide6 + Qt Quick (QML).** Нативное окно на Windows, macOS и Linux
+без веб-прослойки и без Node.js. Интерфейс в `ui/qml`, дизайн-система в модуле
+`Ao` (тема, иконки Lucide, компоненты). Данные отдаёт мост `ui/bridge`:
+`Backend` и по контроллеру на экран. Штатная интеграция с asyncio через
+`qasync`, упаковка через PyInstaller. Лицензия LGPL допускает закрытую
+дистрибуцию при динамической линковке.
+
+**Два правила моста, нарушение которых ломает интерфейс молча.** Сигнал
+`changed = Signal()` объявляется в каждом конечном классе моста: PySide6
+связывает `notify` свойства только с сигналом того же класса, иначе биндинги
+QML перестают обновляться. Роль модели списка не может называться `model`:
+в делегате она перекрывает сам объект `model`. Оба правила проверяются
+тестами (`tests/test_ui.py`, `DictListModel`).
 
 **Параллелизм — один asyncio-луп.** Qt и asyncio объединены `qasync`, агенты
 живут в нём как обычные таски. Пятнадцать агентов не превращаются в
 пятнадцать потоков. Блокирующие операции (SQLite, библиотека поиска) уходят
 в `asyncio.to_thread`, исполнение кода — в отдельный процесс или контейнер.
 
-**Графики — собственная отрисовка на QPainter.** Не QtCharts и не pyqtgraph:
-ноль дополнительных зависимостей, цвета сразу из активной темы приложения,
-независимость от конкретной сборки PySide6.
+**Графики — средствами Qt Quick** (Canvas, Shapes), без QtCharts: ноль
+дополнительных зависимостей, цвета из темы, анимации отрисовки.
 
 ### Безопасность
 
@@ -448,8 +277,8 @@ PySide6 6.11, в том числе на HiDPI.
 
 **Нечитаемый ответ супервайзера** трактуется как «нужна доработка», а не
 «принято»: молча пропустить непроверенный отчёт хуже, чем перепроверить.
-Но если супервайзер недоступен целиком, прогон не падает — отчёт
-принимается, а пропуск проверки пишется в ленту.
+Если супервайзер недоступен или упёрся в лимит, результат считается
+непроверенным и не уходит в зависимые подзадачи без решения человека.
 
 **Решение человека важнее настройки.** `max_rework_rounds` ограничивает
 автоматические доработки супервайзера. Когда доработку назначает человек,
@@ -457,7 +286,10 @@ PySide6 6.11, в том числе на HiDPI.
 цикл «вернул — переделал — вернул» не заканчивался бы.
 
 **Бюджеты проверяются до вызова модели**, а не после: узнавать о превышении
-постфактум бессмысленно, деньги уже потрачены. Расход берётся из журнала
+постфактум бессмысленно, деньги уже потрачены. Через бюджет проходят и
+проверки супервайзера, и планирование. При включённом human-in-the-loop
+исчерпанный лимит не обрывает работу, а превращается в вопрос «поднять на
+50%?», общий для всех агентов, упёршихся в этот уровень. Расход берётся из журнала
 `usage_log`, а не из накопительных счётчиков, поэтому перезапуск приложения
 не обнуляет израсходованный бюджет.
 
@@ -473,8 +305,12 @@ PySide6 6.11, в том числе на HiDPI.
 Модалка заслоняла бы прогресс и ленту — ровно то, по чему принимается
 решение.
 
-**Локализация RU/EN** с переключателем, строки вынесены в словари
-(232 ключа в каждом языке).
+**Локализация RU/EN** переключается на лету без пересборки окна: QML
+читает словарь строк как свойство моста. Строки версии 1.1 лежат в
+`app/i18n_ui.py`, тест проверяет, что каждый ключ из QML есть в обоих языках.
+
+**Анимации с выключателем.** Все длительности идут через `Theme.dur()`, а
+уровень «полные / сдержанные / выключены» задаётся в настройках.
 
 ---
 
@@ -529,28 +365,20 @@ python tests/smoke.py
 
 ### Проверка интерфейса
 
-``bash
-python tests/ui_smoke.py
-``
+````bash
+python -m pytest                  # всё, включая тур по интерфейсу
+python tests/ui_tour.py shots     # тур со скриншотами всех экранов
+````
 
-Сквозной сценарий на настоящих виджетах: регистрация → воркспейс → ключ →
-агенты → задача с автоматическим разбиением → прогон с паузой
-human-in-the-loop → супервайзер, дашборд, бюджеты → экспорт во все четыре
-формата → светлая тема → смена языка → выход и повторный вход. Модальные
-окна подменяются заполнителями, модели — фейковым провайдером. Провалом
-считается и любое исключение в слоте Qt или обработчике шины, даже если
-приложение его проглотило. Ожидаемый результат —
-ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ: 34 из 34.
+Тур создаёт профиль, два воркспейса, агентов, задачу с зависимостями,
+проходит все десять экранов и запускает прогон фейковыми агентами со
+стримингом, отвечая на вопрос human-in-the-loop. Провал — любое
+предупреждение QML или незавершённая подзадача.
 
-По умолчанию окна не показываются (платформа offscreen), а скриншоты
-каждого экрана складываются во временный каталог — путь печатается в конце.
---show запускает с настоящими окнами, --out DIR задаёт каталог скриншотов,
-QT_SCALE_FACTOR=2 проверяет HiDPI.
-
-Одно правило для тех, кто будет дописывать сценарий: не вызывайте
-QApplication.processEvents() внутри корутины. Под qasync это повторный вход
-в луп, и чужие таски падают с «Cannot enter into task». Давать интерфейсу
-отрисоваться нужно через wait asyncio.sleep(...).
+Правило для тех, кто будет дописывать сценарий: весь тур идёт внутри одного
+`loop.run_until_complete(...)`. Если прерывать цикл между шагами, Qt
+продолжает обрабатывать события (например, при снимке окна), и корутины
+агентов просыпаются вне цикла с «no running event loop».
 
 ### Пересборка этого документа
 
@@ -565,20 +393,22 @@ python make_handoff.py
 
 | ОС | Путь |
 |---|---|
-| Windows | `%APPDATA%\ai-orchestrator` |
-| macOS | `~/Library/Application Support/ai-orchestrator` |
-| Linux | `~/.local/share/ai-orchestrator` |
+| Windows | `%APPDATA%\agent-forge` |
+| macOS | `~/Library/Application Support/agent-forge` |
+| Linux | `~/.local/share/agent-forge` |
 
-Переопределяется переменной окружения `AIORC_HOME` — этим пользуются тесты.
+Переопределяется переменной окружения `AGENTFORGE_HOME` — этим пользуются тесты.
 Внутри: `app.db`, `logs/`, `workspaces/`, `exports/`, `settings.json`.
 
 ### Сборка в исполняемый файл
 
 ````bash
 pip install pyinstaller
-pyinstaller --name AIOrchestrator --windowed --onedir main.py \
+pyinstaller --name AgentForge --windowed --onedir main.py \
   --add-data "storage/schema.sql:storage" \
-  --add-data "providers/pricing.json:providers"
+  --add-data "providers/pricing.json:providers" \
+  --add-data "ui/qml:ui/qml" \
+  --add-data "ui/assets:ui/assets"
 ````
 
 На Windows разделитель в `--add-data` — точка с запятой. Вариант `--onedir`
@@ -592,7 +422,7 @@ pyinstaller --name AIOrchestrator --windowed --onedir main.py \
 ### Слои
 
 ````
-UI (PySide6)  →  Repos (единственная точка доступа к БД)  →  SQLite
+UI (Qt Quick) ↔ ui/bridge  →  Repos (единственная точка доступа к БД)  →  SQLite
      ↑                        ↑
      │                        │
 EventBus  ←──  Orchestrator ──┴──  Providers (HTTP к моделям)
@@ -604,9 +434,10 @@ EventBus  ←──  Orchestrator ──┴──  Providers (HTTP к модел
                    └── ToolRegistry   поиск, файлы, песочница
 ````
 
-Ядро ничего не знает о Qt: оно публикует события в `EventBus`, а страницы
-интерфейса на них подписываются. Всё работает в одном лупе, поэтому
-обработчики могут напрямую трогать виджеты.
+Ядро ничего не знает о Qt: оно публикует события в `EventBus`, а контроллеры
+моста на них подписываются и обновляют модели для QML. Всё работает в одном
+лупе. Фрагменты стриминга (`AGENT_DELTA`) копятся и сбрасываются в интерфейс
+таймером раз в 60 мс, дашборд перерисовывается не чаще раза в секунду.
 
 ### Схема базы
 
@@ -634,10 +465,12 @@ EventBus  ←──  Orchestrator ──┴──  Providers (HTTP к модел
 4. `Supervisor.review` выносит вердикт по чек-листу. `ok` закрывает
    подзадачу, `rework` возвращает её тому же исполнителю с замечаниями,
    `conflict` заводит инцидент.
-5. При включённом human-in-the-loop срабатывают три триггера паузы:
-   конфликт или непринятый результат, самооценка агента ниже порога,
-   завершение волны подзадач.
-6. `BudgetGuard` проверяется перед каждым обращением к модели.
+5. При включённом human-in-the-loop срабатывают триггеры паузы: конфликт
+   или непринятый результат, непроверенный результат, самооценка агента ниже
+   порога, исчерпанный бюджет, завершение волны подзадач. На время вопроса
+   слот параллельности отдаётся другим подзадачам.
+6. `BudgetGuard.ensure_allowed` проверяется перед каждым обращением к модели,
+   включая проверки супервайзера.
 
 ---
 
@@ -651,10 +484,10 @@ EventBus  ←──  Orchestrator ──┴──  Providers (HTTP к модел
 
 ### `main.py`
 
-*114 строк*
+*85 строк*
 
 ````python
-"""Точка входа AI Orchestrator.
+"""Точка входа Agent Forge.
 
 Запуск::
 
@@ -668,6 +501,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -676,6 +510,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from app.config import APP_NAME, PATHS, AppSettings  # noqa: E402
 from app.i18n import set_language  # noqa: E402
+
+# Шрифты и геометрия Qt Quick лучше выглядят без принудительного округления
+# масштаба на дисплеях 125–175 %.
+os.environ.setdefault("QT_ENABLE_HIGHDPI_SCALING", "1")
 from utils.logging_setup import setup_logging  # noqa: E402
 
 log = logging.getLogger("aiorc.main")
@@ -696,55 +534,15 @@ def _check_dependencies() -> None:
         sys.exit(1)
 
 
-def start_ui(db, settings: AppSettings) -> dict[str, object]:
-    """Связывает окна: вход → главное окно → выход или смена языка.
-
-    Возвращает словарь с текущими окнами (ключи ``login`` и ``main``) —
-    по нему смоук-тест интерфейса ходит по тому же пути, что и приложение.
-    """
-    from ui.login_window import LoginWindow
-    from ui.main_window import MainWindow
-
-    windows: dict[str, object] = {}
-
-    def show_login() -> None:
-        login = LoginWindow(db, settings)
-        login.logged_in.connect(lambda session: on_login(login, session))
-        windows["login"] = login
-        login.show()
-
-    def open_main(session, page: int = 0) -> None:
-        window = MainWindow(db, session, settings)
-        window.logged_out.connect(show_login)
-        window.rebuild_requested.connect(lambda index: rebuild_main(window, index))
-        windows["main"] = window
-        window.select_page(page)
-        window.show()
-
-    def rebuild_main(old: MainWindow, page: int) -> None:
-        """Пересобирает главное окно после смены языка, сохраняя сессию."""
-        geometry = old.saveGeometry()
-        open_main(old.session, page)
-        windows["main"].restoreGeometry(geometry)
-        old.close()
-        old.deleteLater()
-
-    def on_login(login: LoginWindow, session) -> None:
-        login.close()
-        open_main(session)
-
-    show_login()
-    return windows
-
-
 def main() -> int:
     _check_dependencies()
 
     import qasync
+    from PySide6.QtCore import Qt
     from PySide6.QtWidgets import QApplication
 
     from storage.db import Database
-    from ui.theme import stylesheet
+    from ui.app import UiApp
 
     setup_logging()
     PATHS.ensure()
@@ -753,17 +551,23 @@ def main() -> int:
     settings = AppSettings.load()
     set_language(settings.language)
 
+    # QApplication, а не QGuiApplication: системные диалоги выбора файлов
+    # и папок (экспорт, разрешённые каталоги) живут в QtWidgets.
+    QApplication.setHighDpiScaleFactorRoundingPolicy(
+        Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
     app = QApplication(sys.argv)
     app.setApplicationName(APP_NAME)
-    app.setStyleSheet(stylesheet(settings.theme))
+    app.setOrganizationName("AgentForge")
 
     loop = qasync.QEventLoop(app)
     asyncio.set_event_loop(loop)
 
-    windows = start_ui(Database(), settings)  # noqa: F841 — держит окна живыми
+    ui = UiApp(settings, Database())
 
     with loop:
-        return loop.run_forever() or 0
+        code = loop.run_forever() or 0
+        ui.dispose()
+    return code
 
 
 if __name__ == "__main__":
@@ -772,13 +576,14 @@ if __name__ == "__main__":
 
 ### `app/config.py`
 
-*128 строк*
+*139 строк*
 
 ````python
 """Глобальная конфигурация приложения: пути, константы, настройки по умолчанию.
 
 Все пользовательские данные хранятся ЛОКАЛЬНО в домашнем каталоге пользователя.
-Каталог можно переопределить переменной окружения ``AIORC_HOME``.
+Каталог можно переопределить переменной окружения ``AGENTFORGE_HOME``
+(старое имя ``AIORC_HOME`` тоже понимается).
 """
 
 from __future__ import annotations
@@ -789,15 +594,17 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-APP_NAME = "AI Orchestrator"
-APP_SLUG = "ai-orchestrator"
-APP_VERSION = "1.0.0"          # версия растёт вместе с этапами MVP
+APP_NAME = "Agent Forge"
+APP_SLUG = "agent-forge"
+#: каталог данных до переименования проекта (AI Orchestrator → Agent Forge)
+LEGACY_SLUG = "ai-orchestrator"
+APP_VERSION = "1.1.0"          # 1.1: новый интерфейс на Qt Quick, стриминг агентов
 SCHEMA_VERSION = 1             # версия схемы SQLite (для миграций)
 
 
 def _default_home() -> Path:
     """Возвращает корневой каталог данных приложения для текущей ОС."""
-    env = os.environ.get("AIORC_HOME")
+    env = os.environ.get("AGENTFORGE_HOME") or os.environ.get("AIORC_HOME")
     if env:
         return Path(env).expanduser()
     if sys.platform == "win32":
@@ -806,6 +613,11 @@ def _default_home() -> Path:
         base = Path.home() / "Library" / "Application Support"
     else:
         base = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
+    # Профили, созданные до переименования, продолжают работать: если нового
+    # каталога ещё нет, а старый есть, используем старый.
+    legacy = base / LEGACY_SLUG
+    if not (base / APP_SLUG).exists() and legacy.exists():
+        return legacy
     return base / APP_SLUG
 
 
@@ -854,7 +666,8 @@ class AppSettings:
     """Настройки уровня приложения (не привязаны к пользователю)."""
 
     language: str = "ru"           # "ru" | "en"
-    theme: str = "dark"            # "dark" | "light"
+    #: насколько активны анимации интерфейса: "full" | "reduced" | "off"
+    motion: str = "full"
     last_username: str = ""
     remember_master_password: bool = False
 
@@ -895,19 +708,21 @@ DEFAULT_WORKSPACE_SETTINGS: dict = {
     "anonymize_summaries": True,        # пересказ без указания авторов
     "task_token_limit": None,           # None = без лимита (вопрос 7)
     "agent_max_steps": 10,              # шагов ReAct-цикла на подзадачу
+    "max_parallel_agents": 6,           # сколько агентов работают одновременно
     "tools_enabled": ["web_search", "files", "code_exec"],
     "extra_allowed_paths": [],          # доп. каталоги для файлового инструмента
     "sandbox_backend": "auto",          # "auto" | "subprocess" | "docker"
     "sandbox_timeout_sec": 30,
     "sandbox_memory_mb": 512,
     "search_backend": "duckduckgo",     # "duckduckgo" | "tavily" | "brave"
+    "search_api_key": "",               # ключ Tavily/Brave, хранится зашифрованным
     "fetch_pages": True,                # скачивать и парсить страницы из выдачи
 }
 ````
 
 ### `app/i18n.py`
 
-*547 строк*
+*558 строк*
 
 ````python
 """Локализация интерфейса (RU/EN) с переключателем в настройках.
@@ -930,7 +745,7 @@ _CURRENT = "ru"
 
 RU: dict[str, str] = {
     # --- общее ---
-    "app.title": "AI Orchestrator — оркестрация ИИ-агентов",
+    "app.title": "Agent Forge — оркестрация ИИ-агентов",
     "common.ok": "OK",
     "common.cancel": "Отмена",
     "common.save": "Сохранить",
@@ -1067,7 +882,7 @@ RU: dict[str, str] = {
     "nav.settings": "Настройки",
     "nav.logout": "Выйти",
     # --- воркспейсы ---
-    "ws.title": "Воркспейсы (параллельные проекты)",
+    "ws.title": "Воркспейсы",
     "ws.new": "Новый воркспейс",
     "ws.name": "Название проекта",
     "ws.empty": "Ещё нет ни одного воркспейса. Создайте первый, чтобы начать.",
@@ -1182,7 +997,7 @@ RU: dict[str, str] = {
 }
 
 EN: dict[str, str] = {
-    "app.title": "AI Orchestrator — multi-agent orchestration",
+    "app.title": "Agent Forge — multi-agent orchestration",
     "common.ok": "OK",
     "common.cancel": "Cancel",
     "common.save": "Save",
@@ -1312,7 +1127,7 @@ EN: dict[str, str] = {
     "nav.dashboard": "Dashboard",
     "nav.settings": "Settings",
     "nav.logout": "Log out",
-    "ws.title": "Workspaces (parallel projects)",
+    "ws.title": "Workspaces",
     "ws.new": "New workspace",
     "ws.name": "Project name",
     "ws.empty": "No workspaces yet. Create one to get started.",
@@ -1420,6 +1235,12 @@ EN: dict[str, str] = {
     "settings.budget": "Budgets and limits",
 }
 
+# Строки нового интерфейса лежат в отдельном модуле и вливаются сюда.
+from app.i18n_ui import EN_UI, RU_UI  # noqa: E402
+
+RU.update(RU_UI)
+EN.update(EN_UI)
+
 _CATALOG: dict[str, dict[str, str]] = {"ru": RU, "en": EN}
 
 
@@ -1437,6 +1258,11 @@ def set_language(code: str) -> None:
 
 def current_language() -> str:
     return _CURRENT
+
+
+def catalog_for(code: str) -> dict[str, str]:
+    """Словарь строк языка (для моста QML)."""
+    return _CATALOG.get(code, RU)
 
 
 def available_languages() -> list[tuple[str, str]]:
@@ -1467,7 +1293,7 @@ def tr(key: str, **kwargs) -> str:
 *214 строк*
 
 ````sql
--- Схема локальной БД AI Orchestrator (SQLite).
+-- Схема локальной БД Agent Forge (SQLite).
 -- Таблицы заведены сразу под все 9 этапов MVP, чтобы не ломать миграциями
 -- уже созданные профили пользователей.
 
@@ -1685,7 +1511,7 @@ CREATE INDEX IF NOT EXISTS idx_usage_ws ON usage_log(workspace_id, created_at);
 
 ### `storage/db.py`
 
-*99 строк*
+*116 строк*
 
 ````python
 """Подключение к локальной SQLite-БД и применение схемы.
@@ -1699,9 +1525,10 @@ from __future__ import annotations
 
 import sqlite3
 import threading
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable, Sequence
+from typing import Any, Iterable, Iterator, Sequence
 
 from app.config import PATHS, SCHEMA_VERSION
 
@@ -1761,6 +1588,22 @@ class Database:
             self.conn.commit()
 
     # -- базовые операции ----------------------------------------------------
+    @contextmanager
+    def transaction(self) -> Iterator[sqlite3.Connection]:
+        """Несколько изменений одним коммитом: либо применяются все, либо ни одно.
+
+        Внутри блока писать нужно через возвращённое соединение, а не через
+        ``execute``: тот коммитит каждую команду по отдельности.
+        """
+        with self._lock:
+            try:
+                self.conn.execute("BEGIN")
+                yield self.conn
+                self.conn.commit()
+            except BaseException:
+                self.conn.rollback()
+                raise
+
     def execute(self, sql: str, params: Sequence[Any] = ()) -> sqlite3.Cursor:
         with self._lock:
             cur = self.conn.execute(sql, params)
@@ -2059,7 +1902,7 @@ def dumps(obj: Any) -> str:
 
 ### `storage/repositories.py`
 
-*650 строк*
+*721 строк*
 
 ````python
 """Репозитории — единственная точка доступа к БД.
@@ -2140,7 +1983,10 @@ class UserRepo:
         new_verify_salt, new_kdf_salt = new_salt(), new_salt()
         new_box = SecretBox(derive_master_key(new_password, new_kdf_salt))
 
-        # Сначала расшифровываем всё старым ключом, затем пишем одной транзакцией.
+        # Сначала расшифровываем всё старым ключом (если что-то не читается,
+        # исключение вылетит до первой записи), затем пишем одной транзакцией:
+        # сбой посередине не должен оставить часть ключей на новом мастер-ключе
+        # при старом пароле — такие ключи было бы уже не расшифровать.
         rows = self.db.query(
             "SELECT id, secret_blob FROM api_keys WHERE user_id = ? AND secret_blob IS NOT NULL",
             (session.user_id,),
@@ -2148,13 +1994,13 @@ class UserRepo:
         reencrypted = [
             (new_box.encrypt(old_box.decrypt(r["secret_blob"])), r["id"]) for r in rows
         ]
-        for blob, key_id in reencrypted:
-            self.db.execute("UPDATE api_keys SET secret_blob = ? WHERE id = ?", (blob, key_id))
-        self.db.execute(
-            "UPDATE users SET password_hash = ?, verify_salt = ?, kdf_salt = ? WHERE id = ?",
-            (hash_password(new_password, new_verify_salt), new_verify_salt,
-             new_kdf_salt, session.user_id),
-        )
+        new_hash = hash_password(new_password, new_verify_salt)
+        with self.db.transaction() as conn:
+            conn.executemany("UPDATE api_keys SET secret_blob = ? WHERE id = ?", reencrypted)
+            conn.execute(
+                "UPDATE users SET password_hash = ?, verify_salt = ?, kdf_salt = ? WHERE id = ?",
+                (new_hash, new_verify_salt, new_kdf_salt, session.user_id),
+            )
         session.box = new_box
         return True
 
@@ -2683,17 +2529,56 @@ class MessageRepo:
 
     def history(self, agent_id: int, subtask_id: int | None = None,
                 limit: int = 200) -> list[dict]:
+        """Последние ``limit`` сообщений агента в хронологическом порядке.
+
+        Выбираются именно последние: при длинной истории (несколько кругов
+        доработки) агенту важнее свежие замечания, чем самые первые шаги.
+        """
         sql = "SELECT * FROM messages WHERE agent_id = ?"
         params: list[Any] = [agent_id]
         if subtask_id is not None:
             sql += " AND subtask_id = ?"
             params.append(subtask_id)
-        sql += " ORDER BY id LIMIT ?"
+        sql += " ORDER BY id DESC LIMIT ?"
         params.append(limit)
-        return [dict(r) for r in self.db.query(sql, params)]
+        rows = [dict(r) for r in self.db.query(sql, params)]
+        rows.reverse()
+        return rows
 
     def clear(self, agent_id: int) -> None:
         self.db.execute("DELETE FROM messages WHERE agent_id = ?", (agent_id,))
+
+
+class SecretCodec:
+    """Шифрует короткие секреты, которые хранятся не в ``api_keys``.
+
+    Например, ключ поискового API лежит в настройках воркспейса: там это
+    строка base64, а открытым текстом она существует только в памяти.
+    """
+
+    PREFIX = "enc:"
+
+    def __init__(self, session: Session) -> None:
+        self.session = session
+
+    def seal(self, text: str) -> str:
+        if not text:
+            return ""
+        import base64
+
+        return self.PREFIX + base64.b64encode(self.session.box.encrypt(text)).decode("ascii")
+
+    def open(self, token: str) -> str:
+        if not token:
+            return ""
+        if not token.startswith(self.PREFIX):
+            return token          # старое значение, сохранённое открытым текстом
+        import base64
+
+        try:
+            return self.session.box.decrypt(base64.b64decode(token[len(self.PREFIX):]))
+        except Exception:  # noqa: BLE001 — повреждённый секрет равен отсутствующему
+            return ""
 
 
 class Repos:
@@ -2712,6 +2597,35 @@ class Repos:
         self.budgets = BudgetRepo(db)
         self.approvals = ApprovalRepo(db)
         self.messages = MessageRepo(db)
+        self.secrets = SecretCodec(session)
+
+    def recover_interrupted_runs(self) -> int:
+        """Приводит в порядок статусы после аварийного завершения приложения.
+
+        Если процесс упал посреди прогона, в базе остаются «работающие»
+        задачи и агенты, которых на самом деле никто не выполняет. Интерфейс
+        показывал бы их как активные, а повторный запуск считал бы занятыми.
+        Возвращает количество исправленных записей.
+        """
+        user_ws = "SELECT id FROM workspaces WHERE user_id = ?"
+        uid = (self.session.user_id,)
+        with self.db.transaction() as conn:
+            changed = conn.execute(
+                f"UPDATE tasks SET status = 'stopped' WHERE status = 'running' "
+                f"AND workspace_id IN ({user_ws})", uid).rowcount
+            changed += conn.execute(
+                f"UPDATE subtasks SET status = 'paused' WHERE status = 'running' "
+                f"AND task_id IN (SELECT id FROM tasks WHERE workspace_id IN ({user_ws}))",
+                uid).rowcount
+            changed += conn.execute(
+                f"UPDATE agents SET status = 'idle' WHERE status IN ('running', 'paused') "
+                f"AND workspace_id IN ({user_ws})", uid).rowcount
+            conn.execute(
+                "UPDATE approvals SET decision = 'cancelled', "
+                "comment = 'Приложение было закрыто до решения', decided_at = ? "
+                f"WHERE decision = '' AND workspace_id IN ({user_ws})",
+                (utcnow(), *uid))
+        return changed
 ````
 
 
@@ -2848,7 +2762,7 @@ class Session:
 # Необязательная интеграция с хранилищем секретов ОС («запомнить пароль»)
 # ---------------------------------------------------------------------------
 
-_KEYRING_SERVICE = "ai-orchestrator"
+_KEYRING_SERVICE = "agent-forge"
 
 
 def keyring_available() -> bool:
@@ -2893,7 +2807,7 @@ def keyring_delete_password(username: str) -> None:
 
 ### `providers/base.py`
 
-*136 строк*
+*174 строк*
 
 ````python
 """Единый интерфейс LLM-провайдера.
@@ -2908,7 +2822,21 @@ from __future__ import annotations
 import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator
+from typing import Any, AsyncIterator, Callable
+
+#: получатель фрагментов при потоковой генерации: (текст, вид). Вид —
+#: ``"text"`` для ответа модели или ``"reasoning"`` для рассуждения
+#: моделей, которые отдают его отдельно (DeepSeek-R1, Claude thinking и т.п.)
+DeltaHandler = Callable[[str, str], None]
+
+
+def estimate_tokens(text: str) -> int:
+    """Грубая оценка числа токенов, если провайдер не прислал расход.
+
+    Лучше посчитать приблизительно, чем записать ноль: нулевой расход
+    незаметно обходил бы лимиты бюджета.
+    """
+    return max(1, len(text or "") // 4) if text else 0
 
 
 @dataclass
@@ -3007,6 +2935,30 @@ class LLMProvider(ABC):
         tools: list[ToolSpec] | None = None,
     ) -> CompletionResult:
         """Однократный вызов модели."""
+
+    async def stream_complete(
+        self,
+        model: str,
+        messages: list[ChatMessage],
+        *,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+        tools: list[ToolSpec] | None = None,
+        on_delta: DeltaHandler | None = None,
+    ) -> CompletionResult:
+        """Вызов модели с потоковой выдачей текста.
+
+        Результат тот же, что у ``complete`` (текст, вызовы инструментов,
+        расход), но по ходу генерации каждый фрагмент текста передаётся в
+        ``on_delta`` — так интерфейс показывает рассуждение агента вживую.
+        Реализация по умолчанию делает обычный вызов и отдаёт текст целиком:
+        провайдер без стриминга просто покажет ответ разом.
+        """
+        result = await self.complete(model, messages, temperature=temperature,
+                                     max_tokens=max_tokens, tools=tools)
+        if on_delta and result.text:
+            on_delta(result.text, "text")
+        return result
 
     @abstractmethod
     async def list_models(self) -> list[str]:
@@ -3165,7 +3117,7 @@ def preset_list() -> list[ProviderPreset]:
 
 ### `providers/openai_compat.py`
 
-*189 строк*
+*298 строк*
 
 ````python
 """Провайдер для всех OpenAI-совместимых API.
@@ -3184,11 +3136,13 @@ import httpx
 from providers.base import (
     ChatMessage,
     CompletionResult,
+    DeltaHandler,
     LLMProvider,
     ProviderError,
     ToolCall,
     ToolSpec,
     Usage,
+    estimate_tokens,
 )
 
 
@@ -3297,6 +3251,113 @@ class OpenAICompatProvider(LLMProvider):
             raw=data,
         )
 
+    async def stream_complete(self, model: str, messages: list[ChatMessage], *,
+                              temperature: float = 0.7, max_tokens: int = 2048,
+                              tools: list[ToolSpec] | None = None,
+                              on_delta: DeltaHandler | None = None) -> CompletionResult:
+        """Потоковый ``/chat/completions`` с разбором вызовов инструментов.
+
+        Аргументы вызова инструмента приходят кусками JSON в нескольких
+        чанках, поэтому они склеиваются по ``index`` и разбираются в конце.
+        Расход токенов сервер присылает последним чанком, если попросить
+        ``stream_options.include_usage``; часть совместимых серверов этот
+        параметр не знает — тогда запрос повторяется без него.
+        """
+        payload: dict[str, Any] = {
+            "model": model,
+            "messages": self._to_wire(messages),
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "stream": True,
+            "stream_options": {"include_usage": True},
+        }
+        tool_payload = self._tools_payload(tools)
+        if tool_payload:
+            payload["tools"] = tool_payload
+            payload["tool_choice"] = "auto"
+        try:
+            return await self._stream_once(payload, model, messages, on_delta)
+        except ProviderError as exc:
+            if exc.status == 400 and "stream_options" in str(exc):
+                payload.pop("stream_options", None)
+                return await self._stream_once(payload, model, messages, on_delta)
+            raise
+
+    async def _stream_once(self, payload: dict[str, Any], model: str,
+                           messages: list[ChatMessage],
+                           on_delta: DeltaHandler | None) -> CompletionResult:
+        text_parts: list[str] = []
+        reasoning_parts: list[str] = []
+        calls: dict[int, dict[str, str]] = {}
+        usage: dict[str, Any] = {}
+        finish_reason = ""
+        model_name = model
+        try:
+            async with self._http().stream(
+                "POST", f"{self.base_url}/chat/completions",
+                headers=self._headers(), json=payload,
+            ) as resp:
+                if resp.status_code >= 400:
+                    await resp.aread()
+                    raise ProviderError(_error_text(resp), resp.status_code)
+                async for line in resp.aiter_lines():
+                    if not line.startswith("data:"):
+                        continue
+                    raw = line[5:].strip()
+                    if not raw or raw == "[DONE]":
+                        continue
+                    try:
+                        chunk = json.loads(raw)
+                    except ValueError:
+                        continue
+                    if chunk.get("error"):
+                        err = chunk["error"]
+                        raise ProviderError(err.get("message", str(err))
+                                            if isinstance(err, dict) else str(err))
+                    model_name = chunk.get("model") or model_name
+                    usage = (chunk.get("usage")
+                             or (chunk.get("x_groq") or {}).get("usage")
+                             or usage)
+                    for choice in chunk.get("choices") or []:
+                        delta = choice.get("delta") or {}
+                        piece = delta.get("content")
+                        if piece:
+                            text_parts.append(piece)
+                            if on_delta:
+                                on_delta(piece, "text")
+                        thought = delta.get("reasoning_content") or delta.get("reasoning")
+                        if isinstance(thought, str) and thought:
+                            reasoning_parts.append(thought)
+                            if on_delta:
+                                on_delta(thought, "reasoning")
+                        for tc in delta.get("tool_calls") or []:
+                            slot = calls.setdefault(int(tc.get("index", len(calls))),
+                                                    {"id": "", "name": "", "args": ""})
+                            slot["id"] = tc.get("id") or slot["id"]
+                            fn = tc.get("function") or {}
+                            slot["name"] = fn.get("name") or slot["name"]
+                            slot["args"] += fn.get("arguments") or ""
+                        finish_reason = choice.get("finish_reason") or finish_reason
+        except httpx.HTTPError as exc:
+            raise ProviderError(f"Сетевая ошибка: {exc}") from exc
+
+        text = "".join(text_parts)
+        tool_calls = [
+            ToolCall(id=slot["id"] or f"call_{index}", name=slot["name"],
+                     arguments=ToolCall.parse_args(slot["args"]))
+            for index, slot in sorted(calls.items()) if slot["name"]
+        ]
+        if usage:
+            result_usage = Usage(int(usage.get("prompt_tokens", 0)),
+                                 int(usage.get("completion_tokens", 0)))
+        else:
+            prompt = sum(len(m.content or "") for m in messages)
+            output = text + "".join(reasoning_parts) + "".join(
+                c["args"] for c in calls.values())
+            result_usage = Usage(prompt // 4, estimate_tokens(output))
+        return CompletionResult(text=text, tool_calls=tool_calls, usage=result_usage,
+                                finish_reason=finish_reason, model=model_name)
+
     async def stream(self, model: str, messages: list[ChatMessage], *,
                      temperature: float = 0.7,
                      max_tokens: int = 2048) -> AsyncIterator[str]:
@@ -3361,7 +3422,7 @@ def _error_text(resp: httpx.Response) -> str:
 
 ### `providers/anthropic_provider.py`
 
-*173 строк*
+*260 строк*
 
 ````python
 """Провайдер Anthropic Messages API.
@@ -3381,6 +3442,7 @@ import httpx
 from providers.base import (
     ChatMessage,
     CompletionResult,
+    DeltaHandler,
     LLMProvider,
     ProviderError,
     ToolCall,
@@ -3442,9 +3504,8 @@ class AnthropicProvider(LLMProvider):
                 wire.append({"role": m.role, "content": m.content})
         return "\n\n".join(p for p in system_parts if p), wire
 
-    async def complete(self, model: str, messages: list[ChatMessage], *,
-                       temperature: float = 0.7, max_tokens: int = 2048,
-                       tools: list[ToolSpec] | None = None) -> CompletionResult:
+    def _payload(self, model: str, messages: list[ChatMessage], temperature: float,
+                 max_tokens: int, tools: list[ToolSpec] | None) -> dict[str, Any]:
         system, wire = self._split(messages)
         payload: dict[str, Any] = {
             "model": model,
@@ -3459,7 +3520,94 @@ class AnthropicProvider(LLMProvider):
                 {"name": t.name, "description": t.description, "input_schema": t.parameters}
                 for t in tools
             ]
+        return payload
 
+    async def stream_complete(self, model: str, messages: list[ChatMessage], *,
+                              temperature: float = 0.7, max_tokens: int = 2048,
+                              tools: list[ToolSpec] | None = None,
+                              on_delta: DeltaHandler | None = None) -> CompletionResult:
+        """Потоковый Messages API: текст, рассуждение и вызовы инструментов.
+
+        Блоки ответа приходят событиями ``content_block_*``; аргументы
+        ``tool_use`` приходят кусками JSON (``input_json_delta``) и
+        собираются по индексу блока.
+        """
+        import json as _json
+
+        payload = self._payload(model, messages, temperature, max_tokens, tools)
+        payload["stream"] = True
+        blocks: dict[int, dict[str, Any]] = {}
+        usage_in = usage_out = 0
+        stop_reason = ""
+        model_name = model
+        try:
+            async with self._http().stream(
+                "POST", f"{self.base_url}/messages", headers=self._headers(), json=payload
+            ) as resp:
+                if resp.status_code >= 400:
+                    await resp.aread()
+                    raise ProviderError(_error_text(resp), resp.status_code)
+                async for line in resp.aiter_lines():
+                    if not line.startswith("data:"):
+                        continue
+                    try:
+                        event = _json.loads(line[5:].strip())
+                    except ValueError:
+                        continue
+                    kind = event.get("type")
+                    if kind == "message_start":
+                        message = event.get("message") or {}
+                        model_name = message.get("model", model_name)
+                        u = message.get("usage") or {}
+                        usage_in = int(u.get("input_tokens", 0))
+                        usage_out = int(u.get("output_tokens", 0))
+                    elif kind == "content_block_start":
+                        block = dict(event.get("content_block") or {})
+                        block["_json"] = ""
+                        blocks[int(event.get("index", len(blocks)))] = block
+                    elif kind == "content_block_delta":
+                        block = blocks.setdefault(int(event.get("index", 0)),
+                                                  {"type": "text", "text": "", "_json": ""})
+                        delta = event.get("delta") or {}
+                        if delta.get("type") == "text_delta":
+                            piece = delta.get("text", "")
+                            block["text"] = block.get("text", "") + piece
+                            if on_delta and piece:
+                                on_delta(piece, "text")
+                        elif delta.get("type") == "thinking_delta":
+                            piece = delta.get("thinking", "")
+                            if on_delta and piece:
+                                on_delta(piece, "reasoning")
+                        elif delta.get("type") == "input_json_delta":
+                            block["_json"] += delta.get("partial_json", "")
+                    elif kind == "message_delta":
+                        stop_reason = (event.get("delta") or {}).get("stop_reason") or stop_reason
+                        u = event.get("usage") or {}
+                        usage_out = int(u.get("output_tokens", usage_out))
+                    elif kind == "error":
+                        err = event.get("error") or {}
+                        raise ProviderError(err.get("message", "ошибка потока Anthropic"))
+        except httpx.HTTPError as exc:
+            raise ProviderError(f"Сетевая ошибка: {exc}") from exc
+
+        text_parts: list[str] = []
+        calls: list[ToolCall] = []
+        for _, block in sorted(blocks.items()):
+            if block.get("type") == "text":
+                text_parts.append(block.get("text", ""))
+            elif block.get("type") == "tool_use":
+                args = ToolCall.parse_args(block["_json"]) if block["_json"] \
+                    else (block.get("input") or {})
+                calls.append(ToolCall(id=block.get("id", ""), name=block.get("name", ""),
+                                      arguments=args))
+        return CompletionResult(text="".join(text_parts), tool_calls=calls,
+                                usage=Usage(usage_in, usage_out),
+                                finish_reason=stop_reason, model=model_name)
+
+    async def complete(self, model: str, messages: list[ChatMessage], *,
+                       temperature: float = 0.7, max_tokens: int = 2048,
+                       tools: list[ToolSpec] | None = None) -> CompletionResult:
+        payload = self._payload(model, messages, temperature, max_tokens, tools)
         try:
             resp = await self._http().post(
                 f"{self.base_url}/messages", headers=self._headers(), json=payload
@@ -3541,7 +3689,7 @@ def _error_text(resp: httpx.Response) -> str:
 
 ### `providers/gemini_provider.py`
 
-*143 строк*
+*207 строк*
 
 ````python
 """Провайдер Google Gemini (generativeLanguage API).
@@ -3562,6 +3710,7 @@ import httpx
 from providers.base import (
     ChatMessage,
     CompletionResult,
+    DeltaHandler,
     LLMProvider,
     ProviderError,
     ToolCall,
@@ -3617,9 +3766,8 @@ class GeminiProvider(LLMProvider):
                 contents.append({"role": "user", "parts": [{"text": m.content}]})
         return "\n\n".join(p for p in system_parts if p), contents
 
-    async def complete(self, model: str, messages: list[ChatMessage], *,
-                       temperature: float = 0.7, max_tokens: int = 2048,
-                       tools: list[ToolSpec] | None = None) -> CompletionResult:
+    def _payload(self, messages: list[ChatMessage], temperature: float, max_tokens: int,
+                 tools: list[ToolSpec] | None) -> dict[str, Any]:
         system, contents = self._split(messages)
         payload: dict[str, Any] = {
             "contents": contents,
@@ -3635,7 +3783,68 @@ class GeminiProvider(LLMProvider):
                     for t in tools
                 ]
             }]
+        return payload
 
+    async def stream_complete(self, model: str, messages: list[ChatMessage], *,
+                              temperature: float = 0.7, max_tokens: int = 2048,
+                              tools: list[ToolSpec] | None = None,
+                              on_delta: DeltaHandler | None = None) -> CompletionResult:
+        """``streamGenerateContent`` в режиме SSE.
+
+        Каждый чанк — полноценный ответ с частью ``parts``; вызовы функций
+        приходят целиком, а ``usageMetadata`` в последнем чанке содержит
+        итоговый расход.
+        """
+        import json as _json
+
+        payload = self._payload(messages, temperature, max_tokens, tools)
+        url = f"{self.base_url}/models/{model}:streamGenerateContent?alt=sse"
+        text_parts: list[str] = []
+        calls: list[ToolCall] = []
+        usage: dict[str, Any] = {}
+        finish_reason = ""
+        try:
+            async with self._http().stream("POST", url, headers=self._headers(),
+                                           json=payload) as resp:
+                if resp.status_code >= 400:
+                    await resp.aread()
+                    raise ProviderError(_error_text(resp), resp.status_code)
+                async for line in resp.aiter_lines():
+                    if not line.startswith("data:"):
+                        continue
+                    try:
+                        chunk = _json.loads(line[5:].strip())
+                    except ValueError:
+                        continue
+                    usage = chunk.get("usageMetadata") or usage
+                    for candidate in chunk.get("candidates") or []:
+                        finish_reason = candidate.get("finishReason") or finish_reason
+                        for part in (candidate.get("content") or {}).get("parts", []):
+                            if "functionCall" in part:
+                                fc = part["functionCall"]
+                                calls.append(ToolCall(id=uuid.uuid4().hex[:12],
+                                                      name=fc.get("name", ""),
+                                                      arguments=fc.get("args") or {}))
+                            elif part.get("text"):
+                                kind = "reasoning" if part.get("thought") else "text"
+                                if kind == "text":
+                                    text_parts.append(part["text"])
+                                if on_delta:
+                                    on_delta(part["text"], kind)
+        except httpx.HTTPError as exc:
+            raise ProviderError(f"Сетевая ошибка: {exc}") from exc
+        return CompletionResult(
+            text="".join(text_parts), tool_calls=calls,
+            usage=Usage(int(usage.get("promptTokenCount", 0)),
+                        int(usage.get("candidatesTokenCount", 0))
+                        + int(usage.get("thoughtsTokenCount", 0))),
+            finish_reason=finish_reason, model=model,
+        )
+
+    async def complete(self, model: str, messages: list[ChatMessage], *,
+                       temperature: float = 0.7, max_tokens: int = 2048,
+                       tools: list[ToolSpec] | None = None) -> CompletionResult:
+        payload = self._payload(messages, temperature, max_tokens, tools)
         url = f"{self.base_url}/models/{model}:generateContent"
         try:
             resp = await self._http().post(url, headers=self._headers(), json=payload)
@@ -3648,18 +3857,21 @@ class GeminiProvider(LLMProvider):
         candidate = (data.get("candidates") or [{}])[0]
         text_parts, calls = [], []
         for part in (candidate.get("content") or {}).get("parts", []):
-            if "text" in part:
-                text_parts.append(part["text"])
-            elif "functionCall" in part:
+            if "functionCall" in part:
                 fc = part["functionCall"]
                 calls.append(ToolCall(id=uuid.uuid4().hex[:12], name=fc.get("name", ""),
                                       arguments=fc.get("args") or {}))
+            elif "text" in part and not part.get("thought"):
+                # Рассуждение «думающих» моделей в ответ не входит.
+                text_parts.append(part["text"])
         u = data.get("usageMetadata") or {}
         return CompletionResult(
             text="".join(text_parts),
             tool_calls=calls,
+            # Токены рассуждения оплачиваются как выходные.
             usage=Usage(int(u.get("promptTokenCount", 0)),
-                        int(u.get("candidatesTokenCount", 0))),
+                        int(u.get("candidatesTokenCount", 0))
+                        + int(u.get("thoughtsTokenCount", 0))),
             finish_reason=candidate.get("finishReason", ""),
             model=model,
             raw=data,
@@ -3733,8 +3945,8 @@ def build_provider(provider_key: str, api_key: str = "",
     extra: dict[str, str] = {}
     if provider_key == "openrouter":
         # OpenRouter просит идентифицировать приложение.
-        extra = {"HTTP-Referer": "https://localhost/ai-orchestrator",
-                 "X-Title": "AI Orchestrator"}
+        extra = {"HTTP-Referer": "https://localhost/agent-forge",
+                 "X-Title": "Agent Forge"}
     prov = OpenAICompatProvider(api_key, url, timeout, extra_headers=extra)
     prov.key = provider_key
     return prov
@@ -3992,7 +4204,7 @@ def default_registry() -> ToolRegistry:
 
 ### `core/tools/sandbox.py`
 
-*258 строк*
+*303 строк*
 
 ````python
 """Песочница для исполнения кода агентами.
@@ -4025,6 +4237,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
+import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
@@ -4168,12 +4382,21 @@ class SubprocessSandbox(Sandbox):
 
 
 def _kill_tree(proc) -> None:
-    """Убивает процесс вместе с его группой."""
+    """Убивает процесс вместе со всеми потомками.
+
+    На Windows ``proc.kill()`` завершает только сам процесс: запущенные им
+    дочерние (``subprocess``, ``multiprocessing``) продолжили бы работать
+    после таймаута. ``taskkill /T`` снимает всё дерево.
+    """
     try:
         if os.name == "posix":
             os.killpg(os.getpgid(proc.pid), 9)
         else:
-            proc.kill()
+            subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                           capture_output=True, timeout=10,
+                           creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            if proc.returncode is None:
+                proc.kill()
     except Exception:  # noqa: BLE001
         try:
             proc.kill()
@@ -4202,13 +4425,19 @@ class DockerSandbox(Sandbox):
                  "bash": ["bash", "/work/" + script.name],
                  "node": ["node", "/work/" + script.name]}[language]
 
+        # Имя нужно, чтобы по таймауту остановить именно контейнер: убийство
+        # процесса docker CLI оставило бы контейнер работать в фоне.
+        name = f"aiorc-{uuid.uuid4().hex[:12]}"
         cmd = [
-            "docker", "run", "--rm",
+            "docker", "run", "--rm", "--name", name,
             "--network", "bridge" if network else "none",
             "--memory", f"{memory_mb}m", "--memory-swap", f"{memory_mb}m",
             "--cpus", "1", "--pids-limit", "128",
             "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
             "--user", "1000:1000",
+            # Корень контейнера только для чтения; писать можно в /tmp и в
+            # одноразовый каталог со скриптом.
+            "--read-only", "--tmpfs", "/tmp:rw,size=64m",
             "-v", f"{tmpdir}:/work",
             "-w", "/work",
             self.IMAGES[language], *inner,
@@ -4223,6 +4452,7 @@ class DockerSandbox(Sandbox):
                 out, err = await asyncio.wait_for(proc.communicate(), timeout=timeout + 15)
             except asyncio.TimeoutError:
                 timed_out = True
+                await _docker_kill(name)
                 proc.kill()
                 out, err = b"", "Контейнер остановлен по таймауту".encode("utf-8")
             return SandboxResult(
@@ -4234,25 +4464,52 @@ class DockerSandbox(Sandbox):
             shutil.rmtree(tmpdir, ignore_errors=True)
 
 
-def docker_available() -> bool:
-    """Проверяет, что Docker установлен и демон отвечает."""
-    if shutil.which("docker") is None:
-        return False
+async def _docker_kill(name: str) -> None:
     try:
-        res = subprocess.run(["docker", "info", "--format", "{{json .ServerVersion}}"],
-                             capture_output=True, timeout=5)
-        return res.returncode == 0 and bool(json.loads(res.stdout or b'""'))
-    except Exception:  # noqa: BLE001
-        return False
+        proc = await asyncio.create_subprocess_exec(
+            "docker", "kill", name,
+            stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL,
+        )
+        await asyncio.wait_for(proc.wait(), timeout=10)
+    except Exception:  # noqa: BLE001 — контейнер мог уже завершиться сам
+        pass
 
 
-def get_sandbox(backend: str = "auto") -> Sandbox:
+#: результат проверки Docker кэшируется: ``docker info`` занимает секунды
+_DOCKER_CACHE: dict[str, float | bool] = {}
+_DOCKER_TTL = 60.0
+
+
+def docker_available(use_cache: bool = True) -> bool:
+    """Проверяет, что Docker установлен и демон отвечает."""
+    now = time.monotonic()
+    if use_cache and _DOCKER_CACHE and now - float(_DOCKER_CACHE["at"]) < _DOCKER_TTL:
+        return bool(_DOCKER_CACHE["ok"])
+    ok = False
+    if shutil.which("docker") is not None:
+        try:
+            res = subprocess.run(["docker", "info", "--format", "{{json .ServerVersion}}"],
+                                 capture_output=True, timeout=5,
+                                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            ok = res.returncode == 0 and bool(json.loads(res.stdout or b'""'))
+        except Exception:  # noqa: BLE001
+            ok = False
+    _DOCKER_CACHE.update(ok=ok, at=now)
+    return ok
+
+
+async def docker_available_async() -> bool:
+    """То же, но без блокировки общего asyncio-лупа (и интерфейса вместе с ним)."""
+    return await asyncio.to_thread(docker_available)
+
+
+async def get_sandbox(backend: str = "auto") -> Sandbox:
     """Фабрика песочницы по настройке воркспейса."""
     if backend == "docker":
         return DockerSandbox()
     if backend == "subprocess":
         return SubprocessSandbox()
-    return DockerSandbox() if docker_available() else SubprocessSandbox()
+    return DockerSandbox() if await docker_available_async() else SubprocessSandbox()
 ````
 
 ### `core/tools/code_exec.py`
@@ -4299,7 +4556,7 @@ class CodeExecTool(Tool):
         if language not in LANG_COMMANDS:
             raise ToolError(f"Язык «{language}» не поддерживается")
 
-        sandbox = get_sandbox(ctx.sandbox_backend)
+        sandbox = await get_sandbox(ctx.sandbox_backend)
         result = await sandbox.run(
             code=code,
             language=language,
@@ -4515,7 +4772,7 @@ class WebFetchTool(Tool):
         try:
             async with httpx.AsyncClient(
                 timeout=30, follow_redirects=True,
-                headers={"User-Agent": "Mozilla/5.0 (compatible; AI-Orchestrator/1.0)"},
+                headers={"User-Agent": "Mozilla/5.0 (compatible; AgentForge/1.1)"},
             ) as client:
                 resp = await client.get(url)
         except Exception as exc:  # noqa: BLE001
@@ -4614,7 +4871,7 @@ def _extract_text(html: str) -> str:
 
 ### `core/events.py`
 
-*103 строк*
+*105 строк*
 
 ````python
 """Шина событий между ядром и интерфейсом.
@@ -4648,6 +4905,7 @@ class EventType(str, Enum):
 
     AGENT_STATUS = "agent_status"        # агент сменил статус
     AGENT_THINKING = "agent_thinking"    # шаг рассуждения
+    AGENT_DELTA = "agent_delta"          # очередной фрагмент текста модели (стриминг)
     AGENT_TOOL_CALL = "agent_tool_call"  # агент вызвал инструмент
     AGENT_TOOL_RESULT = "agent_tool_result"
 
@@ -4665,6 +4923,7 @@ class EventType(str, Enum):
 
     BUDGET_ALERT = "budget_alert"          # расход подошёл к порогу
     BUDGET_EXCEEDED = "budget_exceeded"    # лимит исчерпан, вызовы заблокированы
+    BUDGET_EXTENDED = "budget_extended"    # пользователь поднял лимит во время прогона
     USAGE = "usage"                      # расход токенов/денег
     LOG = "log"                          # произвольное сообщение в ленту
     ERROR = "error"
@@ -4871,7 +5130,7 @@ def title(template: RoleTemplate, lang: str) -> str:
 
 ### `core/agents/runner.py`
 
-*392 строк*
+*492 строк*
 
 ````python
 """Этап 4 — исполнитель одного агента над одной подзадачей.
@@ -4906,6 +5165,17 @@ log = logging.getLogger("aiorc.runner")
 HISTORY_WINDOW = 24
 #: после какого количества символов истории включается сжатие
 HISTORY_COMPACT_CHARS = 24_000
+#: фрагменты стриминга копятся до такой длины, прежде чем уйти в шину:
+#: отправлять событие на каждый токен бессмысленно дорого
+DELTA_FLUSH_CHARS = 16
+#: статусы HTTP, при которых провайдер, вероятно, просто не умеет стриминг
+STREAM_UNSUPPORTED = {400, 404, 405, 415, 422, 501}
+
+FINALIZE_PROMPT = (
+    "Лимит шагов на эту подзадачу исчерпан, инструменты больше недоступны. "
+    "Подведи итог по тому, что уже успел выяснить: выдай его после строки RESULT: "
+    "и укажи строку CONFIDENCE: <0..1>. Честно отметь, что осталось непроверенным."
+)
 
 
 class RunCancelled(Exception):
@@ -4991,8 +5261,10 @@ class AgentRunner:
         self.max_steps = int(workspace_settings.get("agent_max_steps", 10))
         # Шаблоны и старые настройки хранят групповые имена («files»),
         # поэтому обе стороны разворачиваются до реальных инструментов.
-        enabled = expand_tool_names(workspace_settings.get("tools_enabled")) \
-            or registry.names()
+        # Пустой список значит «все инструменты выключены», а не «все включены».
+        raw_enabled = workspace_settings.get("tools_enabled")
+        enabled = (expand_tool_names(raw_enabled) if raw_enabled is not None
+                   else registry.names())
         self.tools_allowed = [
             name for name in expand_tool_names(agent.tools)
             if name in registry.names() and name in enabled
@@ -5014,7 +5286,8 @@ class AgentRunner:
             sandbox_memory_mb=int(self.settings.get("sandbox_memory_mb", 512)),
             allow_network_in_sandbox=False,
             search_backend=self.settings.get("search_backend", "duckduckgo"),
-            search_api_key=self.settings.get("search_api_key", ""),
+            # Ключ поискового API хранится в настройках зашифрованным.
+            search_api_key=self.repos.secrets.open(self.settings.get("search_api_key", "")),
             fetch_pages=bool(self.settings.get("fetch_pages", True)),
         )
 
@@ -5128,6 +5401,62 @@ class AgentRunner:
             agent_name=self.agent.name, message=message, payload=payload,
         ))
 
+    # -- вызов модели --------------------------------------------------------
+    async def _check_budget(self) -> str:
+        """Проверка ДО вызова модели: узнавать о лимите постфактум бессмысленно.
+
+        Возвращает текст ошибки, если вызов делать нельзя, иначе пустую строку.
+        """
+        if self.budget is None:
+            return ""
+        ensure = getattr(self.budget, "ensure_allowed", None)
+        blocked = (await ensure(self.agent.id) if ensure is not None
+                   else self.budget.blocking_scope(self.agent.id))
+        return f"Лимит исчерпан — {blocked.reason()}" if blocked is not None else ""
+
+    async def _call_model(self, messages: list[ChatMessage], step: int,
+                          tools: list | None) -> CompletionResult:
+        """Один вызов модели со стримингом текста в интерфейс.
+
+        Фрагменты копятся в небольшой буфер и уходят в шину пачками. Если
+        провайдер отверг потоковый запрос ещё до первого фрагмента (частая
+        история с самописными OpenAI-совместимыми серверами), вызов
+        повторяется в обычном режиме, а не роняет подзадачу.
+        """
+        buffer: dict[str, list[str]] = {"text": [], "reasoning": []}
+        streamed = False
+
+        def flush(kind: str) -> None:
+            if buffer[kind]:
+                chunk = "".join(buffer[kind])
+                buffer[kind].clear()
+                self._emit(EventType.AGENT_DELTA, chunk, step=step, stream=kind)
+
+        def on_delta(piece: str, kind: str = "text") -> None:
+            nonlocal streamed
+            streamed = True
+            kind = kind if kind in buffer else "text"
+            buffer[kind].append(piece)
+            if sum(map(len, buffer[kind])) >= DELTA_FLUSH_CHARS or "\n" in piece:
+                flush(kind)
+
+        options = dict(temperature=self.agent.temperature,
+                       max_tokens=self.agent.max_tokens, tools=tools)
+        try:
+            result = await self.provider.stream_complete(
+                self.agent.model, messages, on_delta=on_delta, **options)
+        except ProviderError as exc:
+            if streamed or exc.status not in STREAM_UNSUPPORTED:
+                raise
+            log.info("Стриминг не поддержан (%s), повтор обычным запросом", exc)
+            result = await self.provider.complete(self.agent.model, messages, **options)
+            if result.text:
+                on_delta(result.text, "text")
+        finally:
+            flush("reasoning")
+            flush("text")
+        return result
+
     # -- основной цикл -------------------------------------------------------
     async def run(self) -> RunResult:
         """Прогоняет ReAct-цикл до готового результата или до стоп-условия."""
@@ -5143,14 +5472,12 @@ class AgentRunner:
 
         totals = RunResult(ok=False)
         last_text = ""
+        last_step_used_tools = False
 
         for step in range(1, self.max_steps + 1):
-            # Проверка ДО вызова модели: узнавать о лимите постфактум
-            # бессмысленно — деньги уже потрачены.
-            blocked = (self.budget.blocking_scope(self.agent.id)
-                       if self.budget else None)
-            if blocked is not None:
-                totals.error = f"Лимит исчерпан — {blocked.reason()}"
+            blocked = await self._check_budget()
+            if blocked:
+                totals.error = blocked
                 self._emit(EventType.SUBTASK_FAILED, totals.error)
                 return totals
 
@@ -5158,12 +5485,7 @@ class AgentRunner:
             self._emit(EventType.AGENT_THINKING, f"шаг {step}/{self.max_steps}", step=step)
 
             try:
-                result = await self.provider.complete(
-                    self.agent.model, messages,
-                    temperature=self.agent.temperature,
-                    max_tokens=self.agent.max_tokens,
-                    tools=specs or None,
-                )
+                result = await self._call_model(messages, step, specs or None)
             except asyncio.CancelledError:
                 raise
             except ProviderError as exc:
@@ -5176,9 +5498,7 @@ class AgentRunner:
                 self._emit(EventType.SUBTASK_FAILED, totals.error)
                 return totals
 
-            totals.tokens_in += result.usage.input_tokens
-            totals.tokens_out += result.usage.output_tokens
-            totals.cost_usd += self._account(result)
+            self._add_usage(totals, result)
             last_text = result.text or last_text
 
             # Ответ модели сохраняем в её личную историю.
@@ -5187,12 +5507,9 @@ class AgentRunner:
                                         self.subtask.id, tokens=result.usage.output_tokens)
 
             if not result.tool_calls:
+                last_step_used_tools = False
                 if looks_done(result.text) or step == self.max_steps:
-                    totals.ok = True
-                    totals.result_text = parse_result(result.text)
-                    totals.confidence = parse_confidence(result.text)
-                    self._emit(EventType.SUBTASK_PROGRESS, "получен результат")
-                    return totals
+                    return self._finish(totals, result.text)
                 # Модель ответила текстом, но не обозначила финал — просим завершить.
                 messages.append(ChatMessage("assistant", result.text))
                 nudge = ("Если подзадача выполнена — выдай итог после строки RESULT: "
@@ -5201,6 +5518,7 @@ class AgentRunner:
                 continue
 
             # --- есть вызовы инструментов ---
+            last_step_used_tools = True
             messages.append(ChatMessage("assistant", result.text,
                                         tool_calls=result.tool_calls))
             for call in result.tool_calls:
@@ -5211,13 +5529,54 @@ class AgentRunner:
                                         self.subtask.id, tool_name=call.name,
                                         tool_call_id=call.id)
 
-        # Шаги кончились — отдаём то, что есть.
+        if last_step_used_tools:
+            # Последний шаг ушёл на инструменты, итога модель не дала. Выдать
+            # промежуточное «сейчас посчитаю» за результат нельзя — просим
+            # подвести итог одним дополнительным вызовом без инструментов.
+            finalized = await self._finalize(messages, totals)
+            if finalized is not None:
+                return finalized
+
         totals.ok = bool(last_text)
         totals.result_text = parse_result(last_text)
         totals.confidence = parse_confidence(last_text)
         if not totals.ok:
             totals.error = "Агент не выдал результат за отведённое число шагов"
         return totals
+
+    def _add_usage(self, totals: RunResult, result: CompletionResult) -> None:
+        totals.tokens_in += result.usage.input_tokens
+        totals.tokens_out += result.usage.output_tokens
+        totals.cost_usd += self._account(result)
+
+    def _finish(self, totals: RunResult, text: str) -> RunResult:
+        totals.ok = True
+        totals.result_text = parse_result(text)
+        totals.confidence = parse_confidence(text)
+        self._emit(EventType.SUBTASK_PROGRESS, "получен результат")
+        return totals
+
+    async def _finalize(self, messages: list[ChatMessage],
+                        totals: RunResult) -> RunResult | None:
+        """Дополнительный вызов для итога, когда шаги кончились на инструментах."""
+        if await self._check_budget():
+            return None
+        messages.append(ChatMessage("user", FINALIZE_PROMPT))
+        step = totals.steps + 1
+        self._emit(EventType.AGENT_THINKING, "подведение итога", step=step)
+        try:
+            result = await self._call_model(messages, step, None)
+        except asyncio.CancelledError:
+            raise
+        except Exception:  # noqa: BLE001 — итог не получился, вернём что было
+            log.exception("Не удалось получить итог после исчерпания шагов")
+            return None
+        self._add_usage(totals, result)
+        if not result.text:
+            return None
+        self.repos.messages.add(self.agent.id, "assistant", result.text,
+                                self.subtask.id, tokens=result.usage.output_tokens)
+        return self._finish(totals, result.text)
 
     async def _invoke_tool(self, call: ToolCall, ctx: ToolContext,
                            totals: RunResult) -> str:
@@ -5270,14 +5629,14 @@ class TokenBudget:
 
 ### `core/orchestrator.py`
 
-*707 строк*
+*824 строк*
 
 ````python
 """Этап 4 — оркестратор выполнения задачи.
 
 Отвечает за расписание: какие подзадачи можно запускать сейчас, какие ждут
 предшественников, сколько агентов работают параллельно. Каждый агент
-выполняет свои подзадачи последовательно (семафор на агента), разные агенты —
+выполняет свои подзадачи последовательно (лок на агента), разные агенты —
 параллельно, все в одном asyncio-лупе.
 
 Оркестратор ведёт весь жизненный цикл: статусы, отчёты, расход, паузы и
@@ -5292,9 +5651,9 @@ from dataclasses import dataclass, field
 
 from app.config import DEFAULT_WORKSPACE_SETTINGS, PATHS
 from core.agents.runner import AgentRunner, RunResult
-from core.budget import BudgetGuard
+from core.budget import BudgetGuard, ScopeState
 from core.events import Event, EventBus, EventType
-from core.hitl import ApprovalGate, Decision, Reason
+from core.hitl import Answer, ApprovalGate, Decision, Reason
 from core.supervisor.supervisor import Supervisor
 from core.tools.base import ToolRegistry, default_registry
 from providers.base import LLMProvider
@@ -5308,7 +5667,7 @@ log = logging.getLogger("aiorc.orchestrator")
 #: сверх автоматического лимита супервайзера
 USER_REWORK_LIMIT = 3
 
-#: сколько агентов могут работать одновременно
+#: сколько агентов могут работать одновременно, если в настройках не указано
 DEFAULT_CONCURRENCY = 6
 
 
@@ -5351,6 +5710,8 @@ class Orchestrator:
         self._summary_on_event: bool = True
         self._gate: ApprovalGate | None = None
         self._confidence_threshold: float = 0.0
+        self._semaphore: asyncio.Semaphore | None = None
+        self._workspace_id: int | None = None
 
     # -- управление ----------------------------------------------------------
     def pause(self) -> None:
@@ -5358,6 +5719,7 @@ class Orchestrator:
             self.state.paused = True
             self._pause.clear()
             self.bus.emit(Event(EventType.RUN_PAUSED, task_id=self.state.task_id,
+                                workspace_id=self._workspace_id,
                                 message="Выполнение поставлено на паузу"))
 
     def resume(self) -> None:
@@ -5365,6 +5727,7 @@ class Orchestrator:
             self.state.paused = False
             self._pause.set()
             self.bus.emit(Event(EventType.RUN_RESUMED, task_id=self.state.task_id,
+                                workspace_id=self._workspace_id,
                                 message="Выполнение возобновлено"))
 
     def stop(self) -> None:
@@ -5372,14 +5735,17 @@ class Orchestrator:
             return
         self._stop.set()
         self._pause.set()                       # разбудить ожидающих
+        if self._gate is not None:
+            self._gate.cancel_all()             # снять висящие вопросы
         for task in list(self._tasks):
             task.cancel()
         self.bus.emit(Event(EventType.RUN_STOPPED, task_id=self.state.task_id,
+                            workspace_id=self._workspace_id,
                             message="Остановка по команде пользователя"))
 
     # -- основной запуск -----------------------------------------------------
     async def run_task(self, workspace_id: int, task_id: int,
-                       concurrency: int = DEFAULT_CONCURRENCY) -> RunState:
+                       concurrency: int | None = None) -> RunState:
         """Прогоняет все подзадачи задачи с учётом зависимостей."""
         if self.state.running:
             raise RuntimeError("Выполнение уже запущено")
@@ -5392,8 +5758,7 @@ class Orchestrator:
         settings = {**DEFAULT_WORKSPACE_SETTINGS, **workspace.settings}
         PATHS.workspace_dir(workspace_id).mkdir(parents=True, exist_ok=True)
 
-        subtasks = [s for s in self.repos.tasks.subtasks(task_id)
-                    if s.status not in ("done",)]
+        subtasks = [s for s in self.repos.tasks.subtasks(task_id) if s.status != "done"]
         unassigned = [s for s in subtasks if not s.agent_id]
         if unassigned:
             raise RuntimeError(
@@ -5403,20 +5768,29 @@ class Orchestrator:
         if not subtasks:
             raise RuntimeError("Нет подзадач для выполнения")
 
+        if concurrency is None:
+            try:
+                concurrency = int(settings.get("max_parallel_agents") or DEFAULT_CONCURRENCY)
+            except (TypeError, ValueError):
+                concurrency = DEFAULT_CONCURRENCY
+
+        self._workspace_id = workspace_id
         self._reset_state(task_id, len(subtasks))
+        self._start_gate(workspace_id, settings)
         self._budget = BudgetGuard(self.repos, self.bus, workspace_id,
                                    task.id, task.token_limit)
+        if self._gate is not None:
+            self._budget.on_blocked = self._on_budget_blocked
         self.repos.tasks.update(task_id, status="running")
         self.bus.emit(Event(EventType.RUN_STARTED, workspace_id=workspace_id,
                             task_id=task_id,
                             message=f"Запуск: {len(subtasks)} подзадач"))
 
         self._start_supervisor(workspace_id, settings, task)
-        self._start_gate(workspace_id, settings)
 
-        semaphore = asyncio.Semaphore(max(1, concurrency))
+        self._semaphore = asyncio.Semaphore(max(1, concurrency))
         try:
-            await self._schedule(workspace_id, settings, task, subtasks, semaphore)
+            await self._schedule(workspace_id, settings, task, subtasks)
             if self._supervisor is not None and not self._stop.is_set():
                 # Финальный разбор: ищем расхождения между результатами
                 # и подводим общий итог для команды.
@@ -5427,11 +5801,7 @@ class Orchestrator:
         finally:
             await self._cleanup()
             self.state.running = False
-            self.repos.tasks.update(
-                task_id,
-                status="stopped" if self._stop.is_set()
-                else ("failed" if self.state.failed else "done"),
-            )
+            self.repos.tasks.update(task_id, status=self._final_status())
             self.bus.emit(Event(
                 EventType.RUN_FINISHED, workspace_id=workspace_id, task_id=task_id,
                 message=(f"Готово: {self.state.finished} выполнено, "
@@ -5441,9 +5811,19 @@ class Orchestrator:
                          f"{self.state.tokens} токенов, ~${self.state.cost:.4f}"),
                 payload={"finished": self.state.finished, "failed": self.state.failed,
                          "reworks": self.state.reworks,
-                         "escalated": self.state.escalated},
+                         "escalated": self.state.escalated,
+                         "stopped": self._stop.is_set()},
             ))
         return self.state
+
+    def _final_status(self) -> str:
+        if self._stop.is_set():
+            return "stopped"
+        if self.state.failed:
+            return "failed"
+        if self.state.escalated:
+            return "review"         # есть результаты, которые ждут человека
+        return "done"
 
     def _reset_state(self, task_id: int, total: int) -> None:
         from storage.db import utcnow
@@ -5457,33 +5837,27 @@ class Orchestrator:
 
     # -- расписание ----------------------------------------------------------
     async def _schedule(self, workspace_id: int, settings: dict, task: Task,
-                        subtasks: list[Subtask], semaphore: asyncio.Semaphore) -> None:
+                        subtasks: list[Subtask]) -> None:
         """Волнами запускает подзадачи, у которых выполнены зависимости."""
         pending = {s.id: s for s in subtasks}
         done_ids: set[int] = {
             s.id for s in self.repos.tasks.subtasks(task.id) if s.status == "done"
         }
+        titles = {s.id: s.title for s in self.repos.tasks.subtasks(task.id)}
 
         while pending and not self._stop.is_set():
             ready = [s for s in pending.values() if self._deps_met(s, done_ids)]
             if not ready:
-                # Циклическая или неразрешимая зависимость — не зависаем молча.
-                names = ", ".join(s.title for s in pending.values())
-                self.bus.error(f"Невозможно разрешить зависимости подзадач: {names}",
-                               workspace_id=workspace_id, task_id=task.id)
-                for s in pending.values():
-                    self.repos.tasks.update_subtask(s.id, status="error")
-                    self.state.failed += 1
+                self._block_unreachable(workspace_id, task, pending, done_ids, titles)
                 break
 
             wave = [
-                asyncio.ensure_future(
-                    self._run_subtask(workspace_id, settings, task, s, semaphore)
-                )
+                asyncio.ensure_future(self._run_subtask(workspace_id, settings, task, s))
                 for s in ready
             ]
             self._tasks.update(wave)
             results = await asyncio.gather(*wave, return_exceptions=True)
+            self._tasks.difference_update(wave)
             for subtask, outcome in zip(ready, results):
                 pending.pop(subtask.id, None)
                 # CancelledError наследуется от BaseException, а не от Exception,
@@ -5516,6 +5890,32 @@ class Orchestrator:
                     self._stop.set()
                     break
 
+    def _block_unreachable(self, workspace_id: int, task: Task,
+                           pending: dict[int, Subtask], done_ids: set[int],
+                           titles: dict[int, str]) -> None:
+        """Помечает подзадачи, которые уже не смогут стартовать, и объясняет почему.
+
+        Причин две, и путать их нельзя: либо не выполнена одна из
+        зависимостей (упала или не принята), либо зависимости замкнуты в
+        цикл. Раньше обе выдавались как «невозможно разрешить зависимости»,
+        и упавший предшественник выглядел как ошибка в графе.
+        """
+        for subtask in pending.values():
+            missing = [dep for dep in self._deps(subtask) if dep not in done_ids]
+            failed_deps = [dep for dep in missing if dep not in pending]
+            if failed_deps:
+                names = ", ".join(f"«{titles.get(d, d)}»" for d in failed_deps)
+                reason = f"не выполнена зависимость {names}"
+            else:
+                reason = "зависимости замкнуты в цикл"
+            self.repos.tasks.update_subtask(subtask.id, status="error")
+            self.state.failed += 1
+            self.bus.emit(Event(
+                EventType.SUBTASK_FAILED, workspace_id=workspace_id, task_id=task.id,
+                subtask_id=subtask.id, agent_id=subtask.agent_id,
+                message=f"«{subtask.title}» не запущена: {reason}",
+            ))
+
     def _wave_summary(self, task: Task, done_ids: set[int]) -> str:
         """Короткая сводка по завершённой волне — чтобы решать осознанно."""
         lines: list[str] = []
@@ -5524,29 +5924,34 @@ class Orchestrator:
                 continue
             body = (subtask.result or "").strip().replace("\n", " ")
             lines.append(f"· {subtask.title}: {body[:180]}" if body else f"· {subtask.title}")
-        tokens, cost = self.repos.budgets.workspace_totals(task.workspace_id)
+        tokens, cost = self.repos.budgets.task_totals(task.id)
         lines.append("")
-        lines.append(f"Израсходовано: {tokens} токенов, ~${cost:.4f}")
+        lines.append(f"Израсходовано по задаче: {tokens} токенов, ~${cost:.4f}")
         return "\n".join(lines)
 
     @staticmethod
-    def _deps_met(subtask: Subtask, done_ids: set[int]) -> bool:
+    def _deps(subtask: Subtask) -> list[int]:
         raw = (subtask.depends_on or "").strip()
-        if not raw:
-            return True
-        return all(int(tok) in done_ids
-                   for tok in (t.strip() for t in raw.split(",")) if tok.isdigit())
+        return [int(t) for t in (tok.strip() for tok in raw.split(",")) if t.isdigit()]
+
+    @classmethod
+    def _deps_met(cls, subtask: Subtask, done_ids: set[int]) -> bool:
+        return all(dep in done_ids for dep in cls._deps(subtask))
 
     # -- выполнение одной подзадачи -----------------------------------------
     async def _run_subtask(self, workspace_id: int, settings: dict, task: Task,
-                           subtask: Subtask, semaphore: asyncio.Semaphore) -> bool:
+                           subtask: Subtask) -> bool:
         agent = self.repos.agents.get(subtask.agent_id or 0)
         if agent is None or not agent.enabled:
             self._fail(subtask, agent, "Исполнитель недоступен или отключён")
             return False
 
+        # Сначала лок агента, потом слот параллельности. В обратном порядке
+        # подзадачи одного агента занимали бы слоты, простаивая в очереди
+        # к собственному локу, и другие агенты ждали бы впустую.
         lock = self._agent_locks.setdefault(agent.id, asyncio.Lock())
-        async with semaphore, lock:
+        assert self._semaphore is not None
+        async with lock, self._semaphore:
             await self._pause.wait()
             if self._stop.is_set():
                 return False
@@ -5600,7 +6005,7 @@ class Orchestrator:
                 if accepted is not None:
                     return accepted
 
-                # accepted is None → назначена доработка, идём на новый круг
+                # accepted is None → назначена доработка, идём на новый круг.
                 # Потолок считается по числу выданных человеком кругов,
                 # а не относительно текущей попытки: иначе граница уезжала бы
                 # вперёд на каждом круге и цикл никогда бы не закончился.
@@ -5618,6 +6023,21 @@ class Orchestrator:
                          agent_name=agent.name)
             return False
 
+    async def _ask_human(self, reason: Reason, question: str, **kwargs) -> Answer:
+        """Вопрос человеку изнутри подзадачи.
+
+        Пока человек думает, агент не работает, поэтому его слот
+        параллельности отдаётся другим подзадачам и забирается обратно
+        после ответа. Лок агента при этом держится: к ответу он вернётся
+        со связной историей.
+        """
+        assert self._gate is not None and self._semaphore is not None
+        self._semaphore.release()
+        try:
+            return await self._gate.ask(reason, question, **kwargs)
+        finally:
+            await self._semaphore.acquire()
+
     async def _review_result(self, workspace_id: int, task: Task, subtask: Subtask,
                              agent: Agent, result: RunResult,
                              attempt: int, max_rework: int
@@ -5634,29 +6054,19 @@ class Orchestrator:
             return False, "", False
 
         supervisor = self._supervisor
-        if supervisor is None:
-            # Без супервайзера отчёт принимается как есть.
+        report = self._last_report(subtask.id) if supervisor is not None else None
+        if supervisor is None or report is None:
+            # Без супервайзера отчёт принимается как есть: пользователь сам
+            # отказался от проверки, и в ленте об этом написано при старте.
             self.repos.tasks.update_subtask(subtask.id, status="done")
             self.state.finished += 1
             return True, "", False
 
-        report = self._last_report(subtask.id)
-        if report is None:
-            self.repos.tasks.update_subtask(subtask.id, status="done")
-            self.state.finished += 1
-            return True, "", False
+        verdict = await supervisor.review(task, subtask, report)
 
-        try:
-            verdict = await supervisor.review(task, subtask, report)
-        except asyncio.CancelledError:
-            raise
-        except Exception as exc:  # noqa: BLE001
-            log.exception("Супервайзер упал на проверке %s", subtask.id)
-            self.bus.error(f"Проверка не выполнена: {exc}",
-                           workspace_id=workspace_id, subtask_id=subtask.id)
-            self.repos.tasks.update_subtask(subtask.id, status="done")
-            self.state.finished += 1
-            return True, "", False
+        if verdict.verdict == "unverified":
+            return await self._handle_unverified(workspace_id, task, subtask, agent,
+                                                 report, verdict)
 
         if verdict.accepted:
             self.repos.tasks.update_subtask(subtask.id, status="done")
@@ -5678,7 +6088,7 @@ class Orchestrator:
             if (self._gate is not None and report.confidence is not None
                     and report.confidence < self._confidence_threshold):
                 self._set_status(agent, subtask, "paused")
-                answer = await self._gate.ask(
+                answer = await self._ask_human(
                     Reason.LOW_CONFIDENCE,
                     f"«{subtask.title}»: исполнитель оценил свою уверенность "
                     f"в {report.confidence:.2f}",
@@ -5715,8 +6125,6 @@ class Orchestrator:
 
         # Доработки исчерпаны либо это конфликт — фиксируем инцидент
         # и, если human-in-the-loop включён, останавливаемся и спрашиваем.
-        self.repos.tasks.update_subtask(subtask.id, status="review")
-        self.state.escalated += 1
         incident_id = self.repos.incidents.add(
             workspace_id,
             kind="conflict" if verdict.verdict == "conflict" else "contradiction",
@@ -5725,26 +6133,51 @@ class Orchestrator:
             severity=verdict.max_severity,
             task_id=task.id, subtask_id=subtask.id, report_id=report.id,
         )
+        reason = (Reason.CONFLICT if verdict.verdict == "conflict"
+                  else Reason.NOT_ACCEPTED)
+        return await self._escalate(workspace_id, task, subtask, agent, report,
+                                    verdict, incident_id, reason)
+
+    async def _handle_unverified(self, workspace_id: int, task: Task, subtask: Subtask,
+                                 agent: Agent, report: Report, verdict
+                                 ) -> tuple[bool | None, str, bool]:
+        """Супервайзер не смог проверить отчёт — решение за человеком."""
+        incident_id = self.repos.incidents.add(
+            workspace_id, kind="unverified",
+            description=verdict.notes or "Результат не прошёл проверку супервайзера",
+            severity="medium", task_id=task.id, subtask_id=subtask.id,
+            report_id=report.id,
+        )
+        return await self._escalate(workspace_id, task, subtask, agent, report,
+                                    verdict, incident_id, Reason.UNVERIFIED)
+
+    async def _escalate(self, workspace_id: int, task: Task, subtask: Subtask,
+                        agent: Agent, report: Report, verdict, incident_id: int,
+                        reason: Reason) -> tuple[bool | None, str, bool]:
+        """Результат не принят автоматически: спросить человека или отложить.
+
+        Без human-in-the-loop спросить некого, поэтому результат остаётся
+        на проверке и НЕ передаётся зависимым подзадачам: строить дальше на
+        непринятом результате значит размножить возможную ошибку.
+        """
+        self.repos.tasks.update_subtask(subtask.id, status="review")
+        self.state.escalated += 1
         self.repos.incidents.resolve(incident_id, "escalated",
                                      "Требуется решение пользователя")
 
         if self._gate is None:
-            # Режим без пауз: помечаем и идём дальше, решение остаётся человеку
-            # постфактум на вкладке «Супервайзер».
+            self.repos.agents.set_status(agent.id, "idle")
             self.bus.emit(Event(
                 EventType.APPROVAL_REQUESTED, workspace_id=workspace_id, task_id=task.id,
                 subtask_id=subtask.id, agent_id=agent.id, agent_name=agent.name,
                 message=f"нужно решение по «{subtask.title}»: {verdict.notes[:150]}",
                 payload={"incident_id": incident_id, "verdict": verdict.verdict},
             ))
-            self.state.finished += 1
             await self._maybe_summarize(task)
-            return True, "", False
+            return False, "", False
 
-        reason = (Reason.CONFLICT if verdict.verdict == "conflict"
-                  else Reason.NOT_ACCEPTED)
         self._set_status(agent, subtask, "paused")
-        answer = await self._gate.ask(
+        answer = await self._ask_human(
             reason,
             f"«{subtask.title}»: {verdict.notes[:200] or 'результат не принят'}",
             details=self._decision_details(subtask, report, verdict),
@@ -5760,17 +6193,22 @@ class Orchestrator:
             parts.append("Замечания супервайзера:\n" + "\n".join(
                 f"· [{i.severity}] {i.description}" for i in verdict.issues
             ))
+        elif verdict.notes:
+            parts.append("Супервайзер:\n" + verdict.notes[:600])
         parts.append("Результат исполнителя:\n" + (report.content or "")[:1200])
         return "\n\n".join(p for p in parts if p)
 
     async def _apply_decision(self, workspace_id: int, task: Task, subtask: Subtask,
-                              agent: Agent, answer, incident_id: int | None
+                              agent: Agent, answer: Answer, incident_id: int | None
                               ) -> tuple[bool | None, str, bool]:
         """Применяет решение пользователя к подзадаче.
 
         Третий элемент кортежа — признак того, что круг доработки назначил
         человек, а значит его надо выдать сверх автоматического лимита.
         """
+        if incident_id is not None:
+            self.state.escalated = max(0, self.state.escalated - 1)
+
         if answer.decision is Decision.ABORT:
             self.bus.log("Прогон остановлен решением пользователя",
                          workspace_id=workspace_id, task_id=task.id)
@@ -5791,14 +6229,12 @@ class Orchestrator:
                     incident_id, "resolved",
                     f"Пользователь отправил на доработку: {answer.comment[:200]}"
                 )
-            self.state.escalated = max(0, self.state.escalated - 1)
             return None, answer.comment or "Пользователь вернул работу на доработку.", True
 
         if answer.decision is Decision.SKIP:
             self.repos.tasks.update_subtask(subtask.id, status="error")
             self.repos.agents.set_status(agent.id, "idle")
             self.state.failed += 1
-            self.state.escalated = max(0, self.state.escalated - 1)
             if incident_id:
                 self.repos.incidents.resolve(
                     incident_id, "resolved",
@@ -5814,7 +6250,6 @@ class Orchestrator:
         self.repos.tasks.update_subtask(subtask.id, status="done")
         self.repos.agents.set_status(agent.id, "idle")
         self.state.finished += 1
-        self.state.escalated = max(0, self.state.escalated - 1)
         if incident_id:
             self.repos.incidents.resolve(
                 incident_id, "resolved",
@@ -5822,6 +6257,31 @@ class Orchestrator:
             )
         await self._maybe_summarize(task)
         return True, "", False
+
+    async def _on_budget_blocked(self, state: ScopeState) -> bool:
+        """Лимит исчерпан посреди прогона: спросить, поднимать ли его.
+
+        Возвращает ``True``, если пользователь разрешил продолжить (лимит
+        поднимает сам ``BudgetGuard``). Остановка прогона — отдельное
+        решение: тогда заблокированные вызовы завершаются ошибкой.
+        """
+        gate = self._gate
+        if gate is None or self._stop.is_set():
+            return False
+        answer = await gate.ask(
+            Reason.BUDGET,
+            f"Исчерпан лимит: {state.reason()}. Поднять лимит на 50% и продолжить?",
+            details=(f"Уровень: {state.name}\n"
+                     f"Текущий лимит: {BudgetGuard.describe_limit(state)}\n"
+                     f"Израсходовано: {state.tokens} токенов, ~${state.cost:.4f}"),
+            task_id=self.state.task_id, agent_name="Бюджет",
+        )
+        if answer.decision is Decision.ABORT:
+            self.bus.log("Прогон остановлен: лимит бюджета исчерпан",
+                         workspace_id=self._workspace_id, task_id=self.state.task_id)
+            self._stop.set()
+            self._pause.set()
+        return answer.decision is Decision.EXTEND
 
     def _last_report(self, subtask_id: int) -> Report | None:
         row = self.repos.db.query_one(
@@ -5866,7 +6326,7 @@ class Orchestrator:
             ))
             return False
 
-        # Отчёт — это то, что увидит супервайзер на этапе 5.
+        # Отчёт — это то, что увидит супервайзер.
         report_id = self.repos.reports.add_report(
             workspace_id, task.id, subtask.id, agent.id,
             content=result.result_text, confidence=result.confidence,
@@ -5875,7 +6335,8 @@ class Orchestrator:
         )
         self.repos.agents.set_status(agent.id, "idle")
 
-        confidence = f", уверенность {result.confidence:.2f}" if result.confidence else ""
+        confidence = (f", уверенность {result.confidence:.2f}"
+                      if result.confidence is not None else "")
         self.bus.emit(Event(
             EventType.REPORT_CREATED, workspace_id=workspace_id, task_id=task.id,
             subtask_id=subtask.id, agent_id=agent.id, agent_name=agent.name,
@@ -5890,7 +6351,7 @@ class Orchestrator:
         return True
 
     def _rework_notes(self, subtask: Subtask) -> str:
-        """Замечания супервайзера к прошлой версии подзадачи (используется на этапе 5)."""
+        """Замечания супервайзера к прошлой версии подзадачи."""
         if subtask.rework_count <= 0:
             return ""
         row = self.repos.db.query_one(
@@ -5918,7 +6379,8 @@ class Orchestrator:
     def _set_status(self, agent: Agent, subtask: Subtask, status: str) -> None:
         self.repos.agents.set_status(agent.id, status)
         self.repos.tasks.update_subtask(subtask.id, status=status)
-        self.bus.emit(Event(EventType.AGENT_STATUS, agent_id=agent.id,
+        self.bus.emit(Event(EventType.AGENT_STATUS, workspace_id=self._workspace_id,
+                            task_id=self.state.task_id, agent_id=agent.id,
                             agent_name=agent.name, subtask_id=subtask.id,
                             message=status, payload={"status": status}))
 
@@ -5928,7 +6390,8 @@ class Orchestrator:
         if agent:
             self.repos.agents.set_status(agent.id, "error")
         self.bus.emit(Event(
-            EventType.SUBTASK_FAILED, subtask_id=subtask.id,
+            EventType.SUBTASK_FAILED, workspace_id=self._workspace_id,
+            task_id=self.state.task_id, subtask_id=subtask.id,
             agent_id=agent.id if agent else None,
             agent_name=agent.name if agent else "", message=message,
         ))
@@ -5954,10 +6417,21 @@ class Orchestrator:
         """Ворота согласования — интерфейс отдаёт через них решения пользователя."""
         return self._gate
 
+    @property
+    def budget(self) -> BudgetGuard | None:
+        """Бюджет текущего прогона — для живых индикаторов в интерфейсе."""
+        return self._budget
+
+    def _count_supervisor_usage(self, tokens: int, cost: float) -> None:
+        self.state.tokens += tokens
+        self.state.cost += cost
+
     def _start_supervisor(self, workspace_id: int, settings: dict, task: Task) -> None:
         """Поднимает супервайзера, если он настроен, и включает сводки по таймеру."""
         self._summary_on_event = bool(settings.get("summary_on_event", True))
-        supervisor = Supervisor(self.repos, self.bus, workspace_id, settings)
+        supervisor = Supervisor(self.repos, self.bus, workspace_id, settings,
+                                budget=self._budget,
+                                on_usage=self._count_supervisor_usage)
         if not supervisor.available():
             self._supervisor = None
             self.bus.log("Супервайзер не настроен — отчёты принимаются без проверки",
@@ -5970,6 +6444,8 @@ class Orchestrator:
         if self._gate is not None:
             self._gate.cancel_all()
             self._gate = None
+        if self._budget is not None:
+            self._budget.on_blocked = None
         if self._supervisor is not None:
             await self._supervisor.aclose()
             self._supervisor = None
@@ -5984,7 +6460,7 @@ class Orchestrator:
 
 ### `core/planner.py`
 
-*140 строк*
+*156 строк*
 
 ````python
 """Автоматическое разбиение задачи на подзадачи через ИИ (этап 3).
@@ -6077,6 +6553,17 @@ async def plan_subtasks(repos: Repos, workspace_id: int,
         f"ДОСТУПНЫЕ ИСПОЛНИТЕЛИ: {json.dumps(roster, ensure_ascii=False)}"
     )
 
+    # Планирование тоже тратит бюджет, поэтому лимиты проверяются заранее.
+    from core.budget import BudgetGuard
+    from core.events import EventBus
+
+    task = repos.tasks.current(workspace_id)
+    guard = BudgetGuard(repos, EventBus(), workspace_id,
+                        task.id if task else None, task.token_limit if task else None)
+    blocked = guard.blocking_scope(agent.id)
+    if blocked is not None:
+        raise RuntimeError(f"Планирование не запущено: лимит исчерпан — {blocked.reason()}")
+
     secret = repos.keys.reveal(agent.api_key_id) if agent.api_key_id else ""
     key = repos.keys.get(agent.api_key_id) if agent.api_key_id else None
     provider = build_provider(agent.provider, secret, key.base_url if key else "")
@@ -6093,7 +6580,8 @@ async def plan_subtasks(repos: Repos, workspace_id: int,
     # Учёт расхода — планирование тоже стоит денег.
     cost = estimate_cost(agent.provider, agent.model,
                          result.usage.input_tokens, result.usage.output_tokens)
-    repos.budgets.log_call(workspace_id, None, None, agent.id, agent.provider,
+    repos.budgets.log_call(workspace_id, task.id if task else None, None, agent.id,
+                           agent.provider,
                            agent.model, result.usage.input_tokens,
                            result.usage.output_tokens, cost)
 
@@ -6104,8 +6592,12 @@ async def plan_subtasks(repos: Repos, workspace_id: int,
         raise RuntimeError("Модель вернула ответ не в формате JSON. "
                            "Попробуйте ещё раз или выберите другую модель.") from exc
 
+    # Некоторые модели отвечают голым списком вместо объекта — принимаем и так.
+    items = data if isinstance(data, list) else (data.get("subtasks") or [])
     out: list[PlannedSubtask] = []
-    for item in data.get("subtasks", []):
+    for item in items:
+        if not isinstance(item, dict):
+            continue
         title = str(item.get("title", "")).strip()
         if not title:
             continue
@@ -6131,7 +6623,7 @@ def match_agent_by_role(repos: Repos, workspace_id: int, role: str | None) -> in
 
 ### `core/supervisor/checklist.py`
 
-*305 строк*
+*308 строк*
 
 ````python
 """Этап 5 — промпты супервайзера и разбор его ответов.
@@ -6434,16 +6926,19 @@ class Anonymizer:
         """Вычищает имена агентов из готового текста — страховка на случай,
         если модель всё-таки назвала кого-то по имени."""
         result = text or ""
-        for agent_id, name in names.items():
+        # Длинные имена первыми: «Аналитик Пётр» не должно превратиться в
+        # «Исполнитель A Пётр» из-за того, что сначала заменили «Аналитик».
+        for agent_id, name in sorted(names.items(), key=lambda kv: -len(kv[1] or "")):
             if name and len(name) > 2:
-                result = re.sub(re.escape(name), self.label(agent_id), result,
-                                flags=re.IGNORECASE)
+                # Только целые слова: имя «Ан» не должно резать «Анализ».
+                pattern = rf"(?<!\w){re.escape(name)}(?!\w)"
+                result = re.sub(pattern, self.label(agent_id), result, flags=re.IGNORECASE)
         return result
 ````
 
 ### `core/supervisor/supervisor.py`
 
-*338 строк*
+*376 строк*
 
 ````python
 """Этап 5 — служба супервайзера.
@@ -6466,7 +6961,9 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass
+from typing import Callable
 
+from core.budget import BudgetBlocked, BudgetGuard
 from core.events import Event, EventBus, EventType
 from core.supervisor.checklist import (
     CONFLICT_SYSTEM,
@@ -6508,15 +7005,28 @@ class Supervisor:
     """Проверяющий над командой агентов."""
 
     def __init__(self, repos: Repos, bus: EventBus, workspace_id: int,
-                 settings: dict) -> None:
+                 settings: dict, budget: BudgetGuard | None = None,
+                 on_usage: Callable[[int, float], None] | None = None) -> None:
         self.repos = repos
         self.bus = bus
         self.workspace_id = workspace_id
         self.settings = settings
+        #: лимиты прогона: проверки супервайзера — самая дорогая часть
+        #: системы, поэтому они обязаны проходить через тот же бюджет
+        self.budget = budget
+        self.on_usage = on_usage
+        self.anonymize = bool(settings.get("anonymize_summaries", True))
         self.anon = Anonymizer()
+        self._names = {a.id: a.name for a in repos.agents.list(workspace_id)}
         self._model: SupervisorModel | None = None
         self._summary_task: asyncio.Task | None = None
         self._stop = asyncio.Event()
+
+    def _label(self, agent_id: int | None) -> str:
+        """Как подписать автора: анонимной меткой или по имени (если выключено)."""
+        if not self.anonymize and agent_id in self._names:
+            return self._names[agent_id]
+        return self.anon.label(agent_id)
 
     # -- модель --------------------------------------------------------------
     def available(self) -> bool:
@@ -6582,6 +7092,10 @@ class Supervisor:
                 "Супервайзер не настроен: выберите агента или локальную модель "
                 "на вкладке «Настройки»."
             )
+        if self.budget is not None:
+            blocked = await self.budget.ensure_allowed(None)
+            if blocked is not None:
+                raise BudgetBlocked(f"лимит исчерпан — {blocked.reason()}")
         result = await model.provider.complete(
             model.model,
             [ChatMessage("system", system), ChatMessage("user", user)],
@@ -6595,6 +7109,16 @@ class Supervisor:
             model.provider_key, model.model,
             result.usage.input_tokens, result.usage.output_tokens, cost,
         )
+        if self.budget is not None:
+            self.budget.add(result.usage.total, cost, None)
+        if self.on_usage is not None:
+            self.on_usage(result.usage.total, cost)
+        self.bus.emit(Event(
+            EventType.USAGE, workspace_id=self.workspace_id, task_id=task_id,
+            agent_name="Супервайзер",
+            message=f"+{result.usage.total} токенов (~${cost:.4f})",
+            payload={"tokens": result.usage.total, "cost": cost, "supervisor": True},
+        ))
         return result.text
 
     def _emit(self, kind: EventType, message: str, **payload) -> None:
@@ -6604,8 +7128,13 @@ class Supervisor:
 
     # -- проверка отчёта -----------------------------------------------------
     async def review(self, task: Task, subtask: Subtask, report: Report) -> Verdict:
-        """Проверяет отчёт по чек-листу и возвращает вердикт."""
-        label = self.anon.label(report.agent_id)
+        """Проверяет отчёт по чек-листу и возвращает вердикт.
+
+        Если проверить не удалось (сеть, лимит, модель не настроена),
+        вердикт — ``unverified``: такой результат не считается принятым и
+        не уходит дальше по конвейеру, пока его не посмотрит человек.
+        """
+        label = self._label(report.agent_id)
         context = self._accepted_context(task.id, exclude_subtask=subtask.id)
 
         user = REVIEW_USER.format(
@@ -6621,12 +7150,16 @@ class Supervisor:
         self._emit(EventType.AGENT_THINKING, f"проверяю «{subtask.title}»")
         try:
             raw = await self._ask(REVIEW_SYSTEM, user, task.id)
-        except ProviderError as exc:
-            log.warning("Супервайзер недоступен: %s", exc)
-            # Недоступность проверяющего не должна ронять весь прогон:
-            # отчёт принимается, но факт пропуска проверки фиксируется.
-            self._emit(EventType.ERROR, f"проверка пропущена: {exc}")
-            return Verdict(verdict="ok", notes=f"Проверка не выполнена: {exc}")
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:  # noqa: BLE001 — любая причина равна «не проверено»
+            log.warning("Супервайзер не смог проверить отчёт: %s", exc)
+            # Раньше непроверенный отчёт молча принимался. Это опаснее, чем
+            # остановиться: ошибка ушла бы в зависимые подзадачи без следа.
+            self._emit(EventType.ERROR, f"проверка не выполнена: {exc}")
+            notes = f"Проверка не выполнена: {exc}"
+            self.repos.reports.mark_reviewed(report.id, "unverified", notes)
+            return Verdict(verdict="unverified", notes=notes)
 
         verdict = parse_verdict(raw)
         self.repos.reports.mark_reviewed(report.id, verdict.verdict, verdict.notes)
@@ -6658,7 +7191,7 @@ class Supervisor:
                 continue
             if st.status not in ("done", "review"):
                 continue
-            chunks.append(f"[{self.anon.label(st.agent_id)}] {st.title}:\n"
+            chunks.append(f"[{self._label(st.agent_id)}] {st.title}:\n"
                           f"{st.result[:1200]}")
         return "\n\n".join(chunks[-CONTEXT_REPORTS:])
 
@@ -6689,7 +7222,7 @@ class Supervisor:
 
         # Страховка: вычищаем имена агентов, если модель их всё-таки назвала.
         names = {a.id: a.name for a in self.repos.agents.list(self.workspace_id)}
-        content = self.anon.scrub(raw.strip(), names)
+        content = self.anon.scrub(raw.strip(), names) if self.anonymize else raw.strip()
         if not content:
             return ""
 
@@ -6709,7 +7242,7 @@ class Supervisor:
         for st in self.repos.tasks.subtasks(task_id):
             if not st.result:
                 continue
-            chunks.append(f"[{self.anon.label(st.agent_id)}] {st.title}:\n"
+            chunks.append(f"[{self._label(st.agent_id)}] {st.title}:\n"
                           f"{st.result[:2500]}")
         return "\n\n".join(chunks[-CONTEXT_REPORTS:])
 
@@ -6788,7 +7321,7 @@ class Supervisor:
 
 ### `core/hitl.py`
 
-*212 строк*
+*225 строк*
 
 ````python
 """Этап 7 — human-in-the-loop: реальная пауза в критических точках.
@@ -6824,6 +7357,7 @@ class Decision(str, Enum):
     REWORK = "rework"      # вернуть исполнителю с комментарием
     SKIP = "skip"          # пометить подзадачу как неудачную и продолжить
     ABORT = "abort"        # остановить весь прогон
+    EXTEND = "extend"      # поднять исчерпанный лимит бюджета и продолжить
 
 
 class Reason(str, Enum):
@@ -6833,6 +7367,8 @@ class Reason(str, Enum):
     NOT_ACCEPTED = "not_accepted"      # доработки исчерпаны, результат не принят
     LOW_CONFIDENCE = "low_confidence"  # агент сам не уверен в результате
     MILESTONE = "milestone"            # завершён этап работ
+    UNVERIFIED = "unverified"          # супервайзер не смог проверить результат
+    BUDGET = "budget"                  # исчерпан лимит бюджета
 
 
 REASON_TITLES = {
@@ -6840,6 +7376,8 @@ REASON_TITLES = {
     Reason.NOT_ACCEPTED: "Результат не принят супервайзером",
     Reason.LOW_CONFIDENCE: "Низкая уверенность исполнителя",
     Reason.MILESTONE: "Завершён этап работ",
+    Reason.UNVERIFIED: "Результат не проверен",
+    Reason.BUDGET: "Исчерпан лимит бюджета",
 }
 
 #: какие кнопки показывать для каждой причины
@@ -6848,6 +7386,8 @@ REASON_OPTIONS: dict[Reason, list[Decision]] = {
     Reason.NOT_ACCEPTED: [Decision.APPROVE, Decision.REWORK, Decision.SKIP, Decision.ABORT],
     Reason.LOW_CONFIDENCE: [Decision.APPROVE, Decision.REWORK, Decision.ABORT],
     Reason.MILESTONE: [Decision.APPROVE, Decision.ABORT],
+    Reason.UNVERIFIED: [Decision.APPROVE, Decision.REWORK, Decision.SKIP, Decision.ABORT],
+    Reason.BUDGET: [Decision.EXTEND, Decision.SKIP, Decision.ABORT],
 }
 
 DECISION_TITLES = {
@@ -6855,6 +7395,7 @@ DECISION_TITLES = {
     Decision.REWORK: "На доработку",
     Decision.SKIP: "Пропустить",
     Decision.ABORT: "Остановить прогон",
+    Decision.EXTEND: "Увеличить лимит на 50%",
 }
 
 
@@ -6975,8 +7516,13 @@ class ApprovalGate:
             try:
                 decision = Decision(decision)
             except ValueError:
-                decision = Decision.APPROVE
-        future.set_result(Answer(decision, comment.strip()))
+                # Неизвестное решение не превращаем молча в «Принять»:
+                # это ровно та ошибка, ради которой человека и спрашивают.
+                return False
+        request = self._open.get(approval_id)
+        if request is not None and request.options and decision not in request.options:
+            return False
+        future.set_result(Answer(decision, (comment or "").strip()))
         return True
 
     def cancel_all(self) -> None:
@@ -7007,7 +7553,7 @@ def parse_payload(raw: str) -> dict:
 
 ### `core/budget.py`
 
-*251 строк*
+*341 строк*
 
 ````python
 """Этап 9 — бюджеты, лимиты и алерты.
@@ -7026,13 +7572,22 @@ def parse_payload(raw: str) -> dict:
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from dataclasses import dataclass, field
+from typing import Awaitable, Callable
 
 from core.events import Event, EventBus, EventType
 from storage.repositories import Repos
 
 log = logging.getLogger("aiorc.budget")
+
+#: во сколько раз поднимается лимит по решению пользователя
+EXTEND_FACTOR = 1.5
+
+
+class BudgetBlocked(RuntimeError):
+    """Вызов модели не выполнен: исчерпан лимит бюджета."""
 
 SCOPE_TITLES = {
     "workspace": "воркспейс",
@@ -7078,6 +7633,7 @@ class ScopeState:
     tokens: int = 0
     cost: float = 0.0
     alerted: bool = False
+    exceeded_reported: bool = False
 
     def ratio(self) -> float:
         """Доля израсходованного — максимум из токенов и денег."""
@@ -7119,6 +7675,12 @@ class BudgetGuard:
         self.workspace_id = workspace_id
         self.task_id = task_id
         self._scopes: dict[tuple[str, int], ScopeState] = {}
+        #: лимит на уровне задачи взят из формы задачи, а не из таблицы budgets
+        self._task_limit_from_form = False
+        #: кто решает, что делать при исчерпании лимита; ``None`` — блокировать
+        self.on_blocked: Callable[[ScopeState], Awaitable[bool]] | None = None
+        #: один вопрос на уровень: параллельные агенты ждут общего ответа
+        self._pending: dict[tuple[str, int], asyncio.Future] = {}
         self._load(task_token_limit)
 
     # -- загрузка ------------------------------------------------------------
@@ -7139,6 +7701,8 @@ class BudgetGuard:
             # если отдельной записи в budgets нет, берём его оттуда.
             if limit.token_limit is None and task_token_limit:
                 limit.token_limit = task_token_limit
+                self._task_limit_from_form = self.repos.budgets.get(
+                    "task", self.task_id) is None
             self._scopes[("task", self.task_id)] = ScopeState(
                 "task", self.task_id, task.title if task else "задача",
                 limit, used_tokens, used_cost,
@@ -7185,6 +7749,70 @@ class BudgetGuard:
         """Совместимость со старым интерфейсом ``TokenBudget``."""
         return self.blocking_scope(agent_id) is not None
 
+    async def ensure_allowed(self, agent_id: int | None = None) -> ScopeState | None:
+        """Проверка перед вызовом модели с возможностью продлить лимит.
+
+        Возвращает ``None``, если вызов разрешён, иначе уровень, который
+        его блокирует. Когда назначен ``on_blocked`` (включён
+        human-in-the-loop), исчерпанный лимит не обрывает работу сразу:
+        пользователя спрашивают, поднять ли лимит. Параллельные агенты,
+        упёршиеся в тот же уровень, ждут одного общего ответа, а не
+        заваливают человека одинаковыми вопросами.
+        """
+        while True:
+            blocked = self.blocking_scope(agent_id)
+            if blocked is None or self.on_blocked is None:
+                return blocked
+            key = (blocked.scope, blocked.scope_id)
+            future = self._pending.get(key)
+            if future is None:
+                future = asyncio.ensure_future(self._ask_extension(blocked))
+                self._pending[key] = future
+                future.add_done_callback(lambda _f, k=key: self._pending.pop(k, None))
+            if not await asyncio.shield(future):
+                return blocked
+            # лимит поднят — проверяем все уровни заново: мог упереться другой
+
+    async def _ask_extension(self, state: ScopeState) -> bool:
+        assert self.on_blocked is not None
+        if not await self.on_blocked(state):
+            return False
+        self.extend(state)
+        return True
+
+    def extend(self, state: ScopeState, factor: float = EXTEND_FACTOR) -> None:
+        """Поднимает исчерпанный лимит и сохраняет новое значение."""
+        limit = state.limit
+        if limit.token_limit:
+            limit.token_limit = int(max(limit.token_limit, state.tokens) * factor)
+        if limit.cost_limit:
+            limit.cost_limit = round(max(limit.cost_limit, state.cost) * factor, 6)
+        state.alerted = False
+        if state.scope == "task" and self._task_limit_from_form:
+            # Лимит задан в форме задачи — там его и обновляем.
+            self.repos.tasks.update(state.scope_id, token_limit=limit.token_limit)
+        else:
+            self.repos.budgets.upsert(state.scope, state.scope_id, limit.token_limit,
+                                      limit.cost_limit, limit.alert_threshold)
+            self.repos.budgets.sync_used(state.scope, state.scope_id,
+                                         state.tokens, state.cost)
+        self.bus.emit(Event(
+            EventType.BUDGET_EXTENDED, workspace_id=self.workspace_id,
+            task_id=self.task_id,
+            message=(f"лимит поднят: {SCOPE_TITLES.get(state.scope, state.scope)} "
+                     f"«{state.name}» — {self.describe_limit(state)}"),
+            payload={"scope": state.scope, "scope_id": state.scope_id},
+        ))
+
+    @staticmethod
+    def describe_limit(state: ScopeState) -> str:
+        parts = []
+        if state.limit.token_limit:
+            parts.append(f"{state.limit.token_limit} токенов")
+        if state.limit.cost_limit:
+            parts.append(money(state.limit.cost_limit))
+        return ", ".join(parts) or "без лимита"
+
     # -- учёт ----------------------------------------------------------------
     def add(self, tokens: int, cost: float, agent_id: int | None = None) -> None:
         """Записывает расход и при необходимости поднимает алерты."""
@@ -7206,10 +7834,17 @@ class BudgetGuard:
                 self._maybe_alert(state)
 
     def _maybe_alert(self, state: ScopeState) -> None:
-        """Алерт срабатывает один раз на уровень — иначе он превратится в шум."""
+        """Каждый алерт срабатывает один раз на уровень — иначе это шум.
+
+        «Подходим к порогу» и «лимит исчерпан» — разные события, поэтому у
+        них отдельные флаги: предупреждение о пороге не должно глушить
+        сообщение о превышении, и наоборот.
+        """
         if state.exceeded():
-            if not state.alerted:
-                state.alerted = True
+            if state.exceeded_reported:
+                return
+            state.exceeded_reported = True
+            state.alerted = True
             self.bus.emit(Event(
                 EventType.BUDGET_EXCEEDED, workspace_id=self.workspace_id,
                 task_id=self.task_id,
@@ -7219,6 +7854,7 @@ class BudgetGuard:
             ))
             return
 
+        state.exceeded_reported = False     # после продления лимита снова следим
         if not state.alerted and state.ratio() >= state.limit.alert_threshold:
             state.alerted = True
             percent = state.ratio() * 100
@@ -7268,7 +7904,7 @@ def load_states(repos: Repos, workspace_id: int) -> list[ScopeState]:
 
 ### `core/export/bundle.py`
 
-*373 строк*
+*383 строк*
 
 ````python
 """Этап 8 — сборка результата проекта.
@@ -7393,8 +8029,12 @@ class ResultBundle:
             return "Супервайзер"
         if anonymize:
             ordered = sorted(self.agent_names)
-            index = ordered.index(agent_id) if agent_id in ordered else 0
-            return f"Исполнитель {chr(ord('A') + index)}"
+            if agent_id not in ordered:
+                # Удалённый агент не должен получить чужую метку «A».
+                return "Исполнитель ?"
+            index = ordered.index(agent_id)
+            suffix = chr(ord("A") + index) if index < 26 else str(index + 1)
+            return f"Исполнитель {suffix}"
         return self.agent_names.get(agent_id, "Агент удалён")
 
     def has_code(self) -> bool:
@@ -7409,15 +8049,21 @@ def collect(repos: Repos, workspace_id: int) -> ResultBundle:
 
     task = repos.tasks.current(workspace_id)
     subtasks = repos.tasks.subtasks(task.id) if task else []
-    tokens, cost = repos.budgets.workspace_totals(workspace_id)
+    # В воркспейсе может быть несколько задач подряд: в документ идёт только
+    # текущая, иначе отчёты и расход прошлых задач смешались бы с новыми.
+    tokens, cost = (repos.budgets.task_totals(task.id) if task
+                    else repos.budgets.workspace_totals(workspace_id))
+
+    def of_task(items):
+        return [i for i in items if task is None or i.task_id in (task.id, None)]
 
     bundle = ResultBundle(
         workspace=workspace,
         task=task,
         subtasks=subtasks,
-        reports=repos.reports.list_reports(workspace_id, limit=500),
-        summaries=repos.reports.list_summaries(workspace_id, limit=100),
-        incidents=repos.incidents.list(workspace_id, limit=500),
+        reports=of_task(repos.reports.list_reports(workspace_id, limit=500)),
+        summaries=of_task(repos.reports.list_summaries(workspace_id, limit=100)),
+        incidents=of_task(repos.incidents.list(workspace_id, limit=500)),
         decisions=repos.approvals.history(workspace_id, limit=200),
         agent_names={a.id: a.name for a in repos.agents.list(workspace_id)},
         files=scan_files(PATHS.workspace_dir(workspace_id)),
@@ -8040,932 +8686,585 @@ def open_folder(path: Path) -> bool:
 ````
 
 
-## Интерфейс
+## Интерфейс: мост Python и QML
 
-### `ui/theme.py`
+### `ui/app.py`
 
-*264 строк*
+*152 строк*
 
 ````python
-"""Оформление приложения: палитра и QSS.
+"""Запуск интерфейса на Qt Quick.
 
-Тема тёмная по умолчанию, светлая — переключается в настройках. Цвета
-статусов вынесены отдельно: ими красятся бейджи агентов на дашборде.
+Порядок: приложение Qt → шрифты → мост (Backend, I18n) → QML-движок →
+главное окно → общий цикл asyncio (qasync).
 """
 
 from __future__ import annotations
 
-from app.config import PATHS
+import ctypes
+import logging
+import sys
+from pathlib import Path
 
-DARK = {
-    "bg": "#12141a",
-    "surface": "#191c24",
-    "surface2": "#20242e",
-    "border": "#2c313d",
-    "text": "#e6e9f0",
-    "text_dim": "#99a1b3",
-    "accent": "#6c8cff",
-    "accent_hover": "#8099ff",
-    "danger": "#ef5f6b",
-    "ok": "#3ecf8e",
-    "warn": "#f0b429",
-}
+from PySide6.QtCore import QtMsgType, qInstallMessageHandler
+from PySide6.QtGui import QFontDatabase, QGuiApplication, QIcon
+from PySide6.QtQml import QQmlApplicationEngine
+from PySide6.QtQuickControls2 import QQuickStyle
 
-LIGHT = {
-    "bg": "#f4f5f8",
-    "surface": "#ffffff",
-    "surface2": "#eef0f5",
-    "border": "#d7dae2",
-    "text": "#1a1d24",
-    "text_dim": "#6a7080",
-    "accent": "#3a5bd9",
-    "accent_hover": "#2c49ba",
-    "danger": "#d63a48",
-    "ok": "#1f9d63",
-    "warn": "#c98a06",
-}
+from app.config import AppSettings
+from storage.db import Database
 
-STATUS_COLORS = {
-    "idle": "#99a1b3",
-    "running": "#6c8cff",
-    "paused": "#f0b429",
-    "error": "#ef5f6b",
-    "done": "#3ecf8e",
-    "review": "#b07cff",
-    "rework": "#f0b429",
-}
+log = logging.getLogger("aiorc.qml")
+
+UI_DIR = Path(__file__).resolve().parent
+QML_DIR = UI_DIR / "qml"
+FONTS_DIR = UI_DIR / "assets" / "fonts"
+
+#: сообщения QML, собранные за сессию (смоук-тест интерфейса проверяет,
+#: что среди них нет ошибок)
+QML_MESSAGES: list[tuple[str, str]] = []
 
 
-#: текущая активная тема; графики берут цвета отсюда, чтобы не тянуть
-#: настройки через полдюжины конструкторов
-_ACTIVE_THEME = "dark"
+def _qt_message(mode: QtMsgType, context, message: str) -> None:
+    level = {QtMsgType.QtWarningMsg: "warning", QtMsgType.QtCriticalMsg: "error",
+             QtMsgType.QtFatalMsg: "error"}.get(mode, "info")
+    if "Cannot find font directory" in message:
+        level = "info"    # платформа без системных шрифтов; свои шрифты мы приносим сами
+    QML_MESSAGES.append((level, message))
+    if level == "info":
+        log.debug(message)
+    else:
+        log.warning("Qt: %s", message)
 
 
-def palette(theme: str) -> dict[str, str]:
-    return LIGHT if theme == "light" else DARK
+def ensure_qt_dll_path() -> None:
+    """Помогает Windows найти DLL Qt для QML-плагинов.
 
-
-def set_active_theme(theme: str) -> None:
-    """Запоминает тему, применённую к приложению."""
-    global _ACTIVE_THEME
-    _ACTIVE_THEME = theme if theme in ("dark", "light") else "dark"
-
-
-def active_theme() -> str:
-    return _ACTIVE_THEME
-
-
-def current_palette() -> dict[str, str]:
-    """Палитра активной темы — для виджетов, рисующих себя вручную."""
-    return palette(_ACTIVE_THEME)
-
-
-_ARROW_POINTS = {"down": ((1, 3), (5, 7), (9, 3)), "up": ((1, 7), (5, 3), (9, 7))}
-
-
-def _arrow_icon(direction: str, colour: str) -> str:
-    """Рисует стрелку в PNG-файл кэша и возвращает путь для QSS.
-
-    Стрелки у QComboBox и QSpinBox пропадают, как только их кнопки
-    стилизованы через QSS, а треугольник из рамок Qt не рисует — нужна
-    картинка. SVG не годится: плагина qsvg в сборке PySide6 может не быть.
-    Рядом кладётся вариант @2x — Qt сам берёт его на HiDPI-экранах.
-    Вызывать можно только после создания QApplication.
+    Плагины (например, стиль Basic для Qt Quick Controls) лежат в подкаталогах
+    PySide6 и зависят от DLL в его корне. В части окружений (venv, запуск не
+    из консоли Python) Windows их не находит, и загрузка QML падает с
+    «Не найден указанный модуль». Явное добавление каталога это лечит.
     """
-    from PySide6.QtCore import QPointF, Qt
-    from PySide6.QtGui import QColor, QImage, QPainter, QPen
+    if sys.platform != "win32":
+        return
+    import os
 
-    folder = PATHS.home / "cache" / "theme"
-    base = f"arrow_{direction}_{colour.lstrip('#')}"
-    path = folder / f"{base}.png"
-    if not path.exists():
-        folder.mkdir(parents=True, exist_ok=True)
-        for scale, target in ((1, path), (2, folder / f"{base}@2x.png")):
-            image = QImage(10 * scale, 10 * scale, QImage.Format.Format_ARGB32)
-            image.fill(Qt.GlobalColor.transparent)
-            painter = QPainter(image)
-            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-            pen = QPen(QColor(colour), 1.6 * scale)
-            pen.setCapStyle(Qt.PenCapStyle.RoundCap)
-            pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
-            painter.setPen(pen)
-            painter.drawPolyline([QPointF(x * scale, y * scale)
-                                  for x, y in _ARROW_POINTS[direction]])
-            painter.end()
-            image.save(str(target))
-    return path.as_posix()
+    import PySide6
+
+    qt_dir = os.path.dirname(PySide6.__file__)
+    try:
+        os.add_dll_directory(qt_dir)
+    except (OSError, AttributeError):
+        pass
+    if qt_dir not in os.environ.get("PATH", ""):
+        os.environ["PATH"] = qt_dir + os.pathsep + os.environ.get("PATH", "")
 
 
-def stylesheet(theme: str = "dark") -> str:
-    """Собирает QSS под выбранную палитру."""
-    set_active_theme(theme)
-    c = palette(theme)
-    down, up = _arrow_icon("down", c["text_dim"]), _arrow_icon("up", c["text_dim"])
-    down_off, up_off = _arrow_icon("down", c["border"]), _arrow_icon("up", c["border"])
-    return f"""
-    QWidget {{
-        background: {c['bg']};
-        color: {c['text']};
-        font-family: "Inter", "Segoe UI", "SF Pro Text", "Noto Sans", sans-serif;
-        font-size: 14px;
-    }}
-    /* Правило выше красит фон всем виджетам. Внутри карточек это давало
-       тёмные «заплатки» под надписями и под контейнерами-раскладками, поэтому
-       у них фон прозрачный. «.QWidget» — только сам QWidget, без подклассов:
-       окна и страницы свой фон сохраняют. */
-    QLabel, QCheckBox, QRadioButton {{ background: transparent; }}
-    .QWidget {{ background: transparent; }}
-    QLabel#H1 {{ font-size: 24px; font-weight: 600; }}
-    QLabel#H2 {{ font-size: 18px; font-weight: 600; }}
-    QLabel#Dim {{ color: {c['text_dim']}; }}
-    QLabel#Error {{ color: {c['danger']}; }}
-    QLabel#Ok {{ color: {c['ok']}; }}
+def load_fonts() -> dict[str, str]:
+    """Регистрирует шрифты из комплекта и возвращает имена семейств для QML."""
+    families = {"sans": "Segoe UI", "mono": "Consolas", "icons": "lucide"}
+    found: dict[str, str] = {}
+    for path in sorted(FONTS_DIR.glob("*.ttf")):
+        font_id = QFontDatabase.addApplicationFont(str(path))
+        names = QFontDatabase.applicationFontFamilies(font_id) if font_id >= 0 else []
+        if not names:
+            log.warning("Не удалось загрузить шрифт %s", path.name)
+            continue
+        if path.name.startswith("Inter"):
+            found["sans"] = names[0]
+        elif path.name.startswith("JetBrains"):
+            found["mono"] = names[0]
+        elif path.name.startswith("lucide"):
+            found["icons"] = names[0]
+    families.update(found)
+    return families
 
-    QFrame#Card, QWidget#Card {{
-        background: {c['surface']};
-        border: 1px solid {c['border']};
-        border-radius: 12px;
-    }}
-    QFrame#Sidebar {{
-        background: {c['surface']};
-        border-right: 1px solid {c['border']};
-    }}
 
-    QLineEdit, QTextEdit, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox {{
-        background: {c['surface2']};
-        border: 1px solid {c['border']};
-        border-radius: 8px;
-        padding: 7px 10px;
-        selection-background-color: {c['accent']};
-    }}
-    QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus, QComboBox:focus {{
-        border: 1px solid {c['accent']};
-    }}
-    QComboBox::drop-down {{ border: none; width: 22px; }}
-    QComboBox::down-arrow {{ image: url("{down}"); width: 10px; height: 10px; }}
-    QComboBox::down-arrow:on {{ image: url("{up}"); }}
-    QAbstractSpinBox {{ padding-right: 24px; }}
-    QAbstractSpinBox::up-button, QAbstractSpinBox::down-button {{
-        subcontrol-origin: border; width: 22px;
-        border: none; background: transparent;
-    }}
-    QAbstractSpinBox::up-button {{ subcontrol-position: top right; }}
-    QAbstractSpinBox::down-button {{ subcontrol-position: bottom right; }}
-    QAbstractSpinBox::up-arrow {{ image: url("{up}"); width: 8px; height: 8px; }}
-    QAbstractSpinBox::down-arrow {{ image: url("{down}"); width: 8px; height: 8px; }}
-    QAbstractSpinBox::up-arrow:disabled, QAbstractSpinBox::up-arrow:off {{ image: url("{up_off}"); }}
-    QAbstractSpinBox::down-arrow:disabled, QAbstractSpinBox::down-arrow:off {{ image: url("{down_off}"); }}
-    QComboBox QAbstractItemView {{
-        background: {c['surface2']};
-        border: 1px solid {c['border']};
-        selection-background-color: {c['accent']};
-        outline: none;
-    }}
+def apply_dark_titlebar(window) -> None:
+    """Тёмный системный заголовок окна на Windows 10/11, в цвет фона приложения."""
+    if sys.platform != "win32" or window is None:
+        return
+    try:
+        hwnd = int(window.winId())
+        dwm = ctypes.windll.dwmapi
+        value = ctypes.c_int(1)
+        # DWMWA_USE_IMMERSIVE_DARK_MODE: 20 (новые сборки) и 19 (старые)
+        for attr in (20, 19):
+            if dwm.DwmSetWindowAttribute(hwnd, attr, ctypes.byref(value), ctypes.sizeof(value)) == 0:
+                break
+        # DWMWA_CAPTION_COLOR (Windows 11): цвет заголовка = цвет фона (BGR)
+        caption = ctypes.c_int(0x0F0809)
+        dwm.DwmSetWindowAttribute(hwnd, 35, ctypes.byref(caption), ctypes.sizeof(caption))
+    except Exception:  # noqa: BLE001 — косметика, не повод падать
+        log.debug("Тёмный заголовок окна недоступен", exc_info=True)
 
-    QPushButton {{
-        background: {c['surface2']};
-        border: 1px solid {c['border']};
-        border-radius: 8px;
-        padding: 8px 16px;
-    }}
-    QPushButton:hover {{ border-color: {c['accent']}; }}
-    QPushButton:disabled {{ color: {c['text_dim']}; border-color: {c['border']}; }}
-    QPushButton#Primary {{
-        background: {c['accent']};
-        border: 1px solid {c['accent']};
-        color: #ffffff;
-        font-weight: 600;
-    }}
-    QPushButton#Primary:hover {{ background: {c['accent_hover']}; }}
-    QPushButton#Primary:disabled {{
-        background: {c['surface2']}; border-color: {c['border']};
-        color: {c['text_dim']}; font-weight: 600;
-    }}
-    QPushButton#Icon {{ padding: 6px 0; }}
-    QPushButton#Danger {{ color: {c['danger']}; }}
-    QPushButton#Danger:hover {{ border-color: {c['danger']}; }}
-    QPushButton#Nav {{
-        background: transparent;
-        border: none;
-        border-radius: 8px;
-        padding: 10px 14px;
-        text-align: left;
-    }}
-    QPushButton#Nav:hover {{ background: {c['surface2']}; }}
-    QPushButton#Nav:checked {{ background: {c['accent']}; color: #ffffff; font-weight: 600; }}
 
-    QListWidget, QTableWidget, QTreeWidget {{
-        background: {c['surface']};
-        border: 1px solid {c['border']};
-        border-radius: 10px;
-        outline: none;
-    }}
-    QListWidget::item {{ padding: 8px; border-radius: 6px; }}
-    QListWidget::item:selected {{ background: {c['accent']}; color: #ffffff; }}
-    QHeaderView::section {{
-        background: {c['surface2']};
-        border: none;
-        border-bottom: 1px solid {c['border']};
-        padding: 8px;
-        font-weight: 600;
-    }}
-    QTableWidget {{ gridline-color: {c['border']}; }}
+class UiApp:
+    """Собранное приложение: держит ссылки, чтобы их не собрал сборщик мусора."""
 
-    QScrollBar:vertical {{ background: transparent; width: 10px; margin: 2px; }}
-    QScrollBar::handle:vertical {{
-        background: {c['border']}; border-radius: 5px; min-height: 30px;
-    }}
-    QScrollBar::handle:vertical:hover {{ background: {c['text_dim']}; }}
-    QScrollBar::add-line, QScrollBar::sub-line {{ height: 0; width: 0; }}
-    QScrollBar:horizontal {{ background: transparent; height: 10px; margin: 2px; }}
-    QScrollBar::handle:horizontal {{
-        background: {c['border']}; border-radius: 5px; min-width: 30px;
-    }}
+    def __init__(self, settings: AppSettings, db: Database | None = None) -> None:
+        from ui.bridge.backend import Backend
+        from ui.bridge.i18n_bridge import I18n
 
-    QProgressBar {{
-        background: {c['surface2']};
-        border: none; border-radius: 6px; height: 10px; text-align: center;
-    }}
-    QProgressBar::chunk {{ background: {c['accent']}; border-radius: 6px; }}
+        ensure_qt_dll_path()
+        qInstallMessageHandler(_qt_message)
+        QQuickStyle.setStyle("Basic")
+        self.app = QGuiApplication.instance()
+        assert self.app is not None, "QApplication должно быть создано до UiApp"
+        icon = UI_DIR / "assets" / "icon.png"
+        if icon.exists():
+            self.app.setWindowIcon(QIcon(str(icon)))
 
-    QCheckBox::indicator, QRadioButton::indicator {{
-        width: 16px; height: 16px; border-radius: 4px;
-        border: 1px solid {c['border']}; background: {c['surface2']};
-    }}
-    QCheckBox::indicator:checked {{ background: {c['accent']}; border-color: {c['accent']}; }}
+        self.fonts = load_fonts()
+        self.backend = Backend(db or Database(), settings)
+        self.i18n = I18n()
+        self.engine = QQmlApplicationEngine()
+        self.engine.addImportPath(str(QML_DIR))
+        ctx = self.engine.rootContext()
+        ctx.setContextProperty("backend", self.backend)
+        ctx.setContextProperty("i18n", self.i18n)
+        ctx.setContextProperty("fonts", self.fonts)
+        self.engine.load(str(QML_DIR / "Main.qml"))
+        if not self.engine.rootObjects():
+            raise RuntimeError("Не удалось загрузить интерфейс (Main.qml). Подробности в логе.")
+        self.window = self.engine.rootObjects()[0]
+        apply_dark_titlebar(self.window)
 
-    QTabWidget::pane {{ border: 1px solid {c['border']}; border-radius: 10px; top: -1px; }}
-    QTabBar::tab {{
-        background: transparent; padding: 8px 16px; border: none;
-        color: {c['text_dim']};
-    }}
-    QTabBar::tab:selected {{ color: {c['text']}; border-bottom: 2px solid {c['accent']}; }}
+    def dispose(self) -> None:
+        """Порядок важен: сначала гасим агентов и QML, потом мост.
 
-    QToolTip {{
-        background: {c['surface2']}; color: {c['text']};
-        border: 1px solid {c['border']}; padding: 6px; border-radius: 6px;
-    }}
-    QMenu {{
-        background: {c['surface2']}; border: 1px solid {c['border']}; border-radius: 8px;
-    }}
-    QMenu::item:selected {{ background: {c['accent']}; }}
-    QSplitter::handle {{ background: {c['border']}; }}
-    """
+        Если мост уничтожить раньше движка, биндинги QML успевают обратиться
+        к уже удалённым объектам и засыпают лог ошибками «of null».
+
+        Вызывается явно после выхода из цикла событий, а не по
+        ``aboutToQuit``: qasync выходит из цикла Qt и в служебных случаях
+        (``run_until_complete``), и окно пропадало бы посреди работы.
+        """
+        self.backend.shutdown()
+        # Движок принадлежит Python: снятие ссылки удаляет его сразу, вместе
+        # с деревом QML, пока мост ещё жив.
+        self.window = None
+        self.engine = None
 ````
 
-### `ui/widgets/common.py`
+### `ui/bridge/core.py`
 
-*144 строк*
+*143 строк*
 
 ````python
-"""Мелкие переиспользуемые виджеты."""
+"""Общие кирпичики моста: объект состояния, контроллер страницы, форматтеры."""
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (
-    QFrame,
-    QHBoxLayout,
-    QLabel,
-    QMessageBox,
-    QPushButton,
-    QSizePolicy,
-    QVBoxLayout,
-    QWidget,
-)
+from typing import TYPE_CHECKING, Any
+
+from PySide6.QtCore import Property, QObject, Signal, Slot
 
 from app.i18n import tr
-from ui.theme import STATUS_COLORS
+from storage.db import local_time
+
+if TYPE_CHECKING:  # pragma: no cover
+    from core.events import Event
+    from storage.repositories import Repos
+    from ui.bridge.backend import Backend
 
 
-class Card(QFrame):
-    """Карточка-контейнер со скруглением и рамкой."""
+class StateObject(QObject):
+    """QObject, у которого все свойства лежат в одном словаре.
 
-    def __init__(self, parent: QWidget | None = None, spacing: int = 12) -> None:
-        super().__init__(parent)
-        self.setObjectName("Card")
-        self.body = QVBoxLayout(self)
-        self.body.setContentsMargins(16, 16, 16, 16)
-        self.body.setSpacing(spacing)
+    Одного сигнала ``changed`` хватает всем свойствам: QML перечитывает
+    только те биндинги, что зависят от объекта, а объектов немного. Это
+    избавляет от десятков однотипных сигналов и сеттеров.
 
-
-class StatusBadge(QLabel):
-    """Цветной бейдж статуса агента/подзадачи."""
-
-    def __init__(self, status: str = "idle", parent: QWidget | None = None) -> None:
-        super().__init__(parent)
-        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        # Иначе в строке с крупным заголовком бейдж растягивается по высоте.
-        self.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
-        self.set_status(status)
-
-    def set_status(self, status: str) -> None:
-        color = STATUS_COLORS.get(status, STATUS_COLORS["idle"])
-        self.setText(tr(f"status.{status}") if f"status.{status}" else status)
-        self.setStyleSheet(
-            f"color: {color}; border: 1px solid {color}; border-radius: 9px;"
-            f"padding: 2px 10px; font-size: 12px; font-weight: 600; background: transparent;"
-        )
-
-
-class Header(QWidget):
-    """Заголовок страницы: title + subtitle + слот для кнопок справа."""
-
-    def __init__(self, title: str, subtitle: str = "", parent: QWidget | None = None) -> None:
-        super().__init__(parent)
-        row = QHBoxLayout(self)
-        row.setContentsMargins(0, 0, 0, 0)
-
-        texts = QVBoxLayout()
-        texts.setSpacing(2)
-        self.title_label = QLabel(title)
-        self.title_label.setObjectName("H1")
-        texts.addWidget(self.title_label)
-        self.subtitle_label = QLabel(subtitle)
-        self.subtitle_label.setObjectName("Dim")
-        self.subtitle_label.setWordWrap(True)
-        self.subtitle_label.setVisible(bool(subtitle))
-        texts.addWidget(self.subtitle_label)
-        row.addLayout(texts, 1)
-
-        self.actions = QHBoxLayout()
-        self.actions.setSpacing(8)
-        row.addLayout(self.actions)
-
-    def add_action(self, button: QPushButton) -> None:
-        self.actions.addWidget(button)
-
-    def set_texts(self, title: str, subtitle: str = "") -> None:
-        self.title_label.setText(title)
-        self.subtitle_label.setText(subtitle)
-        self.subtitle_label.setVisible(bool(subtitle))
-
-
-class PageSwitcher(QWidget):
-    """Замена QStackedWidget для форм с переносом строк.
-
-    QStackedWidget не передаёт height-for-width своих страниц, из-за чего
-    длинные надписи с переносом обрезаются. Здесь страницы просто лежат
-    в одном layout, а видна только текущая.
+    Важно: сигнал ``changed = Signal()`` объявляет КАЖДЫЙ конечный класс, а
+    не этот базовый. PySide6 связывает ``notify`` свойства только с сигналом
+    того же класса; с унаследованным сигналом свойство становится
+    «неуведомляемым», и биндинги QML перестают обновляться.
     """
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    changed: Signal  # объявляется в подклассе
+
+    def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
-        self._layout = QVBoxLayout(self)
-        self._layout.setContentsMargins(0, 0, 0, 0)
-        self._pages: list[QWidget] = []
-        self._current = -1
+        self._s: dict[str, Any] = {}
 
-    def addWidget(self, page: QWidget) -> int:  # noqa: N802 — как у QStackedWidget
-        self._pages.append(page)
-        self._layout.addWidget(page)
-        if self._current < 0:
-            self._current = 0
-        page.setVisible(len(self._pages) - 1 == self._current)
-        return len(self._pages) - 1
-
-    def setCurrentIndex(self, index: int) -> None:  # noqa: N802
-        self._current = index
-        for i, page in enumerate(self._pages):
-            page.setVisible(i == index)
-
-    def currentIndex(self) -> int:  # noqa: N802
-        return self._current
+    def _set(self, **values: Any) -> None:
+        dirty = False
+        for name, value in values.items():
+            if self._s.get(name, _MISSING) != value:
+                self._s[name] = value
+                dirty = True
+        if dirty:
+            self.changed.emit()
 
 
-class EmptyState(QLabel):
-    """Заглушка для пустых списков."""
-
-    def __init__(self, text: str, parent: QWidget | None = None) -> None:
-        super().__init__(text, parent)
-        self.setObjectName("Dim")
-        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.setWordWrap(True)
-        self.setMinimumHeight(120)
+_MISSING = object()
 
 
-def confirm(parent: QWidget, text: str) -> bool:
-    """Диалог подтверждения с локализованными кнопками."""
-    box = QMessageBox(parent)
-    box.setWindowTitle(tr("common.confirm"))
-    box.setText(text)
-    box.setIcon(QMessageBox.Icon.Question)
-    yes = box.addButton(tr("common.yes"), QMessageBox.ButtonRole.YesRole)
-    box.addButton(tr("common.no"), QMessageBox.ButtonRole.NoRole)
-    box.exec()
-    return box.clickedButton() is yes
+def sprop(type_: Any, name: str, default: Any, signal: Signal) -> Property:
+    """Свойство, читающее ``self._s[name]`` и уведомляющее сигналом класса."""
+
+    def getter(self: StateObject) -> Any:
+        return self._s.get(name, default)
+
+    return Property(type_, getter, notify=signal)
 
 
-def warn(parent: QWidget, text: str, title: str = "") -> None:
-    QMessageBox.warning(parent, title or tr("common.error"), text)
+class Controller(StateObject):
+    """Контроллер одной страницы: данные для QML и действия пользователя."""
+
+    def __init__(self, backend: "Backend") -> None:
+        super().__init__(backend)
+        self.backend = backend
+
+    @property
+    def repos(self) -> "Repos":
+        assert self.backend.repos is not None, "контроллер вызван до входа в профиль"
+        return self.backend.repos
+
+    @property
+    def ws_id(self) -> int | None:
+        return self.backend.workspace_id
+
+    @property
+    def ready(self) -> bool:
+        return self.backend.repos is not None
+
+    def toast(self, kind: str, title: str, message: str = "") -> None:
+        self.backend.toast.emit(kind, title, message)
+
+    # -- переопределяемое ---------------------------------------------------
+    @Slot()
+    def refresh(self) -> None:
+        """Перечитать данные из хранилища."""
+
+    def on_workspace_changed(self) -> None:
+        self.refresh()
+
+    def on_event(self, event: "Event") -> None:
+        """Реакция на событие ядра (по умолчанию ничего)."""
+
+    def reset(self) -> None:
+        """Сброс при выходе из профиля."""
+        self._s.clear()
+        self.changed.emit()
 
 
-def info(parent: QWidget, text: str, title: str = "") -> None:
-    QMessageBox.information(parent, title or tr("common.success"), text)
-````
-
-### `ui/widgets/charts.py`
-
-*305 строк*
-
-````python
-"""Лёгкие графики на QPainter.
-
-Намеренно без QtCharts и pyqtgraph: дашборду нужны две простые диаграммы,
-а собственная отрисовка не тянет зависимостей, мгновенно подхватывает тему
-приложения и не ломается при разных сборках PySide6.
-
-Все виджеты безопасны к пустым данным: при отсутствии точек рисуется
-аккуратная надпись, а не пустой прямоугольник.
-"""
-
-from __future__ import annotations
-
-from dataclasses import dataclass
-
-from PySide6.QtCore import QPointF, QRectF, Qt
-from PySide6.QtGui import QColor, QFont, QPainter, QPainterPath, QPen
-from PySide6.QtWidgets import QSizePolicy, QWidget
-
-from ui.theme import current_palette
-
-PADDING_LEFT = 58
-PADDING_RIGHT = 14
-PADDING_TOP = 26
-PADDING_BOTTOM = 30
-GRID_LINES = 4
+# -- форматтеры -------------------------------------------------------------------
 
 
-def _color(key: str, alpha: int = 255) -> QColor:
-    colour = QColor(current_palette().get(key, "#888888"))
-    colour.setAlpha(alpha)
-    return colour
-
-
-def _nice_max(value: float) -> float:
-    """Округляет верх шкалы вверх до «красивого» числа (1, 2, 5 × 10^n)."""
-    if value <= 0:
-        return 1.0
-    import math
-
-    exponent = math.floor(math.log10(value))
-    base = 10 ** exponent
-    for step in (1, 2, 2.5, 5, 10):
-        if value <= step * base:
-            return step * base
-    return 10 * base
-
-
-def _fmt(value: float, unit: str) -> str:
-    """Короткая подпись оси: 12.3k, $0.0412, 1.2M."""
-    if unit == "usd":
-        if value >= 1:
-            return f"${value:,.2f}".replace(",", " ")
-        return f"${value:.4f}"
+def fmt_tokens(value: int | float) -> str:
+    value = int(value or 0)
     if value >= 1_000_000:
-        return f"{value / 1_000_000:.1f}M"
-    if value >= 1_000:
-        return f"{value / 1_000:.1f}k"
-    return f"{value:.0f}"
+        return f"{value / 1_000_000:.2f}M"
+    if value >= 10_000:
+        return f"{value / 1000:.1f}k"
+    return f"{value:,}".replace(",", " ")
 
 
-class ChartBase(QWidget):
-    """Общая рамка: заголовок, сетка, подписи оси Y."""
-
-    def __init__(self, title: str = "", unit: str = "", parent: QWidget | None = None) -> None:
-        super().__init__(parent)
-        self.title = title
-        self.unit = unit
-        self.empty_text = "нет данных"
-        self.setMinimumHeight(190)
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-
-    def set_title(self, title: str) -> None:
-        self.title = title
-        self.update()
-
-    def _plot_rect(self) -> QRectF:
-        return QRectF(
-            PADDING_LEFT, PADDING_TOP,
-            max(10.0, self.width() - PADDING_LEFT - PADDING_RIGHT),
-            max(10.0, self.height() - PADDING_TOP - PADDING_BOTTOM),
-        )
-
-    def _draw_frame(self, painter: QPainter, top_value: float) -> QRectF:
-        """Рисует заголовок, горизонтальную сетку и подписи, возвращает поле графика."""
-        rect = self._plot_rect()
-
-        if self.title:
-            font = QFont(painter.font())
-            font.setPointSizeF(max(8.0, font.pointSizeF()))
-            font.setBold(True)
-            painter.setFont(font)
-            painter.setPen(QPen(_color("text")))
-            painter.drawText(QRectF(PADDING_LEFT, 2, rect.width(), 20),
-                             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
-                             self.title)
-            font.setBold(False)
-            painter.setFont(font)
-
-        grid_pen = QPen(_color("border"))
-        grid_pen.setWidthF(1.0)
-        painter.setPen(grid_pen)
-        for i in range(GRID_LINES + 1):
-            y = rect.bottom() - rect.height() * i / GRID_LINES
-            painter.drawLine(QPointF(rect.left(), y), QPointF(rect.right(), y))
-            painter.setPen(QPen(_color("text_dim")))
-            painter.drawText(
-                QRectF(0, y - 9, PADDING_LEFT - 8, 18),
-                Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
-                _fmt(top_value * i / GRID_LINES, self.unit),
-            )
-            painter.setPen(grid_pen)
-        return rect
-
-    def _draw_empty(self, painter: QPainter) -> None:
-        painter.setPen(QPen(_color("text_dim")))
-        painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, self.empty_text)
+def fmt_money(value: float) -> str:
+    """Сумма с точностью, при которой копеечные расходы не превращаются в $0.00."""
+    value = float(value or 0)
+    if value >= 100:
+        return f"${value:,.0f}".replace(",", " ")
+    if value >= 1:
+        return f"${value:.2f}"
+    if value >= 0.01:
+        return f"${value:.3f}"
+    if value == 0:
+        return "$0"
+    return f"${value:.4f}"
 
 
-@dataclass
-class SeriesPoint:
-    """Точка временного ряда: подпись по оси X и значение."""
-
-    label: str
-    value: float
+def when(iso: str | None, fmt: str = "%d.%m %H:%M") -> str:
+    return local_time(iso or "", fmt) if iso else ""
 
 
-class LineChart(ChartBase):
-    """Кумулятивная кривая с заливкой под ней."""
-
-    def __init__(self, title: str = "", unit: str = "",
-                 parent: QWidget | None = None) -> None:
-        super().__init__(title, unit, parent)
-        self._points: list[SeriesPoint] = []
-
-    def set_points(self, points: list[SeriesPoint]) -> None:
-        self._points = points
-        self.update()
-
-    def paintEvent(self, event) -> None:  # noqa: N802 — сигнатура Qt
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        if len(self._points) < 2:
-            if self.title:
-                self._draw_frame(painter, 1.0)
-            self._draw_empty(painter)
-            return
-
-        top = _nice_max(max(p.value for p in self._points))
-        rect = self._draw_frame(painter, top)
-
-        step = rect.width() / (len(self._points) - 1)
-        coords = [
-            QPointF(rect.left() + i * step,
-                    rect.bottom() - (p.value / top) * rect.height())
-            for i, p in enumerate(self._points)
-        ]
-
-        # Заливка под кривой
-        area = QPainterPath()
-        area.moveTo(QPointF(coords[0].x(), rect.bottom()))
-        for point in coords:
-            area.lineTo(point)
-        area.lineTo(QPointF(coords[-1].x(), rect.bottom()))
-        area.closeSubpath()
-        painter.fillPath(area, _color("accent", 46))
-
-        line_pen = QPen(_color("accent"))
-        line_pen.setWidthF(2.0)
-        painter.setPen(line_pen)
-        path = QPainterPath(coords[0])
-        for point in coords[1:]:
-            path.lineTo(point)
-        painter.drawPath(path)
-
-        # Точка последнего значения и её подпись
-        painter.setBrush(_color("accent"))
-        painter.drawEllipse(coords[-1], 3.5, 3.5)
-        painter.setPen(QPen(_color("text")))
-        painter.drawText(
-            QRectF(coords[-1].x() - 90, coords[-1].y() - 24, 86, 18),
-            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
-            _fmt(self._points[-1].value, self.unit),
-        )
-
-        # Подписи по краям оси X
-        painter.setPen(QPen(_color("text_dim")))
-        painter.drawText(QRectF(rect.left(), rect.bottom() + 6, 120, 18),
-                         Qt.AlignmentFlag.AlignLeft, self._points[0].label)
-        painter.drawText(QRectF(rect.right() - 120, rect.bottom() + 6, 120, 18),
-                         Qt.AlignmentFlag.AlignRight, self._points[-1].label)
+def elide(text: str, limit: int) -> str:
+    text = (text or "").strip().replace("\n", " ")
+    return text if len(text) <= limit else text[: limit - 1] + "…"
 
 
-@dataclass
-class Bar:
-    """Столбец: подпись, значение и необязательный цвет."""
+def error_text(exc: BaseException) -> str:
+    from providers.base import ProviderError
 
-    label: str
-    value: float
-    color: str = ""
-
-
-class BarChart(ChartBase):
-    """Горизонтальные столбцы — удобны, когда подписи длинные (имена агентов)."""
-
-    ROW_HEIGHT = 30
-
-    def __init__(self, title: str = "", unit: str = "",
-                 parent: QWidget | None = None) -> None:
-        super().__init__(title, unit, parent)
-        self._bars: list[Bar] = []
-
-    def set_bars(self, bars: list[Bar]) -> None:
-        self._bars = bars
-        self.setMinimumHeight(max(140, PADDING_TOP + 14 + self.ROW_HEIGHT * max(1, len(bars))))
-        self.update()
-
-    def paintEvent(self, event) -> None:  # noqa: N802
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-
-        if self.title:
-            font = QFont(painter.font())
-            font.setBold(True)
-            painter.setFont(font)
-            painter.setPen(QPen(_color("text")))
-            painter.drawText(QRectF(10, 2, self.width() - 20, 20),
-                             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
-                             self.title)
-            font.setBold(False)
-            painter.setFont(font)
-
-        if not self._bars:
-            self._draw_empty(painter)
-            return
-
-        top = max((b.value for b in self._bars), default=0.0) or 1.0
-        label_width = 150.0
-        metrics = painter.fontMetrics()
-        bar_left = 12 + label_width
-        bar_width = max(30.0, self.width() - bar_left - 90)
-
-        for i, bar in enumerate(self._bars):
-            y = PADDING_TOP + 6 + i * self.ROW_HEIGHT
-            painter.setPen(QPen(_color("text_dim")))
-            painter.drawText(
-                QRectF(12, y, label_width - 10, self.ROW_HEIGHT - 8),
-                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
-                metrics.elidedText(bar.label, Qt.TextElideMode.ElideRight,
-                                   int(label_width - 10)),
-            )
-
-            track = QRectF(bar_left, y + 6, bar_width, self.ROW_HEIGHT - 18)
-            painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(_color("surface2"))
-            painter.drawRoundedRect(track, 5, 5)
-
-            filled = QRectF(track)
-            filled.setWidth(max(3.0, bar_width * (bar.value / top)))
-            painter.setBrush(QColor(bar.color) if bar.color else _color("accent"))
-            painter.drawRoundedRect(filled, 5, 5)
-
-            painter.setPen(QPen(_color("text")))
-            painter.drawText(
-                QRectF(bar_left + bar_width + 8, y, 80, self.ROW_HEIGHT - 8),
-                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
-                _fmt(bar.value, self.unit),
-            )
+    if isinstance(exc, (ProviderError, RuntimeError, ValueError)):
+        return str(exc)
+    return f"{type(exc).__name__}: {exc}"
 
 
-class SegmentBar(QWidget):
-    """Одна полоска, разбитая на цветные сегменты — статусы подзадач."""
-
-    def __init__(self, parent: QWidget | None = None) -> None:
-        super().__init__(parent)
-        self._segments: list[tuple[str, int, str]] = []   # (подпись, количество, цвет)
-        self.setFixedHeight(14)
-
-    def set_segments(self, segments: list[tuple[str, int, str]]) -> None:
-        self._segments = [s for s in segments if s[1] > 0]
-        self.update()
-        self.setToolTip(", ".join(f"{label}: {count}" for label, count, _ in self._segments))
-
-    def paintEvent(self, event) -> None:  # noqa: N802
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.setPen(Qt.PenStyle.NoPen)
-
-        total = sum(count for _, count, _ in self._segments)
-        track = QRectF(0, 0, self.width(), self.height())
-        painter.setBrush(_color("surface2"))
-        painter.drawRoundedRect(track, 7, 7)
-        if not total:
-            return
-
-        painter.setClipping(True)
-        path = QPainterPath()
-        path.addRoundedRect(track, 7, 7)
-        painter.setClipPath(path)
-
-        x = 0.0
-        for _, count, colour in self._segments:
-            width = self.width() * count / total
-            painter.setBrush(QColor(colour))
-            painter.drawRect(QRectF(x, 0, width + 0.5, self.height()))
-            x += width
+def status_title(code: str) -> str:
+    return tr(f"status.{code}") if code else ""
 ````
 
-### `ui/widgets/approval_panel.py`
+### `ui/bridge/listmodel.py`
 
-*155 строк*
+*164 строк*
 
 ````python
-"""Панель решений human-in-the-loop (этап 7).
+"""Модель списка для QML поверх обычных словарей.
 
-Когда ядро останавливается и ждёт человека, здесь появляется карточка с
-вопросом, выжимкой по делу и кнопками. Панель намеренно встроена в страницу
-«Выполнение», а не сделана модальным окном: вопросов может быть несколько
-одновременно, и модалка заслоняла бы прогресс, по которому как раз и
-принимается решение.
+Главное отличие от «сбросить и заполнить заново»: ``set_items`` сравнивает
+старый и новый списки по ключу и сообщает QML только о реальных изменениях
+(вставках, удалениях, правках строк). Благодаря этому ``ListView`` может
+анимировать появление и исчезновение карточек, а прокрутка и выделение не
+прыгают при каждом обновлении данных.
 """
 
 from __future__ import annotations
 
-from typing import Callable
+from typing import Any, Iterable
 
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (
-    QFrame,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QPushButton,
-    QVBoxLayout,
-    QWidget,
+from PySide6.QtCore import (
+    Property,
+    QAbstractListModel,
+    QByteArray,
+    QModelIndex,
+    QPersistentModelIndex,
+    Qt,
+    Signal,
+    Slot,
 )
 
-from core.hitl import DECISION_TITLES, REASON_TITLES, ApprovalRequest, Decision
-from ui.theme import current_palette
-
-#: у деструктивных решений своя окраска, чтобы их не нажимали на автомате
-DECISION_STYLES = {
-    Decision.APPROVE: "Primary",
-    Decision.REWORK: "",
-    Decision.SKIP: "",
-    Decision.ABORT: "Danger",
-}
-
-DECISION_HINTS = {
-    Decision.APPROVE: "Принять результат как есть и продолжить",
-    Decision.REWORK: "Вернуть исполнителю; комментарий уйдёт ему первым",
-    Decision.SKIP: "Пометить подзадачу неудачной и идти дальше",
-    Decision.ABORT: "Остановить весь прогон",
-}
+_BASE_ROLE = Qt.ItemDataRole.UserRole + 1
 
 
-class ApprovalCard(QFrame):
-    """Один вопрос к пользователю."""
+class DictListModel(QAbstractListModel):
+    """Список словарей с фиксированным набором ролей.
 
-    def __init__(self, request: ApprovalRequest,
-                 on_decide: Callable[[int, Decision, str], None],
-                 parent: QWidget | None = None) -> None:
+    Роли задаются при создании: каждый ключ словаря доступен в делегате QML
+    как одноимённое свойство (``model.title`` или просто ``title``).
+    """
+
+    countChanged = Signal()
+
+    def __init__(self, roles: Iterable[str], key: str = "id", parent=None) -> None:
         super().__init__(parent)
-        self.request = request
-        self.on_decide = on_decide
+        self._roles = list(roles)
+        if "model" in self._roles:
+            # Роль «model» в делегате перекрывает сам объект model, и все
+            # обращения вида model.title молча становятся undefined.
+            raise ValueError("роль 'model' запрещена: переименуйте её, например в 'modelName'")
+        if key not in self._roles:
+            self._roles.insert(0, key)
+        self._key = key
+        self._role_ids = {name: _BASE_ROLE + i for i, name in enumerate(self._roles)}
+        self._items: list[dict[str, Any]] = []
 
-        colours = current_palette()
-        self.setObjectName("Card")
-        self.setStyleSheet(
-            f"QFrame#Card {{ border: 1px solid {colours['warn']}; "
-            f"border-radius: 12px; background: {colours['surface']}; }}"
-        )
+    # -- Qt API ----------------------------------------------------------------
+    def rowCount(self, parent: QModelIndex | QPersistentModelIndex = QModelIndex()) -> int:  # noqa: N802
+        return 0 if parent.isValid() else len(self._items)
 
-        lay = QVBoxLayout(self)
-        lay.setContentsMargins(16, 14, 16, 14)
-        lay.setSpacing(8)
+    def data(self, index: QModelIndex | QPersistentModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
+        if not index.isValid() or not 0 <= index.row() < len(self._items):
+            return None
+        name = self._roles[role - _BASE_ROLE] if role >= _BASE_ROLE else None
+        return self._items[index.row()].get(name) if name else None
 
-        head = QHBoxLayout()
-        badge = QLabel(REASON_TITLES.get(request.reason, request.reason.value))
-        badge.setStyleSheet(
-            f"color: {colours['warn']}; border: 1px solid {colours['warn']};"
-            f"border-radius: 9px; padding: 2px 10px; font-size: 12px; font-weight: 600;"
-        )
-        head.addWidget(badge)
-        if request.agent_name:
-            who = QLabel(request.agent_name)
-            who.setObjectName("Dim")
-            head.addWidget(who)
-        head.addStretch(1)
-        lay.addLayout(head)
+    def roleNames(self) -> dict[int, QByteArray]:  # noqa: N802
+        return {rid: QByteArray(name.encode()) for name, rid in self._role_ids.items()}
 
-        question = QLabel(request.question)
-        question.setObjectName("H2")
-        question.setWordWrap(True)
-        lay.addWidget(question)
+    def _count(self) -> int:
+        return len(self._items)
 
-        if request.details:
-            self.details = QLabel(_clip(request.details, 700))
-            self.details.setObjectName("Dim")
-            self.details.setWordWrap(True)
-            self.details.setTextInteractionFlags(
-                Qt.TextInteractionFlag.TextSelectableByMouse
-            )
-            lay.addWidget(self.details)
+    count = Property(int, _count, notify=countChanged)
 
-            if len(request.details) > 700:
-                self._expanded = False
-                self.btn_more = QPushButton("Показать полностью")
-                self.btn_more.clicked.connect(self._toggle_details)
-                lay.addWidget(self.btn_more, 0, Qt.AlignmentFlag.AlignLeft)
+    # -- Python API ------------------------------------------------------------
+    @property
+    def items(self) -> list[dict[str, Any]]:
+        return self._items
 
-        self.comment = QLineEdit()
-        self.comment.setPlaceholderText(
-            "Комментарий (уйдёт исполнителю при отправке на доработку)"
-        )
-        lay.addWidget(self.comment)
+    @Slot(int, result="QVariantMap")
+    def get(self, row: int) -> dict[str, Any]:
+        return dict(self._items[row]) if 0 <= row < len(self._items) else {}
 
-        buttons = QHBoxLayout()
-        buttons.setSpacing(8)
-        for decision in request.options:
-            button = QPushButton(DECISION_TITLES.get(decision, decision.value))
-            style = DECISION_STYLES.get(decision, "")
-            if style:
-                button.setObjectName(style)
-            button.setToolTip(DECISION_HINTS.get(decision, ""))
-            button.clicked.connect(
-                lambda _=False, d=decision: self._decide(d)
-            )
-            buttons.addWidget(button)
-        buttons.addStretch(1)
-        lay.addLayout(buttons)
+    def find(self, key_value: Any) -> int:
+        for row, item in enumerate(self._items):
+            if item.get(self._key) == key_value:
+                return row
+        return -1
 
-    def _toggle_details(self) -> None:
-        self._expanded = not self._expanded
-        self.details.setText(self.request.details if self._expanded
-                             else _clip(self.request.details, 700))
-        self.btn_more.setText("Свернуть" if self._expanded else "Показать полностью")
+    def update_row(self, key_value: Any, **changes: Any) -> None:
+        """Точечная правка одной строки — без пересборки списка."""
+        row = self.find(key_value)
+        if row < 0:
+            return
+        item = self._items[row]
+        changed = [name for name, value in changes.items() if item.get(name) != value]
+        if not changed:
+            return
+        item.update(changes)
+        idx = self.index(row)
+        self.dataChanged.emit(idx, idx, [self._role_ids[n] for n in changed
+                                         if n in self._role_ids])
 
-    def _decide(self, decision: Decision) -> None:
-        self.setEnabled(False)
-        self.on_decide(self.request.id, decision, self.comment.text())
+    def append(self, item: dict[str, Any], limit: int | None = None) -> None:
+        """Добавляет строку в конец; при превышении ``limit`` срезает начало."""
+        if limit is not None and len(self._items) >= limit:
+            drop = len(self._items) - limit + 1
+            self.beginRemoveRows(QModelIndex(), 0, drop - 1)
+            del self._items[:drop]
+            self.endRemoveRows()
+        row = len(self._items)
+        self.beginInsertRows(QModelIndex(), row, row)
+        self._items.append(dict(item))
+        self.endInsertRows()
+        self.countChanged.emit()
 
+    def clear(self) -> None:
+        if not self._items:
+            return
+        self.beginResetModel()
+        self._items = []
+        self.endResetModel()
+        self.countChanged.emit()
 
-class ApprovalPanel(QWidget):
-    """Стопка открытых вопросов; скрывается, когда их нет."""
+    def set_items(self, new_items: list[dict[str, Any]]) -> None:
+        """Приводит модель к новому списку минимальным набором изменений."""
+        new_items = [dict(it) for it in new_items]
+        old_keys = [it.get(self._key) for it in self._items]
+        new_keys = [it.get(self._key) for it in new_items]
+        if (len(set(new_keys)) != len(new_keys) or None in new_keys
+                or len(set(old_keys)) != len(old_keys)):
+            self._reset(new_items)
+            return
 
-    def __init__(self, on_decide: Callable[[int, Decision, str], None],
-                 parent: QWidget | None = None) -> None:
-        super().__init__(parent)
-        self.on_decide = on_decide
-        self._layout = QVBoxLayout(self)
-        self._layout.setContentsMargins(0, 0, 0, 0)
-        self._layout.setSpacing(10)
-        self.setVisible(False)
+        before = len(self._items)
+        new_set = set(new_keys)
+        # 1. удаляем то, чего больше нет (с конца, чтобы не сбивать индексы)
+        for row in range(len(self._items) - 1, -1, -1):
+            if self._items[row].get(self._key) not in new_set:
+                self.beginRemoveRows(QModelIndex(), row, row)
+                del self._items[row]
+                self.endRemoveRows()
 
-    def set_requests(self, requests: list[ApprovalRequest]) -> None:
-        while self._layout.count():
-            item = self._layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-        for request in requests:
-            self._layout.addWidget(ApprovalCard(request, self.on_decide, self))
-        self.setVisible(bool(requests))
+        # 2. если порядок оставшихся изменился — проще пересобрать целиком
+        kept = [it.get(self._key) for it in self._items]
+        if kept != [k for k in new_keys if k in set(kept)]:
+            self._reset(new_items)
+            return
 
+        # 3. вставляем новые на свои места и правим изменившиеся
+        for row, item in enumerate(new_items):
+            key = item.get(self._key)
+            if row < len(self._items) and self._items[row].get(self._key) == key:
+                old = self._items[row]
+                changed = [n for n in self._roles if old.get(n) != item.get(n)]
+                if changed:
+                    self._items[row] = item
+                    idx = self.index(row)
+                    self.dataChanged.emit(idx, idx, [self._role_ids[n] for n in changed])
+            else:
+                self.beginInsertRows(QModelIndex(), row, row)
+                self._items.insert(row, item)
+                self.endInsertRows()
+        if len(self._items) != before:
+            self.countChanged.emit()
 
-def _clip(text: str, limit: int) -> str:
-    text = (text or "").strip()
-    return text if len(text) <= limit else text[:limit] + " …"
+    def _reset(self, items: list[dict[str, Any]]) -> None:
+        self.beginResetModel()
+        self._items = items
+        self.endResetModel()
+        self.countChanged.emit()
 ````
 
-### `ui/login_window.py`
+### `ui/bridge/i18n_bridge.py`
 
-*288 строк*
+*63 строк*
 
 ````python
-"""Этап 1 — окно локальной авторизации.
+"""Локализация для QML.
 
-Поддерживает несколько профилей на одном устройстве. Пароль профиля
-одновременно является мастер-паролем для расшифровки API-ключей, поэтому
-при создании профиля показывается предупреждение о невозможности восстановления.
+Словарь строк текущего языка отдаётся в QML свойством ``t``; биндинги вида
+``text: i18n.t["login.title"]`` зависят от этого свойства, поэтому при смене
+языка весь интерфейс перерисовывается сам — без пересборки окна, как было
+в версии на виджетах.
 """
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import (
-    QCheckBox,
-    QComboBox,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QPushButton,
-    QVBoxLayout,
-    QWidget,
-)
+from typing import Any
 
-from app.config import APP_NAME, APP_VERSION, AppSettings
-from app.i18n import available_languages, current_language, set_language, tr
+from PySide6.QtCore import Property, QObject, Signal, Slot
+
+from app import i18n as catalog
+
+
+class I18n(QObject):
+    changed = Signal()
+
+    def __init__(self, parent=None) -> None:
+        super().__init__(parent)
+        self._strings: dict[str, str] = {}
+        self._rebuild()
+        catalog.on_language_changed(self._on_catalog_changed)
+
+    def _rebuild(self) -> None:
+        # Русский словарь — базовый: если в английском чего-то нет, строка
+        # всё равно не пропадёт из интерфейса.
+        merged = dict(catalog.RU)
+        merged.update(catalog.catalog_for(catalog.current_language()))
+        self._strings = merged
+
+    def _on_catalog_changed(self) -> None:
+        self._rebuild()
+        self.changed.emit()
+
+    def _t(self) -> dict[str, str]:
+        return self._strings
+
+    t = Property("QVariantMap", _t, notify=changed)
+
+    def _lang(self) -> str:
+        return catalog.current_language()
+
+    lang = Property(str, _lang, notify=changed)
+
+    def _languages(self) -> list[dict[str, str]]:
+        return [{"code": c, "title": t} for c, t in catalog.available_languages()]
+
+    languages = Property("QVariantList", _languages, constant=True)
+
+    @Slot(str, "QVariantMap", result=str)
+    def fmt(self, template: str, args: dict[str, Any]) -> str:
+        """Подставляет ``{placeholders}``; сломанный шаблон возвращается как есть."""
+        try:
+            return (template or "").format(**(args or {}))
+        except (KeyError, IndexError, ValueError):
+            return template or ""
+
+    @Slot(str, result=str)
+    def status(self, code: str) -> str:
+        return self._strings.get(f"status.{code}", code)
+````
+
+### `ui/bridge/backend.py`
+
+*441 строк*
+
+````python
+"""Корневой объект моста: профиль, воркспейс, события ядра, уведомления.
+
+QML видит его как контекстное свойство ``backend``; контроллеры страниц
+доступны как его свойства (``backend.agents``, ``backend.run`` …).
+"""
+
+from __future__ import annotations
+
+import asyncio
+import logging
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+from PySide6.QtCore import Property, QObject, QTimer, QUrl, Signal, Slot
+from PySide6.QtGui import QDesktopServices
+
+from app.config import APP_NAME, APP_VERSION, PATHS, AppSettings
+from app.i18n import set_language, tr
+from core.events import Event, EventBus, EventType
+from core.orchestrator import Orchestrator
 from core.security.crypto import (
     Session,
     keyring_available,
@@ -8974,969 +9273,669 @@ from core.security.crypto import (
     keyring_store_password,
 )
 from storage.db import Database
-from storage.repositories import UserRepo
-from ui.widgets.common import Card, PageSwitcher
+from storage.repositories import Repos, UserRepo
+from ui.bridge.core import StateObject, error_text, fmt_money, sprop
+from utils.asyncutils import run_async
+
+log = logging.getLogger("aiorc.ui")
 
 MIN_PASSWORD_LEN = 8
+MOTION_LEVELS = {"off": 0, "reduced": 1, "full": 2}
 
 
-class LoginWindow(QWidget):
-    """Окно входа. При успехе эмитит ``logged_in`` с открытой сессией."""
+class Backend(StateObject):
+    """Состояние приложения, общее для всех экранов."""
 
-    logged_in = Signal(object)  # Session
+    changed = Signal()
+    #: уведомление в углу окна: вид (success|info|warning|error), заголовок, текст
+    toast = Signal(str, str, str)
+    #: завершилась попытка входа или регистрации: ok, текст ошибки
+    authFinished = Signal(bool, str)
+    #: ядро прислало событие — для страниц, которым нужна живая лента
+    coreEvent = Signal("QVariantMap")
+    #: просьба интерфейсу открыть страницу
+    navigateRequested = Signal(str)
 
-    def __init__(self, db: Database, settings: AppSettings) -> None:
-        super().__init__()
+    def __init__(self, db: Database, settings: AppSettings, parent: QObject | None = None) -> None:
+        super().__init__(parent)
         self.db = db
         self.settings = settings
         self.users = UserRepo(db)
+        self.session: Session | None = None
+        self.repos: Repos | None = None
+        self.bus: EventBus | None = None
+        self.orchestrator: Orchestrator | None = None
+        self.workspace_id: int | None = None
 
-        self.setWindowTitle(APP_NAME)
-        self.setMinimumSize(460, 560)
+        from ui.bridge.pages import build_controllers
 
-        outer = QVBoxLayout(self)
-        outer.setContentsMargins(40, 32, 40, 32)
-        outer.addStretch(1)
+        self._controllers = build_controllers(self)
+        for name, controller in self._controllers.items():
+            setattr(self, f"_c_{name}", controller)
 
-        self.card = Card(self, spacing=14)
-        # Фиксированная ширина, а не максимальная: при выравнивании по центру
-        # layout отдаёт карточке ширину sizeHint, и перенос строк в
-        # предупреждении считался бы не от той ширины — текст обрезался.
-        self.card.setFixedWidth(420)
-        outer.addWidget(self.card, 0, Qt.AlignmentFlag.AlignHCenter)
-        outer.addStretch(1)
+        self._state_timer = QTimer(self)
+        self._state_timer.setInterval(1000)
+        self._state_timer.timeout.connect(self._tick)
 
-        self.footer = QLabel(f"{APP_NAME} {APP_VERSION} · локальное хранение данных")
-        self.footer.setObjectName("Dim")
-        self.footer.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        outer.addWidget(self.footer)
+        self._set(loggedIn=False, username="", workspaceId=-1, workspaceName="",
+                  running=False, paused=False, pendingApprovals=0, authBusy=False,
+                  runElapsed="", runTokens="0", runCost="$0",
+                  motion=settings.motion if settings.motion in MOTION_LEVELS else "full")
+        self.refresh_profiles()
 
-        self.stack = PageSwitcher()
-        self.card.body.addWidget(self.stack)
-        self.stack.addWidget(self._build_signin())
-        self.stack.addWidget(self._build_signup())
+    # -- свойства -------------------------------------------------------------
+    loggedIn = sprop(bool, "loggedIn", False, changed)
+    username = sprop(str, "username", "", changed)
+    profiles = sprop("QVariantList", "profiles", [], changed)
+    lastUsername = sprop(str, "lastUsername", "", changed)
+    rememberDefault = sprop(bool, "rememberDefault", False, changed)
+    authBusy = sprop(bool, "authBusy", False, changed)
+    workspaceId = sprop(int, "workspaceId", -1, changed)
+    workspaceName = sprop(str, "workspaceName", "", changed)
+    running = sprop(bool, "running", False, changed)
+    paused = sprop(bool, "paused", False, changed)
+    pendingApprovals = sprop(int, "pendingApprovals", 0, changed)
+    runElapsed = sprop(str, "runElapsed", "", changed)
+    runTokens = sprop(str, "runTokens", "0", changed)
+    runCost = sprop(str, "runCost", "$0", changed)
+    motion = sprop(str, "motion", "full", changed)
 
-        self._refresh_profiles()
+    def _motion_level(self) -> int:
+        return MOTION_LEVELS.get(self._s.get("motion", "full"), 2)
 
-    # -- построение экранов --------------------------------------------------
-    def _build_signin(self) -> QWidget:
-        page = QWidget()
-        lay = QVBoxLayout(page)
-        lay.setContentsMargins(0, 0, 0, 0)
-        lay.setSpacing(12)
+    motionLevel = Property(int, _motion_level, notify=changed)
 
-        lang_row = QHBoxLayout()
-        lang_row.addStretch(1)
-        self.lang_box = QComboBox()
-        for code, label in available_languages():
-            self.lang_box.addItem(label, code)
-        self.lang_box.setCurrentIndex(
-            max(0, [c for c, _ in available_languages()].index(current_language()))
-        )
-        self.lang_box.currentIndexChanged.connect(self._on_language)
-        self.lang_box.setMaximumWidth(140)
-        lang_row.addWidget(self.lang_box)
-        lay.addLayout(lang_row)
+    def _const(value):  # noqa: N805 — фабрика константных свойств
+        return Property(str, lambda self: value, constant=True)
 
-        self.title = QLabel(tr("login.title"))
-        self.title.setObjectName("H1")
-        lay.addWidget(self.title)
-        self.subtitle = QLabel(tr("login.subtitle"))
-        self.subtitle.setObjectName("Dim")
-        self.subtitle.setWordWrap(True)
-        lay.addWidget(self.subtitle)
+    appName = _const(APP_NAME)
+    appVersion = _const(APP_VERSION)
+    dataRoot = _const(str(PATHS.home))
 
-        self.lbl_user = QLabel(tr("login.username"))
-        lay.addWidget(self.lbl_user)
-        self.profile_box = QComboBox()
-        self.profile_box.setEditable(False)
-        self.profile_box.currentTextChanged.connect(self._on_profile_changed)
-        lay.addWidget(self.profile_box)
+    def _keyring(self) -> bool:
+        return keyring_available()
 
-        self.lbl_pass = QLabel(tr("login.password"))
-        lay.addWidget(self.lbl_pass)
-        self.password = QLineEdit()
-        self.password.setEchoMode(QLineEdit.EchoMode.Password)
-        self.password.returnPressed.connect(self._do_signin)
-        lay.addWidget(self.password)
+    keyringAvailable = Property(bool, _keyring, constant=True)
 
-        self.remember = QCheckBox(tr("login.remember"))
-        self.remember.setEnabled(keyring_available())
-        self.remember.setChecked(self.settings.remember_master_password)
-        if not keyring_available():
-            self.remember.setToolTip("Установите пакет keyring, чтобы включить эту опцию")
-        lay.addWidget(self.remember)
+    def _controller(name: str):  # noqa: N805
+        return Property(QObject, lambda self: self._controllers[name], constant=True)
 
-        self.error = QLabel("")
-        self.error.setObjectName("Error")
-        self.error.setWordWrap(True)
-        self.error.setVisible(False)
-        lay.addWidget(self.error)
+    workspaces = _controller("workspaces")
+    keys = _controller("keys")
+    agents = _controller("agents")
+    task = _controller("task")
+    run = _controller("run")
+    supervisor = _controller("supervisor")
+    dashboard = _controller("dashboard")
+    budget = _controller("budget")
+    exporter = _controller("exporter")
+    prefs = _controller("prefs")
 
-        self.btn_signin = QPushButton(tr("login.signin"))
-        self.btn_signin.setObjectName("Primary")
-        self.btn_signin.clicked.connect(self._do_signin)
-        lay.addWidget(self.btn_signin)
-
-        self.btn_to_signup = QPushButton(tr("login.create"))
-        self.btn_to_signup.clicked.connect(lambda: self.stack.setCurrentIndex(1))
-        lay.addWidget(self.btn_to_signup)
-        return page
-
-    def _build_signup(self) -> QWidget:
-        page = QWidget()
-        lay = QVBoxLayout(page)
-        lay.setContentsMargins(0, 0, 0, 0)
-        lay.setSpacing(12)
-
-        self.su_title = QLabel(tr("login.create_title"))
-        self.su_title.setObjectName("H1")
-        lay.addWidget(self.su_title)
-
-        self.su_warning = QLabel(tr("login.warning"))
-        self.su_warning.setObjectName("Dim")
-        self.su_warning.setWordWrap(True)
-        lay.addWidget(self.su_warning)
-
-        self.su_lbl_user = QLabel(tr("login.username"))
-        lay.addWidget(self.su_lbl_user)
-        self.su_username = QLineEdit()
-        lay.addWidget(self.su_username)
-
-        self.su_lbl_pass = QLabel(tr("login.password"))
-        lay.addWidget(self.su_lbl_pass)
-        self.su_password = QLineEdit()
-        self.su_password.setEchoMode(QLineEdit.EchoMode.Password)
-        lay.addWidget(self.su_password)
-
-        self.su_lbl_pass2 = QLabel(tr("login.password2"))
-        lay.addWidget(self.su_lbl_pass2)
-        self.su_password2 = QLineEdit()
-        self.su_password2.setEchoMode(QLineEdit.EchoMode.Password)
-        self.su_password2.returnPressed.connect(self._do_signup)
-        lay.addWidget(self.su_password2)
-
-        self.su_error = QLabel("")
-        self.su_error.setObjectName("Error")
-        self.su_error.setWordWrap(True)
-        self.su_error.setVisible(False)
-        lay.addWidget(self.su_error)
-
-        self.su_btn_create = QPushButton(tr("login.create"))
-        self.su_btn_create.setObjectName("Primary")
-        self.su_btn_create.clicked.connect(self._do_signup)
-        lay.addWidget(self.su_btn_create)
-
-        self.su_btn_back = QPushButton(tr("common.cancel"))
-        self.su_btn_back.clicked.connect(lambda: self.stack.setCurrentIndex(0))
-        lay.addWidget(self.su_btn_back)
-        return page
-
-    # -- логика --------------------------------------------------------------
-    def _refresh_profiles(self) -> None:
+    # -- профиль --------------------------------------------------------------
+    def refresh_profiles(self) -> None:
         names = self.users.list_usernames()
-        self.profile_box.clear()
-        self.profile_box.addItems(names)
-        if not names:
-            self._show_error(tr("login.no_profiles"))
-            self.stack.setCurrentIndex(1)
-            return
-        if self.settings.last_username in names:
-            self.profile_box.setCurrentText(self.settings.last_username)
-        self._on_profile_changed(self.profile_box.currentText())
+        last = self.settings.last_username if self.settings.last_username in names else \
+            (names[0] if names else "")
+        self._set(profiles=names, lastUsername=last,
+                  rememberDefault=bool(self.settings.remember_master_password))
 
-    def _on_profile_changed(self, username: str) -> None:
-        """Подставляет сохранённый пароль, если пользователь просил его запомнить."""
-        self.password.clear()
+    @Slot(str, result=str)
+    def savedPassword(self, username: str) -> str:  # noqa: N802
+        """Пароль из хранилища ОС, если пользователь просил его запомнить."""
         if username and self.settings.remember_master_password and keyring_available():
-            saved = keyring_get_password(username)
-            if saved:
-                self.password.setText(saved)
+            return keyring_get_password(username) or ""
+        return ""
 
-    def _on_language(self) -> None:
-        code = self.lang_box.currentData()
+    @Slot(str, str, bool)
+    def signIn(self, username: str, password: str, remember: bool) -> None:  # noqa: N802
+        username = (username or "").strip()
+        if not username or not password:
+            self.authFinished.emit(False, tr("login.bad_credentials"))
+            return
+        self._set(authBusy=True)
+
+        async def job() -> Session | None:
+            # Argon2id занимает десятые доли секунды — в отдельном потоке,
+            # чтобы индикатор на кнопке не замирал.
+            return await asyncio.to_thread(self.users.authenticate, username, password)
+
+        def done(session: Session | None) -> None:
+            self._set(authBusy=False)
+            if session is None:
+                self.authFinished.emit(False, tr("login.bad_credentials"))
+                return
+            self.settings.last_username = username
+            self.settings.remember_master_password = bool(remember)
+            self.settings.save()
+            if remember:
+                keyring_store_password(username, password)
+            else:
+                keyring_delete_password(username)
+            self._open_session(session)
+            self.authFinished.emit(True, "")
+
+        def failed(exc: Exception) -> None:
+            self._set(authBusy=False)
+            self.authFinished.emit(False, error_text(exc))
+
+        run_async(job(), done, failed)
+
+    @Slot(str, str, str)
+    def signUp(self, username: str, password: str, password2: str) -> None:  # noqa: N802
+        username = (username or "").strip()
+        error = ""
+        if not username:
+            error = tr("login.need_username")
+        elif self.users.exists(username):
+            error = tr("login.user_exists")
+        elif len(password) < MIN_PASSWORD_LEN:
+            error = tr("login.password_short")
+        elif password != password2:
+            error = tr("login.password_mismatch")
+        if error:
+            self.authFinished.emit(False, error)
+            return
+        self._set(authBusy=True)
+
+        async def job() -> Session:
+            return await asyncio.to_thread(self.users.create, username, password)
+
+        def done(session: Session) -> None:
+            self._set(authBusy=False)
+            self.settings.last_username = username
+            self.settings.save()
+            self.refresh_profiles()
+            self._open_session(session)
+            self.authFinished.emit(True, "")
+            self.toast.emit("success", tr("toast.profile_created"), username)
+
+        def failed(exc: Exception) -> None:
+            self._set(authBusy=False)
+            self.authFinished.emit(False, error_text(exc))
+
+        run_async(job(), done, failed)
+
+    @Slot(str, result=int)
+    def passwordStrength(self, password: str) -> int:  # noqa: N802
+        """Оценка 0..4 для индикатора надёжности при создании профиля."""
+        if not password:
+            return 0
+        score = 0
+        if len(password) >= MIN_PASSWORD_LEN:
+            score += 1
+        if len(password) >= 12:
+            score += 1
+        classes = sum(bool(f(password)) for f in (
+            lambda p: any(c.islower() for c in p), lambda p: any(c.isupper() for c in p),
+            lambda p: any(c.isdigit() for c in p), lambda p: any(not c.isalnum() for c in p)))
+        if classes >= 2:
+            score += 1
+        if classes >= 3 and len(password) >= 10:
+            score += 1
+        return min(score, 4)
+
+    def _open_session(self, session: Session) -> None:
+        self.session = session
+        self.repos = Repos(self.db, session)
+        fixed = self.repos.recover_interrupted_runs()
+        if fixed:
+            log.info("После аварийного завершения исправлено статусов: %s", fixed)
+        self.bus = EventBus()
+        self.bus.subscribe(self._on_event)
+        self.orchestrator = Orchestrator(self.repos, self.bus)
+        self._set(loggedIn=True, username=session.username)
+        self._restore_workspace()
+        self._state_timer.start()
+        if fixed:
+            self.toast.emit("info", tr("toast.recovered"), tr("toast.recovered_text"))
+
+    @Slot()
+    def logout(self) -> None:
+        if self.orchestrator and self.orchestrator.state.running:
+            self.orchestrator.stop()
+        self._state_timer.stop()
+        if self.session:
+            self.session.wipe()
+        self.session = None
+        self.repos = None
+        self.bus = None
+        self.orchestrator = None
+        self.workspace_id = None
+        for controller in self._controllers.values():
+            controller.reset()
+        self._set(loggedIn=False, username="", workspaceId=-1, workspaceName="",
+                  running=False, paused=False, pendingApprovals=0)
+        self.refresh_profiles()
+
+    def change_password(self, old: str, new1: str, new2: str) -> str:
+        """Смена пароля; возвращает текст ошибки или пустую строку."""
+        if self.repos is None or self.session is None:
+            return tr("login.bad_credentials")
+        if len(new1) < MIN_PASSWORD_LEN:
+            return tr("login.password_short")
+        if new1 != new2:
+            return tr("login.password_mismatch")
+        if not self.repos.users.change_password(self.session, old, new1):
+            return tr("login.bad_credentials")
+        # Сохранённый в хранилище ОС пароль иначе перестал бы подходить.
+        if self.settings.remember_master_password and keyring_available():
+            keyring_store_password(self.session.username, new1)
+        return ""
+
+    # -- воркспейс --------------------------------------------------------------
+    def _restore_workspace(self) -> None:
+        assert self.repos is not None and self.session is not None
+        user = self.repos.users.get(self.session.user_id)
+        last = user.settings.get("last_workspace_id") if user else None
+        ids = [w.id for w in self.repos.workspaces.list(self.session.user_id)]
+        self.select_workspace(last if last in ids else (ids[0] if ids else None))
+
+    def select_workspace(self, ws_id: int | None) -> None:
+        if self.repos is None or self.session is None:
+            return
+        if self.orchestrator and self.orchestrator.state.running and ws_id != self.workspace_id:
+            self.toast.emit("warning", tr("toast.run_active"), tr("toast.run_active_text"))
+            return
+        self.workspace_id = ws_id
+        if ws_id is not None:
+            PATHS.workspace_dir(ws_id).mkdir(parents=True, exist_ok=True)
+            user = self.repos.users.get(self.session.user_id)
+            if user is not None:
+                settings = dict(user.settings)
+                settings["last_workspace_id"] = ws_id
+                self.repos.users.save_settings(self.session.user_id, settings)
+        self._update_workspace_name()
+        for controller in self._controllers.values():
+            try:
+                controller.on_workspace_changed()
+            except Exception:  # noqa: BLE001 — одна страница не должна ломать остальные
+                log.exception("Контроллер %s не обновился", type(controller).__name__)
+
+    def _update_workspace_name(self) -> None:
+        ws = self.repos.workspaces.get(self.workspace_id) if (self.repos and self.workspace_id) else None
+        self._set(workspaceId=ws.id if ws else -1, workspaceName=ws.name if ws else "")
+
+    @Slot(int)
+    def selectWorkspace(self, ws_id: int) -> None:  # noqa: N802
+        self.select_workspace(ws_id if ws_id >= 0 else None)
+
+    # -- настройки приложения ---------------------------------------------------
+    @Slot(str)
+    def setLanguage(self, code: str) -> None:  # noqa: N802
         set_language(code)
         self.settings.language = code
         self.settings.save()
-        self._retranslate()
+        # Статусы и подписи, собранные в Python, тоже на новом языке.
+        for controller in self._controllers.values():
+            if self.repos is not None:
+                try:
+                    controller.refresh()
+                except Exception:  # noqa: BLE001
+                    log.exception("Не обновился после смены языка: %s", controller)
 
-    def _retranslate(self) -> None:
-        self.title.setText(tr("login.title"))
-        self.subtitle.setText(tr("login.subtitle"))
-        self.lbl_user.setText(tr("login.username"))
-        self.lbl_pass.setText(tr("login.password"))
-        self.remember.setText(tr("login.remember"))
-        self.btn_signin.setText(tr("login.signin"))
-        self.btn_to_signup.setText(tr("login.create"))
-        self.su_title.setText(tr("login.create_title"))
-        self.su_warning.setText(tr("login.warning"))
-        self.su_lbl_user.setText(tr("login.username"))
-        self.su_lbl_pass.setText(tr("login.password"))
-        self.su_lbl_pass2.setText(tr("login.password2"))
-        self.su_btn_create.setText(tr("login.create"))
-        self.su_btn_back.setText(tr("common.cancel"))
-
-    def _show_error(self, text: str) -> None:
-        self.error.setText(text)
-        self.error.setVisible(bool(text))
-
-    def _show_signup_error(self, text: str) -> None:
-        self.su_error.setText(text)
-        self.su_error.setVisible(bool(text))
-
-    def _do_signin(self) -> None:
-        username = self.profile_box.currentText().strip()
-        password = self.password.text()
-        if not username or not password:
-            self._show_error(tr("login.bad_credentials"))
+    @Slot(str)
+    def setMotion(self, level: str) -> None:  # noqa: N802
+        if level not in MOTION_LEVELS:
             return
-        self.btn_signin.setEnabled(False)
+        self.settings.motion = level
+        self.settings.save()
+        self._set(motion=level)
+
+    @Slot(str)
+    def navigate(self, page: str) -> None:
+        self.navigateRequested.emit(page)
+
+    @Slot(str)
+    def openPath(self, path: str) -> None:  # noqa: N802
+        """Открывает файл или каталог в системном проводнике."""
+        target = Path(path)
+        if not target.exists():
+            self.toast.emit("warning", tr("toast.not_found"), str(target))
+            return
+        if sys.platform == "win32" and target.is_file():
+            subprocess.Popen(["explorer", "/select,", str(target)])  # noqa: S603, S607
+            return
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(target if target.is_dir() else target.parent)))
+
+    @Slot(str)
+    def copyText(self, text: str) -> None:  # noqa: N802
+        from PySide6.QtGui import QGuiApplication
+
+        QGuiApplication.clipboard().setText(text or "")
+        self.toast.emit("info", tr("toast.copied"), "")
+
+    # -- события ядра --------------------------------------------------------------
+    def _on_event(self, event: Event) -> None:
+        if event.workspace_id is not None and self.workspace_id is not None \
+                and event.workspace_id != self.workspace_id:
+            return
+        for controller in self._controllers.values():
+            try:
+                controller.on_event(event)
+            except Exception:  # noqa: BLE001
+                log.exception("Сбой обработки события %s", event.type)
+        self._sync_run_state()
+        self._toast_for(event)
+        if event.type is not EventType.AGENT_DELTA:
+            self.coreEvent.emit({"type": event.type.value, "message": event.message,
+                                 "agent": event.agent_name})
+
+    def _sync_run_state(self) -> None:
+        orch = self.orchestrator
+        if orch is None:
+            return
+        gate = orch.gate
+        self._set(running=orch.state.running, paused=orch.state.paused,
+                  pendingApprovals=len(gate.pending()) if gate else 0)
+
+    def _tick(self) -> None:
+        """Раз в секунду: таймер прогона и живые счётчики расхода."""
+        orch = self.orchestrator
+        if orch is None or not orch.state.running:
+            if self._s.get("runElapsed"):
+                self._set(runElapsed="")
+            return
+        from datetime import datetime, timezone
+
         try:
-            session: Session | None = self.users.authenticate(username, password)
-        finally:
-            self.btn_signin.setEnabled(True)
-        if session is None:
-            self._show_error(tr("login.bad_credentials"))
-            return
+            started = datetime.fromisoformat(orch.state.started_at)
+            seconds = int((datetime.now(timezone.utc) - started).total_seconds())
+        except ValueError:
+            seconds = 0
+        minutes, sec = divmod(max(seconds, 0), 60)
+        hours, minutes = divmod(minutes, 60)
+        elapsed = f"{hours}:{minutes:02d}:{sec:02d}" if hours else f"{minutes:02d}:{sec:02d}"
+        from ui.bridge.core import fmt_tokens
 
-        self.settings.last_username = username
-        self.settings.remember_master_password = self.remember.isChecked()
-        self.settings.save()
-        if self.remember.isChecked():
-            keyring_store_password(username, password)
-        else:
-            keyring_delete_password(username)
+        self._set(runElapsed=elapsed, runTokens=fmt_tokens(orch.state.tokens),
+                  runCost=fmt_money(orch.state.cost))
 
-        self._show_error("")
-        self.logged_in.emit(session)
+    def _toast_for(self, event: Event) -> None:
+        kind = event.type
+        if kind is EventType.RUN_FINISHED:
+            p = event.payload
+            if p.get("stopped"):
+                self.toast.emit("warning", tr("toast.run_stopped"), event.message)
+            elif p.get("failed"):
+                self.toast.emit("error", tr("toast.run_failed"), event.message)
+            elif p.get("escalated"):
+                self.toast.emit("warning", tr("toast.run_review"), event.message)
+            else:
+                self.toast.emit("success", tr("toast.run_done"), event.message)
+        elif kind is EventType.APPROVAL_REQUESTED:
+            self.toast.emit("warning", tr("toast.need_decision"), event.message)
+        elif kind is EventType.BUDGET_ALERT:
+            self.toast.emit("warning", tr("toast.budget_alert"), event.message)
+        elif kind is EventType.BUDGET_EXCEEDED:
+            self.toast.emit("error", tr("toast.budget_exceeded"), event.message)
+        elif kind is EventType.BUDGET_EXTENDED:
+            self.toast.emit("info", tr("toast.budget_extended"), event.message)
+        elif kind is EventType.SUBTASK_FAILED:
+            who = f"{event.agent_name}: " if event.agent_name else ""
+            self.toast.emit("error", tr("toast.subtask_failed"), who + event.message)
 
-    def _do_signup(self) -> None:
-        username = self.su_username.text().strip()
-        p1, p2 = self.su_password.text(), self.su_password2.text()
-        if not username:
-            self._show_signup_error(tr("login.username"))
-            return
-        if self.users.exists(username):
-            self._show_signup_error(tr("login.user_exists"))
-            return
-        if len(p1) < MIN_PASSWORD_LEN:
-            self._show_signup_error(tr("login.password_short"))
-            return
-        if p1 != p2:
-            self._show_signup_error(tr("login.password_mismatch"))
-            return
+    # -- служебное -----------------------------------------------------------------
+    def shutdown(self) -> None:
+        """Закрытие окна: гасим агентов, чтобы не оставить висящих запросов."""
+        if self.orchestrator and self.orchestrator.state.running:
+            self.orchestrator.stop()
 
-        session = self.users.create(username, p1)
-        self.settings.last_username = username
-        self.settings.save()
-        self._show_signup_error("")
-        self.logged_in.emit(session)
+    @staticmethod
+    def open_in_explorer(path: str) -> None:  # pragma: no cover — зависит от ОС
+        if sys.platform == "win32":
+            os.startfile(path)  # noqa: S606
 ````
 
-### `ui/main_window.py`
+### `ui/bridge/pages.py`
 
-*250 строк*
+*31 строк*
 
 ````python
-"""Главное окно: боковая навигация + стек страниц.
-
-Активный воркспейс — общее состояние окна: при его смене страницы агентов,
-задачи, дашборда и настроек перезагружают свои данные.
-"""
+"""Сборка контроллеров страниц — в одном месте, чтобы Backend не знал деталей."""
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import (
-    QButtonGroup,
-    QFrame,
-    QHBoxLayout,
-    QLabel,
-    QMainWindow,
-    QPushButton,
-    QStackedWidget,
-    QVBoxLayout,
-    QWidget,
-)
-
-from app.config import APP_NAME, APP_VERSION, AppSettings
-from app.i18n import tr
-from core.events import EventBus
-from core.orchestrator import Orchestrator
-from core.security.crypto import Session
-from storage.db import Database
-from storage.repositories import Repos
-from ui.pages.agents_page import AgentsPage
-from ui.pages.dashboard_page import DashboardPage
-from ui.pages.budget_page import BudgetPage
-from ui.pages.export_page import ExportPage
-from ui.pages.keys_page import KeysPage
-from ui.pages.run_page import RunPage
-from ui.pages.settings_page import SettingsPage
-from ui.pages.supervisor_page import SupervisorPage
-from ui.pages.task_page import TaskPage
-from ui.pages.workspaces_page import WorkspacesPage
-from ui.theme import stylesheet
+from ui.bridge.c_agents import AgentsController
+from ui.bridge.c_budget import BudgetController
+from ui.bridge.c_dashboard import DashboardController
+from ui.bridge.c_export import ExportController
+from ui.bridge.c_keys import KeysController
+from ui.bridge.c_prefs import PrefsController
+from ui.bridge.c_run import RunController
+from ui.bridge.c_supervisor import SupervisorController
+from ui.bridge.c_task import TaskController
+from ui.bridge.c_workspaces import WorkspacesController
 
 
-class MainWindow(QMainWindow):
-    """Основное окно приложения после успешного входа."""
-
-    logged_out = Signal()
-    #: язык сменился — окно нужно собрать заново (аргумент: индекс страницы)
-    rebuild_requested = Signal(int)
-
-    def __init__(self, db: Database, session: Session, app_settings: AppSettings) -> None:
-        super().__init__()
-        self.db = db
-        self.session = session
-        self.app_settings = app_settings
-        self.repos = Repos(db, session)
-        self.workspace_id: int | None = None
-
-        # Шина событий и оркестратор живут на уровне окна: один прогон на окно.
-        self.bus = EventBus()
-        self.orchestrator = Orchestrator(self.repos, self.bus)
-
-        self.setWindowTitle(f"{APP_NAME} — {session.username}")
-        self.resize(1280, 820)
-
-        central = QWidget()
-        self.setCentralWidget(central)
-        root = QHBoxLayout(central)
-        root.setContentsMargins(0, 0, 0, 0)
-        root.setSpacing(0)
-
-        root.addWidget(self._build_sidebar())
-
-        self.stack = QStackedWidget()
-        root.addWidget(self.stack, 1)
-
-        # --- страницы ---
-        self.page_workspaces = WorkspacesPage(self.repos)
-        self.page_keys = KeysPage(self.repos)
-        self.page_agents = AgentsPage(self.repos)
-        self.page_task = TaskPage(self.repos)
-        self.page_run = RunPage(self.repos, self.bus, self.orchestrator)
-        self.page_supervisor = SupervisorPage(self.repos, self.bus, self.orchestrator)
-        self.page_dashboard = DashboardPage(self.repos, self.bus)
-        self.page_budget = BudgetPage(self.repos, self.bus)
-        self.page_export = ExportPage(self.repos)
-        self.page_settings = SettingsPage(
-            self.repos, app_settings,
-            on_theme_change=self._apply_theme,
-            on_language_change=lambda _: self._on_language_changed(),
-        )
-        for page in (self.page_workspaces, self.page_keys, self.page_agents,
-                     self.page_task, self.page_run, self.page_supervisor,
-                     self.page_dashboard, self.page_budget, self.page_export,
-                     self.page_settings):
-            self.stack.addWidget(page)
-
-        # --- связи ---
-        self.page_workspaces.workspace_selected.connect(self.set_workspace)
-        self.page_workspaces.workspaces_changed.connect(self._update_workspace_label)
-        self.page_keys.keys_changed.connect(self.page_agents.refresh)
-        self.page_agents.agents_changed.connect(self.page_task.refresh)
-        self.page_agents.agents_changed.connect(self.page_dashboard.refresh)
-        self.page_task.task_changed.connect(self.page_dashboard.refresh)
-        self.page_task.task_changed.connect(self.page_run.refresh)
-        self.page_task.run_requested.connect(self._goto_run)
-        self.page_agents.agents_changed.connect(self.page_run.refresh)
-
-        self._select_page(0)
-        self.page_workspaces.refresh()
-        self.page_keys.refresh()
-        self._restore_last_workspace()
-
-    # -- построение ----------------------------------------------------------
-    def _build_sidebar(self) -> QWidget:
-        bar = QFrame()
-        bar.setObjectName("Sidebar")
-        bar.setFixedWidth(230)
-        lay = QVBoxLayout(bar)
-        lay.setContentsMargins(14, 18, 14, 18)
-        lay.setSpacing(6)
-
-        logo = QLabel(APP_NAME)
-        logo.setObjectName("H2")
-        lay.addWidget(logo)
-        version = QLabel(f"v{APP_VERSION} · {self.session.username}")
-        version.setObjectName("Dim")
-        lay.addWidget(version)
-        lay.addSpacing(12)
-
-        self.ws_label = QLabel(tr("ws.current") + ": —")
-        self.ws_label.setObjectName("Dim")
-        self.ws_label.setWordWrap(True)
-        lay.addWidget(self.ws_label)
-        lay.addSpacing(8)
-
-        self.nav_group = QButtonGroup(self)
-        self.nav_group.setExclusive(True)
-        entries = [
-            ("nav.workspaces", 0),
-            ("nav.keys", 1),
-            ("nav.agents", 2),
-            ("nav.task", 3),
-            ("nav.run", 4),
-            ("nav.supervisor", 5),
-            ("nav.dashboard", 6),
-            ("nav.budget", 7),
-            ("nav.export", 8),
-            ("nav.settings", 9),
-        ]
-        for key, index in entries:
-            button = QPushButton(tr(key))
-            button.setObjectName("Nav")
-            button.setCheckable(True)
-            button.clicked.connect(lambda _=False, i=index: self._select_page(i))
-            self.nav_group.addButton(button, index)
-            lay.addWidget(button)
-
-        lay.addStretch(1)
-        logout = QPushButton(tr("nav.logout"))
-        logout.clicked.connect(self._logout)
-        lay.addWidget(logout)
-        return bar
-
-    # -- состояние -----------------------------------------------------------
-    def _select_page(self, index: int) -> None:
-        self.stack.setCurrentIndex(index)
-        button = self.nav_group.button(index)
-        if button:
-            button.setChecked(True)
-        widget = self.stack.currentWidget()
-        if hasattr(widget, "refresh"):
-            widget.refresh()
-
-    def set_workspace(self, ws_id: int | None) -> None:
-        self.workspace_id = ws_id
-        self.page_workspaces.set_active(ws_id)
-        self.page_agents.set_workspace(ws_id)
-        self.page_task.set_workspace(ws_id)
-        self.page_run.set_workspace(ws_id)
-        self.page_supervisor.set_workspace(ws_id)
-        self.page_budget.set_workspace(ws_id)
-        self.page_export.set_workspace(ws_id)
-        self.page_dashboard.set_workspace(ws_id)
-        self.page_settings.set_workspace(ws_id)
-        self._update_workspace_label()
-        self._remember_workspace(ws_id)
-
-    def _goto_run(self) -> None:
-        """Переход на страницу выполнения по кнопке со страницы задачи."""
-        self._select_page(4)
-
-    def _update_workspace_label(self) -> None:
-        ws = self.repos.workspaces.get(self.workspace_id) if self.workspace_id else None
-        self.ws_label.setText(f"{tr('ws.current')}: {ws.name if ws else '—'}")
-
-    def _remember_workspace(self, ws_id: int | None) -> None:
-        user = self.repos.users.get(self.session.user_id)
-        if user is None:
-            return
-        settings = dict(user.settings)
-        settings["last_workspace_id"] = ws_id
-        self.repos.users.save_settings(self.session.user_id, settings)
-
-    def _restore_last_workspace(self) -> None:
-        user = self.repos.users.get(self.session.user_id)
-        last = (user.settings.get("last_workspace_id") if user else None)
-        workspaces = self.repos.workspaces.list(self.session.user_id)
-        ids = [w.id for w in workspaces]
-        if last in ids:
-            self.set_workspace(last)
-        elif ids:
-            self.set_workspace(ids[0])
-        else:
-            self.set_workspace(None)
-
-    # -- прочее --------------------------------------------------------------
-    def _apply_theme(self, theme: str) -> None:
-        app = self.window().style().parent() if False else None  # noqa: SIM108
-        from PySide6.QtWidgets import QApplication
-
-        QApplication.instance().setStyleSheet(stylesheet(theme))
-
-    def _on_language_changed(self) -> None:
-        """Строки страниц берутся при построении, поэтому окно собирается заново.
-
-        Во время прогона пересборка убила бы агентов — тогда язык применится
-        при следующем входе.
-        """
-        if self.orchestrator.state.running:
-            from ui.widgets.common import info
-
-            info(self, tr("settings.lang_after_run"))
-            return
-        self.rebuild_requested.emit(self.stack.currentIndex())
-
-    def select_page(self, index: int) -> None:
-        """Открывает страницу по индексу — нужно после пересборки окна."""
-        self._select_page(index)
-
-    def closeEvent(self, event) -> None:  # noqa: N802 — сигнатура Qt
-        """Корректно гасим фоновые задачи агентов при закрытии окна."""
-        if self.orchestrator.state.running:
-            self.orchestrator.stop()
-        super().closeEvent(event)
-
-    def _logout(self) -> None:
-        if self.orchestrator.state.running:
-            self.orchestrator.stop()
-        self.session.wipe()
-        self.logged_out.emit()
-        self.close()
+def build_controllers(backend) -> dict:
+    # Порядок важен: супервайзер описывает модель раньше, чем её спросит
+    # карточка супервайзера на странице выполнения.
+    return {
+        "workspaces": WorkspacesController(backend),
+        "keys": KeysController(backend),
+        "agents": AgentsController(backend),
+        "task": TaskController(backend),
+        "supervisor": SupervisorController(backend),
+        "run": RunController(backend),
+        "dashboard": DashboardController(backend),
+        "budget": BudgetController(backend),
+        "exporter": ExportController(backend),
+        "prefs": PrefsController(backend),
+    }
 ````
 
-### `ui/pages/workspaces_page.py`
+### `ui/bridge/c_workspaces.py`
 
-*204 строк*
+*90 строк*
 
 ````python
-"""Этап 1 — страница воркспейсов (параллельных проектов).
-
-Каждый воркспейс полностью изолирован: свой набор агентов, своя задача,
-свой рабочий каталог на диске и свои настройки супервайзера.
-"""
+"""Воркспейсы: параллельные проекты со своими агентами, задачей и настройками."""
 
 from __future__ import annotations
 
 import shutil
 
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import (
-    QDialog,
-    QDialogButtonBox,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QPlainTextEdit,
-    QPushButton,
-    QScrollArea,
-    QVBoxLayout,
-    QWidget,
-)
+from PySide6.QtCore import Property, QObject, Signal, Slot
 
 from app.config import DEFAULT_WORKSPACE_SETTINGS, PATHS
 from app.i18n import tr
-from storage.db import local_time
-from storage.models import Workspace
-from storage.repositories import Repos
-from ui.widgets.common import Card, EmptyState, Header, confirm
+from ui.bridge.core import Controller, fmt_money, fmt_tokens, when
+from ui.bridge.listmodel import DictListModel
 
 
-class WorkspaceDialog(QDialog):
-    """Диалог создания/переименования воркспейса."""
+class WorkspacesController(Controller):
+    changed = Signal()
 
-    def __init__(self, parent: QWidget, workspace: Workspace | None = None) -> None:
-        super().__init__(parent)
-        self.setWindowTitle(tr("ws.new"))
-        self.setMinimumWidth(440)
-        lay = QVBoxLayout(self)
-        lay.setSpacing(10)
+    def __init__(self, backend) -> None:
+        super().__init__(backend)
+        self._model = DictListModel(["id", "name", "description", "agents", "updated",
+                                     "active", "tokens", "cost", "taskTitle"], parent=self)
 
-        lay.addWidget(QLabel(tr("ws.name")))
-        self.name = QLineEdit(workspace.name if workspace else "")
-        lay.addWidget(self.name)
+    def _get_model(self) -> QObject:
+        return self._model
 
-        lay.addWidget(QLabel(tr("common.description")))
-        self.description = QPlainTextEdit(workspace.description if workspace else "")
-        self.description.setFixedHeight(90)
-        lay.addWidget(self.description)
+    model = Property(QObject, _get_model, constant=True)
 
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        lay.addWidget(buttons)
-
-    def values(self) -> tuple[str, str]:
-        return self.name.text().strip(), self.description.toPlainText().strip()
-
-
-class WorkspaceCard(Card):
-    """Карточка одного воркспейса в списке."""
-
-    def __init__(self, parent: QWidget, ws: Workspace, agents: int,
-                 is_active: bool, on_select, on_edit, on_delete) -> None:
-        super().__init__(parent, spacing=8)
-        row = QHBoxLayout()
-        texts = QVBoxLayout()
-        texts.setSpacing(2)
-
-        title = QLabel(ws.name + ("  ·  " + tr("ws.current") if is_active else ""))
-        title.setObjectName("H2")
-        texts.addWidget(title)
-
-        meta = QLabel(f"{agents} {tr('ws.agents_count')}  ·  {local_time(ws.updated_at, '%Y-%m-%d %H:%M')}")
-        meta.setObjectName("Dim")
-        texts.addWidget(meta)
-
-        if ws.description:
-            desc = QLabel(ws.description)
-            desc.setObjectName("Dim")
-            desc.setWordWrap(True)
-            texts.addWidget(desc)
-
-        row.addLayout(texts, 1)
-
-        btn_select = QPushButton(tr("ws.select"))
-        btn_select.setObjectName("Primary")
-        btn_select.setEnabled(not is_active)
-        btn_select.clicked.connect(lambda: on_select(ws))
-        row.addWidget(btn_select, 0, Qt.AlignmentFlag.AlignTop)
-
-        btn_edit = QPushButton(tr("common.edit"))
-        btn_edit.clicked.connect(lambda: on_edit(ws))
-        row.addWidget(btn_edit, 0, Qt.AlignmentFlag.AlignTop)
-
-        btn_delete = QPushButton(tr("common.delete"))
-        btn_delete.setObjectName("Danger")
-        btn_delete.clicked.connect(lambda: on_delete(ws))
-        row.addWidget(btn_delete, 0, Qt.AlignmentFlag.AlignTop)
-
-        self.body.addLayout(row)
-
-
-class WorkspacesPage(QWidget):
-    """Список воркспейсов с выбором активного."""
-
-    workspace_selected = Signal(int)
-    workspaces_changed = Signal()
-
-    def __init__(self, repos: Repos) -> None:
-        super().__init__()
-        self.repos = repos
-        self.active_id: int | None = None
-
-        lay = QVBoxLayout(self)
-        lay.setContentsMargins(24, 24, 24, 24)
-        lay.setSpacing(16)
-
-        self.header = Header(tr("ws.title"))
-        btn_new = QPushButton(tr("ws.new"))
-        btn_new.setObjectName("Primary")
-        btn_new.clicked.connect(self._create)
-        self.header.add_action(btn_new)
-        lay.addWidget(self.header)
-
-        self.scroll = QScrollArea()
-        self.scroll.setWidgetResizable(True)
-        self.scroll.setFrameShape(QScrollArea.Shape.NoFrame)
-        lay.addWidget(self.scroll, 1)
-
-        self.container = QWidget()
-        self.list_layout = QVBoxLayout(self.container)
-        self.list_layout.setContentsMargins(0, 0, 0, 0)
-        self.list_layout.setSpacing(10)
-        self.scroll.setWidget(self.container)
-
-    # -- отрисовка -----------------------------------------------------------
+    @Slot()
     def refresh(self) -> None:
-        while self.list_layout.count():
-            item = self.list_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-
-        items = self.repos.workspaces.list(self.repos.session.user_id)
-        if not items:
-            self.list_layout.addWidget(EmptyState(tr("ws.empty")))
+        if not self.ready:
             return
-        for ws in items:
-            self.list_layout.addWidget(
-                WorkspaceCard(
-                    self, ws, self.repos.workspaces.agent_count(ws.id),
-                    ws.id == self.active_id, self._select, self._edit, self._delete,
-                )
-            )
-        self.list_layout.addStretch(1)
+        items = []
+        for ws in self.repos.workspaces.list(self.repos.session.user_id):
+            tokens, cost = self.repos.budgets.workspace_totals(ws.id)
+            task = self.repos.tasks.current(ws.id)
+            items.append({
+                "id": ws.id, "name": ws.name, "description": ws.description,
+                "agents": self.repos.workspaces.agent_count(ws.id),
+                "updated": when(ws.updated_at), "active": ws.id == self.ws_id,
+                "tokens": fmt_tokens(tokens), "cost": fmt_money(cost),
+                "taskTitle": task.title if task else "",
+            })
+        self._model.set_items(items)
 
-    def set_active(self, ws_id: int | None) -> None:
-        self.active_id = ws_id
-        self.refresh()
+    def reset(self) -> None:
+        super().reset()
+        self._model.clear()
 
-    # -- действия ------------------------------------------------------------
-    def _create(self) -> None:
-        dlg = WorkspaceDialog(self)
-        if dlg.exec() != QDialog.DialogCode.Accepted:
-            return
-        name, description = dlg.values()
+    @Slot(str, str, result=str)
+    def create(self, name: str, description: str) -> str:
+        name = (name or "").strip()
         if not name:
-            return
-        ws = self.repos.workspaces.create(
-            self.repos.session.user_id, name, description,
-            dict(DEFAULT_WORKSPACE_SETTINGS),
-        )
+            return tr("ws.need_name")
+        ws = self.repos.workspaces.create(self.repos.session.user_id, name,
+                                          (description or "").strip(),
+                                          dict(DEFAULT_WORKSPACE_SETTINGS))
         PATHS.workspace_dir(ws.id).mkdir(parents=True, exist_ok=True)
-        self.workspaces_changed.emit()
-        self._select(ws)
+        self.backend.select_workspace(ws.id)
+        self.toast("success", tr("toast.ws_created"), name)
+        return ""
 
-    def _edit(self, ws: Workspace) -> None:
-        dlg = WorkspaceDialog(self, ws)
-        if dlg.exec() != QDialog.DialogCode.Accepted:
+    @Slot(int, str, str, result=str)
+    def update(self, ws_id: int, name: str, description: str) -> str:
+        name = (name or "").strip()
+        if not name:
+            return tr("ws.need_name")
+        self.repos.workspaces.update(ws_id, name=name, description=(description or "").strip())
+        self.backend._update_workspace_name()
+        self.refresh()
+        return ""
+
+    @Slot(int)
+    def remove(self, ws_id: int) -> None:
+        if self.backend.orchestrator and self.backend.orchestrator.state.running \
+                and ws_id == self.ws_id:
+            self.toast("warning", tr("toast.run_active"), tr("toast.run_active_text"))
             return
-        name, description = dlg.values()
-        if name:
-            self.repos.workspaces.update(ws.id, name=name, description=description)
-            self.workspaces_changed.emit()
+        ws = self.repos.workspaces.get(ws_id)
+        self.repos.workspaces.delete(ws_id)
+        shutil.rmtree(PATHS.workspace_dir(ws_id), ignore_errors=True)
+        if ws_id == self.ws_id:
+            remaining = self.repos.workspaces.list(self.repos.session.user_id)
+            self.backend.select_workspace(remaining[0].id if remaining else None)
+        else:
             self.refresh()
+        self.toast("info", tr("toast.ws_deleted"), ws.name if ws else "")
 
-    def _delete(self, ws: Workspace) -> None:
-        if not confirm(self, tr("ws.delete_confirm")):
-            return
-        self.repos.workspaces.delete(ws.id)
-        shutil.rmtree(PATHS.workspace_dir(ws.id), ignore_errors=True)
-        if self.active_id == ws.id:
-            self.active_id = None
-        self.workspaces_changed.emit()
-        self.refresh()
-
-    def _select(self, ws: Workspace) -> None:
-        self.active_id = ws.id
-        PATHS.workspace_dir(ws.id).mkdir(parents=True, exist_ok=True)
-        self.workspace_selected.emit(ws.id)
-        self.refresh()
+    @Slot(int)
+    def select(self, ws_id: int) -> None:
+        self.backend.select_workspace(ws_id)
 ````
 
-### `ui/pages/keys_page.py`
+### `ui/bridge/c_keys.py`
 
-*254 строк*
+*135 строк*
 
 ````python
-"""Этап 2 — страница API-ключей.
-
-Ключи хранятся зашифрованными (AES-256-GCM на мастер-ключе профиля).
-Кнопка «Проверить» делает реальный запрос списка моделей — это заодно
-подтверждает, что ключ и base URL рабочие.
-"""
+"""API-ключи провайдеров: общие для всех воркспейсов профиля."""
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import (
-    QComboBox,
-    QDialog,
-    QDialogButtonBox,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QPushButton,
-    QScrollArea,
-    QVBoxLayout,
-    QWidget,
-)
+from PySide6.QtCore import Property, QObject, Signal, Slot
 
 from app.i18n import tr
-from providers.base import ProviderError
 from providers.factory import build_provider
 from providers.presets import preset, preset_list
-from storage.models import ApiKey
-from storage.repositories import Repos
-from ui.widgets.common import Card, EmptyState, Header, confirm, info, warn
+from ui.bridge.core import Controller, error_text, when
+from ui.bridge.listmodel import DictListModel
 from utils.asyncutils import run_async
 
 
-class KeyDialog(QDialog):
-    """Создание/редактирование ключа с автоподстановкой base URL из пресета."""
+class KeysController(Controller):
+    changed = Signal()
 
-    def __init__(self, parent: QWidget, repos: Repos, key: ApiKey | None = None) -> None:
-        super().__init__(parent)
-        self.repos = repos
-        self.key = key
-        self.setWindowTitle(tr("keys.new"))
-        self.setMinimumWidth(520)
+    def __init__(self, backend) -> None:
+        super().__init__(backend)
+        self._model = DictListModel(
+            ["id", "label", "provider", "providerTitle", "baseUrl", "hasSecret",
+             "local", "free", "models", "testState", "testMessage", "created"],
+            parent=self)
+        self._presets = [
+            {"key": p.key, "title": p.title, "baseUrl": p.base_url,
+             "requiresKey": p.requires_key, "free": p.free_tier, "local": p.local,
+             "notes": p.notes, "docsUrl": p.docs_url,
+             "models": ", ".join(p.suggested_models[:3])}
+            for p in preset_list()
+        ]
+        #: результаты проверок живут до выхода из профиля
+        self._tests: dict[int, tuple[str, str]] = {}
 
-        lay = QVBoxLayout(self)
-        lay.setSpacing(10)
+    def _get_model(self) -> QObject:
+        return self._model
 
-        lay.addWidget(QLabel(tr("keys.provider")))
-        self.provider = QComboBox()
-        for p in preset_list():
-            suffix = []
-            if p.free_tier:
-                suffix.append("free")
-            if p.local:
-                suffix.append("local")
-            label = p.title + (f"  ({', '.join(suffix)})" if suffix else "")
-            self.provider.addItem(label, p.key)
-        self.provider.currentIndexChanged.connect(self._on_provider)
-        self.provider.setEnabled(key is None)   # провайдер не меняем после создания
-        lay.addWidget(self.provider)
+    model = Property(QObject, _get_model, constant=True)
 
-        self.notes = QLabel("")
-        self.notes.setObjectName("Dim")
-        self.notes.setWordWrap(True)
-        lay.addWidget(self.notes)
+    def _get_presets(self) -> list:
+        return self._presets
 
-        lay.addWidget(QLabel(tr("keys.label")))
-        self.label = QLineEdit(key.label if key else "")
-        lay.addWidget(self.label)
+    presets = Property("QVariantList", _get_presets, constant=True)
 
-        lay.addWidget(QLabel(tr("keys.base_url")))
-        self.base_url = QLineEdit(key.base_url if key else "")
-        lay.addWidget(self.base_url)
-
-        self.key_label = QLabel(tr("keys.key"))
-        lay.addWidget(self.key_label)
-        self.secret = QLineEdit()
-        self.secret.setEchoMode(QLineEdit.EchoMode.Password)
-        self.secret.setPlaceholderText("sk-..." if key is None else "оставьте пустым, чтобы не менять")
-        lay.addWidget(self.secret)
-
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        lay.addWidget(buttons)
-
-        if key is not None:
-            idx = self.provider.findData(key.provider)
-            if idx >= 0:
-                self.provider.setCurrentIndex(idx)
-        self._on_provider()
-
-    def _on_provider(self) -> None:
-        p = preset(self.provider.currentData())
-        if self.key is None:
-            self.base_url.setText(p.base_url)
-            if not self.label.text():
-                self.label.setText(p.title)
-        self.secret.setEnabled(p.requires_key or p.key == "custom")
-        hint = p.notes
-        if not p.requires_key:
-            hint = (hint + " " if hint else "") + tr("keys.no_key_needed")
-        if p.docs_url:
-            hint = (hint + "  " if hint else "") + p.docs_url
-        self.notes.setText(hint)
-
-    def values(self) -> tuple[str, str, str, str]:
-        return (
-            self.provider.currentData(),
-            self.label.text().strip() or preset(self.provider.currentData()).title,
-            self.base_url.text().strip(),
-            self.secret.text().strip(),
-        )
-
-
-class KeysPage(QWidget):
-    """Список ключей пользователя (общий для всех воркспейсов)."""
-
-    keys_changed = Signal()
-
-    def __init__(self, repos: Repos) -> None:
-        super().__init__()
-        self.repos = repos
-
-        lay = QVBoxLayout(self)
-        lay.setContentsMargins(24, 24, 24, 24)
-        lay.setSpacing(16)
-
-        self.header = Header(tr("keys.title"), tr("keys.subtitle"))
-        btn_new = QPushButton(tr("keys.new"))
-        btn_new.setObjectName("Primary")
-        btn_new.clicked.connect(self._create)
-        self.header.add_action(btn_new)
-        lay.addWidget(self.header)
-
-        self.scroll = QScrollArea()
-        self.scroll.setWidgetResizable(True)
-        self.scroll.setFrameShape(QScrollArea.Shape.NoFrame)
-        lay.addWidget(self.scroll, 1)
-
-        self.container = QWidget()
-        self.list_layout = QVBoxLayout(self.container)
-        self.list_layout.setContentsMargins(0, 0, 0, 0)
-        self.list_layout.setSpacing(10)
-        self.scroll.setWidget(self.container)
-
+    @Slot()
     def refresh(self) -> None:
-        while self.list_layout.count():
-            item = self.list_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-
-        keys = self.repos.keys.list()
-        if not keys:
-            self.list_layout.addWidget(EmptyState(tr("keys.empty")))
+        if not self.ready:
             return
-        for key in keys:
-            self.list_layout.addWidget(self._build_card(key))
-        self.list_layout.addStretch(1)
+        items = []
+        for key in self.repos.keys.list():
+            p = preset(key.provider)
+            state, message = self._tests.get(key.id, ("", ""))
+            items.append({
+                "id": key.id, "label": key.label, "provider": key.provider,
+                "providerTitle": p.title, "baseUrl": key.base_url or p.base_url,
+                "hasSecret": key.has_secret, "local": p.local, "free": p.free_tier,
+                "models": len(key.meta.get("models") or []),
+                "testState": state, "testMessage": message, "created": when(key.created_at),
+            })
+        self._model.set_items(items)
 
-    def _build_card(self, key: ApiKey) -> Card:
-        p = preset(key.provider)
-        card = Card(self, spacing=8)
-        row = QHBoxLayout()
+    def reset(self) -> None:
+        super().reset()
+        self._tests.clear()
+        self._model.clear()
 
-        texts = QVBoxLayout()
-        texts.setSpacing(2)
-        title = QLabel(f"{key.label}")
-        title.setObjectName("H2")
-        texts.addWidget(title)
-        meta = QLabel(f"{p.title}  ·  {key.base_url or p.base_url or '—'}  ·  "
-                      + ("ключ сохранён" if key.has_secret else "без ключа"))
-        meta.setObjectName("Dim")
-        texts.addWidget(meta)
-        status = QLabel("")
-        status.setObjectName("Dim")
-        status.setWordWrap(True)
-        texts.addWidget(status)
-        row.addLayout(texts, 1)
-
-        btn_test = QPushButton(tr("common.test"))
-        btn_test.clicked.connect(lambda: self._test(key, btn_test, status))
-        row.addWidget(btn_test, 0, Qt.AlignmentFlag.AlignTop)
-
-        btn_edit = QPushButton(tr("common.edit"))
-        btn_edit.clicked.connect(lambda: self._edit(key))
-        row.addWidget(btn_edit, 0, Qt.AlignmentFlag.AlignTop)
-
-        btn_del = QPushButton(tr("common.delete"))
-        btn_del.setObjectName("Danger")
-        btn_del.clicked.connect(lambda: self._delete(key))
-        row.addWidget(btn_del, 0, Qt.AlignmentFlag.AlignTop)
-
-        card.body.addLayout(row)
-        return card
-
-    # -- действия ------------------------------------------------------------
-    def _create(self) -> None:
-        dlg = KeyDialog(self, self.repos)
-        if dlg.exec() != QDialog.DialogCode.Accepted:
-            return
-        provider, label, base_url, secret = dlg.values()
+    @Slot(str, str, str, str, result=str)
+    def create(self, provider: str, label: str, base_url: str, secret: str) -> str:
         p = preset(provider)
+        secret = (secret or "").strip()
         if p.requires_key and not secret:
-            warn(self, tr("keys.key"))
-            return
-        self.repos.keys.create(label, provider, secret, base_url)
-        self.keys_changed.emit()
+            return tr("keys.need_secret")
+        if p.key == "custom" and not (base_url or "").strip():
+            return tr("keys.need_url")
+        key = self.repos.keys.create((label or "").strip() or p.title, provider, secret,
+                                     (base_url or "").strip())
         self.refresh()
+        self.backend.agents.refresh()
+        self.toast("success", tr("toast.key_saved"), key.label)
+        self.test(key.id)
+        return ""
 
-    def _edit(self, key: ApiKey) -> None:
-        dlg = KeyDialog(self, self.repos, key)
-        if dlg.exec() != QDialog.DialogCode.Accepted:
-            return
-        _, label, base_url, secret = dlg.values()
-        self.repos.keys.update(key.id, label, base_url, secret if secret else None)
-        self.keys_changed.emit()
+    @Slot(int, str, str, str, result=str)
+    def update(self, key_id: int, label: str, base_url: str, secret: str) -> str:
+        key = self.repos.keys.get(key_id)
+        if key is None:
+            return tr("keys.not_found")
+        self.repos.keys.update(key_id, (label or "").strip() or key.label,
+                               (base_url or "").strip(), (secret or "").strip() or None)
+        self._tests.pop(key_id, None)
         self.refresh()
+        self.backend.agents.refresh()
+        return ""
 
-    def _delete(self, key: ApiKey) -> None:
-        if not confirm(self, tr("keys.delete_confirm")):
-            return
-        self.repos.keys.delete(key.id)
-        self.keys_changed.emit()
+    @Slot(int)
+    def remove(self, key_id: int) -> None:
+        key = self.repos.keys.get(key_id)
+        self.repos.keys.delete(key_id)
+        self._tests.pop(key_id, None)
         self.refresh()
+        self.backend.agents.refresh()
+        self.toast("info", tr("toast.key_deleted"), key.label if key else "")
 
-    def _test(self, key: ApiKey, button: QPushButton, status: QLabel) -> None:
-        """Асинхронная проверка соединения без блокировки интерфейса."""
-        button.setEnabled(False)
-        status.setText("…")
+    @Slot(int)
+    def test(self, key_id: int) -> None:
+        """Реальный запрос списка моделей: проверяет и ключ, и адрес сервера."""
+        key = self.repos.keys.get(key_id)
+        if key is None:
+            return
+        self._tests[key_id] = ("testing", "")
+        self._model.update_row(key_id, testState="testing", testMessage="")
 
         async def job() -> list[str]:
             secret = self.repos.keys.reveal(key.id)
@@ -9947,1508 +9946,1151 @@ class KeysPage(QWidget):
                 await provider.aclose()
 
         def done(models: list[str]) -> None:
-            button.setEnabled(True)
-            status.setText(tr("keys.test_ok", n=len(models)))
+            message = tr("keys.test_ok", n=len(models))
+            self._tests[key_id] = ("ok", message)
             meta = dict(key.meta)
-            meta["models"] = models[:300]   # кэш для выпадающего списка в агентах
+            meta["models"] = models[:300]    # кэш для выпадающего списка моделей
             self.repos.keys.update(key.id, key.label, key.base_url, None, meta)
-            self.keys_changed.emit()
+            self._model.update_row(key_id, testState="ok", testMessage=message,
+                                   models=len(models))
+            self.backend.agents.refresh()
 
         def failed(exc: Exception) -> None:
-            button.setEnabled(True)
-            message = str(exc) if isinstance(exc, ProviderError) else f"{type(exc).__name__}: {exc}"
-            status.setText(tr("keys.test_fail", err=message))
+            message = tr("keys.test_fail", err=error_text(exc))
+            self._tests[key_id] = ("fail", message)
+            self._model.update_row(key_id, testState="fail", testMessage=message)
 
         run_async(job(), done, failed)
 ````
 
-### `ui/pages/agents_page.py`
+### `ui/bridge/c_agents.py`
 
-*384 строк*
+*219 строк*
 
 ````python
-"""Этап 2 — страница агентов воркспейса.
-
-Количество агентов не ограничено: список прокручивается, а карточки
-компактны, поэтому 2 агента и 15+ агентов выглядят одинаково опрятно.
-"""
+"""Агенты воркспейса: роли, модели, инструменты, системные промпты."""
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import (
-    QCheckBox,
-    QComboBox,
-    QDialog,
-    QDialogButtonBox,
-    QDoubleSpinBox,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QPlainTextEdit,
-    QPushButton,
-    QScrollArea,
-    QSpinBox,
-    QVBoxLayout,
-    QWidget,
-)
+from PySide6.QtCore import Property, QObject, Signal, Slot
 
 from app.i18n import current_language, tr
 from core.agents.roles import COMMON_RULES, TEMPLATES, by_key, title as role_title
 from core.tools.base import default_registry, expand_tool_names
-from providers.base import ProviderError
-from providers.factory import build_provider
+from providers.factory import build_provider, model_price
 from providers.presets import preset
-from storage.models import Agent
-from storage.repositories import Repos
-from ui.widgets.common import Card, EmptyState, Header, StatusBadge, confirm, warn
+from ui.bridge.core import Controller, elide, error_text, status_title
+from ui.bridge.listmodel import DictListModel
 from utils.asyncutils import run_async
 
+#: подписи инструментов в интерфейсе
+TOOL_TITLES = {
+    "web_search": "tool.web_search", "fetch_url": "tool.fetch_url",
+    "read_file": "tool.read_file", "write_file": "tool.write_file",
+    "list_dir": "tool.list_dir", "code_exec": "tool.code_exec",
+}
 
-class AgentDialog(QDialog):
-    """Форма создания/редактирования агента."""
+ROLE_ICONS = {
+    "analyst": "chart-line", "developer": "terminal", "tester": "badge-check",
+    "critic": "scale", "documenter": "file-text", "researcher": "book-open",
+    "supervisor": "shield-check", "custom": "sparkles",
+}
 
-    def __init__(self, parent: QWidget, repos: Repos, agent: Agent | None = None) -> None:
-        super().__init__(parent)
-        self.repos = repos
-        self.agent = agent
-        self.setWindowTitle(tr("agents.new"))
-        self.setMinimumSize(620, 700)
 
-        root = QVBoxLayout(self)
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
-        root.addWidget(scroll, 1)
-        page = QWidget()
-        scroll.setWidget(page)
-        lay = QVBoxLayout(page)
-        lay.setSpacing(10)
+class AgentsController(Controller):
+    changed = Signal()
 
-        lay.addWidget(QLabel(tr("agents.name")))
-        self.name = QLineEdit(agent.name if agent else "")
-        lay.addWidget(self.name)
-        #: имя, подставленное из шаблона; пока пользователь его не менял,
-        #: смена шаблона меняет и имя
-        self._auto_name = ""
-        self._auto_prompt = ""
+    #: список моделей загружен с сервера провайдера: id ключа, модели, ошибка
+    modelsLoaded = Signal(int, "QVariantList", str)
 
-        lay.addWidget(QLabel(tr("agents.template")))
-        self.template = QComboBox()
+    def __init__(self, backend) -> None:
+        super().__init__(backend)
+        self._model = DictListModel(
+            ["id", "name", "role", "roleTitle", "icon", "provider", "providerTitle",
+             "modelName", "keyId", "keyLabel", "temperature", "maxTokens", "tools",
+             "toolTitles", "prompt", "promptPreview", "isSupervisor", "status",
+             "statusTitle", "enabled", "price"], parent=self)
+        self._set(hasKeys=False, keyOptions=[], supervisorId=-1)
+
+    hasKeys = Property(bool, lambda self: self._s.get("hasKeys", False),
+                       notify=changed)
+    keyOptions = Property("QVariantList", lambda self: self._s.get("keyOptions", []),
+                          notify=changed)
+
+    def _get_model(self) -> QObject:
+        return self._model
+
+    model = Property(QObject, _get_model, constant=True)
+
+    def _templates(self) -> list[dict]:
         lang = current_language()
-        for t in TEMPLATES:
-            self.template.addItem(role_title(t, lang), t.key)
-        self.template.currentIndexChanged.connect(self._apply_template)
-        lay.addWidget(self.template)
+        return [{"key": t.key, "title": role_title(t, lang), "icon": ROLE_ICONS.get(t.key, "bot"),
+                 "tools": expand_tool_names(t.suggested_tools)} for t in TEMPLATES]
 
-        lay.addWidget(QLabel(tr("agents.provider_key")))
-        self.key_box = QComboBox()
-        self.keys = self.repos.keys.list()
-        for k in self.keys:
-            self.key_box.addItem(f"{k.label} — {preset(k.provider).title}", k.id)
-        self.key_box.currentIndexChanged.connect(self._on_key_changed)
-        lay.addWidget(self.key_box)
+    templates = Property("QVariantList", _templates, notify=changed)
 
-        model_row = QHBoxLayout()
-        model_col = QVBoxLayout()
-        model_col.addWidget(QLabel(tr("agents.model")))
-        self.model = QComboBox()
-        self.model.setEditable(True)   # можно вписать модель вручную
-        model_col.addWidget(self.model)
-        model_row.addLayout(model_col, 1)
-        self.btn_models = QPushButton(tr("agents.load_models"))
-        self.btn_models.clicked.connect(self._load_models)
-        model_row.addWidget(self.btn_models, 0, Qt.AlignmentFlag.AlignBottom)
-        lay.addLayout(model_row)
+    def _tools(self) -> list[dict]:
+        return [{"name": n, "title": tr(TOOL_TITLES.get(n, n))} for n in default_registry().names()]
 
-        params_row = QHBoxLayout()
-        temp_col = QVBoxLayout()
-        temp_col.addWidget(QLabel(tr("agents.temperature")))
-        self.temperature = QDoubleSpinBox()
-        self.temperature.setRange(0.0, 2.0)
-        self.temperature.setSingleStep(0.1)
-        self.temperature.setValue(agent.temperature if agent else 0.7)
-        temp_col.addWidget(self.temperature)
-        params_row.addLayout(temp_col)
+    tools = Property("QVariantList", _tools, notify=changed)
 
-        tok_col = QVBoxLayout()
-        tok_col.addWidget(QLabel(tr("agents.max_tokens")))
-        self.max_tokens = QSpinBox()
-        self.max_tokens.setRange(256, 32768)
-        self.max_tokens.setSingleStep(256)
-        self.max_tokens.setValue(agent.max_tokens if agent else 2048)
-        tok_col.addWidget(self.max_tokens)
-        params_row.addLayout(tok_col)
-        lay.addLayout(params_row)
-
-        lay.addWidget(QLabel("Инструменты"))
-        tools_row = QHBoxLayout()
-        self.tool_boxes: dict[str, QCheckBox] = {}
-        enabled_tools = set(expand_tool_names(agent.tools)) if agent else set()
-        for tool_name in default_registry().names():
-            box = QCheckBox(tool_name)
-            box.setChecked(tool_name in enabled_tools)
-            self.tool_boxes[tool_name] = box
-            tools_row.addWidget(box)
-        tools_row.addStretch(1)
-        lay.addLayout(tools_row)
-
-        lay.addWidget(QLabel(tr("agents.prompt")))
-        self.prompt = QPlainTextEdit(agent.system_prompt if agent else "")
-        self.prompt.setMinimumHeight(180)
-        lay.addWidget(self.prompt)
-
-        note = QLabel(tr("agents.isolated_note"))
-        note.setObjectName("Dim")
-        note.setWordWrap(True)
-        lay.addWidget(note)
-
-        self.is_supervisor = QCheckBox(tr("settings.supervisor"))
-        self.is_supervisor.setChecked(agent.is_supervisor if agent else False)
-        lay.addWidget(self.is_supervisor)
-
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        root.addWidget(buttons)
-
-        if agent is not None:
-            idx = self.template.findData(agent.role or "custom")
-            self.template.blockSignals(True)
-            self.template.setCurrentIndex(max(0, idx))
-            self.template.blockSignals(False)
-            idx = self.key_box.findData(agent.api_key_id)
-            if idx >= 0:
-                self.key_box.setCurrentIndex(idx)
-            self._on_key_changed()
-            self.model.setCurrentText(agent.model)
-        else:
-            self._apply_template()
-            self._on_key_changed()
-
-    # -- реакции -------------------------------------------------------------
-    def _apply_template(self) -> None:
-        template = by_key(self.template.currentData())
-        # Промпт, который пользователь успел поправить руками, не затираем.
-        prompt = self.prompt.toPlainText().strip()
-        if template.prompt and (not prompt or prompt == self._auto_prompt):
-            self._auto_prompt = template.prompt + "\n\n" + COMMON_RULES.strip()
-            self.prompt.setPlainText(self._auto_prompt)
-        current = self.name.text().strip()
-        if not current or current == self._auto_name:
-            self._auto_name = role_title(template, current_language())
-            self.name.setText(self._auto_name)
-        suggested = expand_tool_names(template.suggested_tools)
-        for name, box in self.tool_boxes.items():
-            box.setChecked(name in suggested)
-
-    def _on_key_changed(self) -> None:
-        """Подставляет в список моделей кэш последней проверки или пресет."""
-        key_id = self.key_box.currentData()
-        key = next((k for k in self.keys if k.id == key_id), None)
-        if key is None:
+    @Slot()
+    def refresh(self) -> None:
+        if not self.ready:
             return
-        current = self.model.currentText()
-        cached = key.meta.get("models") or []
-        models = cached or preset(key.provider).suggested_models
-        self.model.clear()
-        self.model.addItems(models)
-        if current:
-            self.model.setCurrentText(current)
-        elif models:
-            self.model.setCurrentIndex(0)
-
-    def _load_models(self) -> None:
-        key_id = self.key_box.currentData()
-        key = next((k for k in self.keys if k.id == key_id), None)
-        if key is None:
+        keys = self.repos.keys.list()
+        key_by_id = {k.id: k for k in keys}
+        self._set(hasKeys=bool(keys), keyOptions=[
+            {"id": k.id, "title": f"{k.label} · {preset(k.provider).title}",
+             "provider": k.provider} for k in keys])
+        if self.ws_id is None:
+            self._model.clear()
+            self.changed.emit()
             return
-        self.btn_models.setEnabled(False)
+        lang = current_language()
+        items = []
+        for a in self.repos.agents.list(self.ws_id):
+            key = key_by_id.get(a.api_key_id or -1)
+            tools = expand_tool_names(a.tools)
+            p_in, p_out = model_price(a.provider, a.model) if a.model else (0.0, 0.0)
+            items.append({
+                "id": a.id, "name": a.name, "role": a.role or "custom",
+                "roleTitle": role_title(by_key(a.role or "custom"), lang),
+                "icon": ROLE_ICONS.get(a.role or "custom", "bot"),
+                "provider": a.provider, "providerTitle": preset(a.provider).title if a.provider else "",
+                "modelName": a.model, "keyId": a.api_key_id or -1,
+                "keyLabel": key.label if key else tr("agents.key_missing"),
+                "temperature": a.temperature, "maxTokens": a.max_tokens,
+                "tools": tools, "toolTitles": [tr(TOOL_TITLES.get(t, t)) for t in tools],
+                "prompt": a.system_prompt, "promptPreview": elide(a.system_prompt, 150),
+                "isSupervisor": a.is_supervisor, "status": a.status,
+                "statusTitle": status_title(a.status), "enabled": a.enabled,
+                "price": (f"${p_in:g} / ${p_out:g}" if (p_in or p_out)
+                          else (tr("agents.free") if a.provider and preset(a.provider).local else "")),
+            })
+        self._model.set_items(items)
+        self.changed.emit()
+
+    def reset(self) -> None:
+        super().reset()
+        self._model.clear()
+
+    def on_event(self, event) -> None:
+        from core.events import EventType
+
+        if event.type is EventType.AGENT_STATUS and event.agent_id:
+            status = event.payload.get("status", event.message)
+            self._model.update_row(event.agent_id, status=status,
+                                   statusTitle=status_title(status))
+        elif event.type in (EventType.RUN_FINISHED, EventType.RUN_STOPPED):
+            self.refresh()
+
+    # -- форма агента ---------------------------------------------------------
+    @Slot(str, result="QVariantMap")
+    def templateInfo(self, key: str) -> dict:  # noqa: N802
+        template = by_key(key)
+        prompt = (template.prompt + "\n\n" + COMMON_RULES.strip()) if template.prompt else ""
+        return {"name": role_title(template, current_language()), "prompt": prompt,
+                "tools": expand_tool_names(template.suggested_tools)}
+
+    @Slot(int, result="QVariantList")
+    def modelsForKey(self, key_id: int) -> list[str]:  # noqa: N802
+        """Кэш последней проверки ключа, иначе популярные модели пресета."""
+        key = self.repos.keys.get(key_id) if self.ready and key_id >= 0 else None
+        if key is None:
+            return []
+        return list(key.meta.get("models") or preset(key.provider).suggested_models)
+
+    @Slot(int)
+    def loadModels(self, key_id: int) -> None:  # noqa: N802
+        key = self.repos.keys.get(key_id)
+        if key is None:
+            self.modelsLoaded.emit(key_id, [], tr("keys.not_found"))
+            return
 
         async def job() -> list[str]:
-            secret = self.repos.keys.reveal(key.id)
-            provider = build_provider(key.provider, secret, key.base_url, timeout=20)
+            provider = build_provider(key.provider, self.repos.keys.reveal(key.id),
+                                      key.base_url, timeout=20)
             try:
                 return await provider.list_models()
             finally:
                 await provider.aclose()
 
         def done(models: list[str]) -> None:
-            self.btn_models.setEnabled(True)
-            current = self.model.currentText()
-            self.model.clear()
-            self.model.addItems(models)
-            if current:
-                self.model.setCurrentText(current)
             meta = dict(key.meta)
             meta["models"] = models[:300]
             self.repos.keys.update(key.id, key.label, key.base_url, None, meta)
+            self.modelsLoaded.emit(key_id, models[:300], "")
 
         def failed(exc: Exception) -> None:
-            self.btn_models.setEnabled(True)
-            message = str(exc) if isinstance(exc, ProviderError) else f"{type(exc).__name__}: {exc}"
-            warn(self, tr("keys.test_fail", err=message))
+            self.modelsLoaded.emit(key_id, [], tr("keys.test_fail", err=error_text(exc)))
 
         run_async(job(), done, failed)
 
-    def values(self) -> dict:
-        key_id = self.key_box.currentData()
-        key = next((k for k in self.keys if k.id == key_id), None)
-        return {
-            "name": self.name.text().strip(),
-            "role": self.template.currentData(),
-            "system_prompt": self.prompt.toPlainText().strip(),
-            "api_key_id": key_id,
-            "provider": key.provider if key else "",
-            "model": self.model.currentText().strip(),
-            "params": {
-                "temperature": self.temperature.value(),
-                "max_tokens": self.max_tokens.value(),
-                "tools": [n for n, b in self.tool_boxes.items() if b.isChecked()],
-            },
-            "is_supervisor": self.is_supervisor.isChecked(),
-        }
+    @Slot("QVariantMap", result=str)
+    def save(self, data: dict) -> str:
+        """Создаёт или обновляет агента. Возвращает текст ошибки или пустую строку."""
+        if self.ws_id is None:
+            return tr("ws.empty")
+        name = str(data.get("name") or "").strip()
+        model = str(data.get("model") or "").strip()
+        key_id = int(data.get("keyId", -1))
+        key = self.repos.keys.get(key_id) if key_id >= 0 else None
+        if not name:
+            return tr("agents.need_name")
+        if key is None:
+            return tr("agents.need_key")
+        if not model:
+            return tr("agents.need_model")
+        tools = [t for t in (data.get("tools") or []) if t in default_registry().names()]
+        fields = dict(
+            name=name, role=str(data.get("role") or "custom"),
+            system_prompt=str(data.get("prompt") or "").strip(),
+            api_key_id=key.id, provider=key.provider, model=model,
+            params={"temperature": round(float(data.get("temperature", 0.7)), 2),
+                    "max_tokens": int(data.get("maxTokens", 2048)), "tools": tools},
+            is_supervisor=bool(data.get("isSupervisor", False)),
+        )
+        agent_id = int(data.get("id", -1))
+        if agent_id >= 0:
+            self.repos.agents.update(agent_id, **fields)
+            self.toast("success", tr("toast.agent_saved"), name)
+        else:
+            self.repos.agents.create(self.ws_id, **fields)
+            self.toast("success", tr("toast.agent_created"), name)
+        self._after_change()
+        return ""
 
+    @Slot(int)
+    def remove(self, agent_id: int) -> None:
+        agent = self.repos.agents.get(agent_id)
+        self.repos.agents.delete(agent_id)
+        self._after_change()
+        self.toast("info", tr("toast.agent_deleted"), agent.name if agent else "")
 
-class AgentsPage(QWidget):
-    """Список агентов текущего воркспейса."""
+    @Slot(int, bool)
+    def setEnabled(self, agent_id: int, enabled: bool) -> None:  # noqa: N802
+        self.repos.agents.update(agent_id, enabled=enabled)
+        self._model.update_row(agent_id, enabled=enabled)
 
-    agents_changed = Signal()
+    @Slot(int)
+    def duplicate(self, agent_id: int) -> None:
+        a = self.repos.agents.get(agent_id)
+        if a is None:
+            return
+        self.repos.agents.create(a.workspace_id, a.name + " 2", a.role, a.system_prompt,
+                                 a.api_key_id, a.provider, a.model, dict(a.params), False)
+        self._after_change()
 
-    def __init__(self, repos: Repos) -> None:
-        super().__init__()
-        self.repos = repos
-        self.workspace_id: int | None = None
-
-        lay = QVBoxLayout(self)
-        lay.setContentsMargins(24, 24, 24, 24)
-        lay.setSpacing(16)
-
-        self.header = Header(tr("agents.title"), tr("agents.isolated_note"))
-        self.btn_new = QPushButton(tr("agents.new"))
-        self.btn_new.setObjectName("Primary")
-        self.btn_new.clicked.connect(self._create)
-        self.header.add_action(self.btn_new)
-        lay.addWidget(self.header)
-
-        self.scroll = QScrollArea()
-        self.scroll.setWidgetResizable(True)
-        self.scroll.setFrameShape(QScrollArea.Shape.NoFrame)
-        lay.addWidget(self.scroll, 1)
-
-        self.container = QWidget()
-        self.list_layout = QVBoxLayout(self.container)
-        self.list_layout.setContentsMargins(0, 0, 0, 0)
-        self.list_layout.setSpacing(10)
-        self.scroll.setWidget(self.container)
-
-    def set_workspace(self, ws_id: int | None) -> None:
-        self.workspace_id = ws_id
+    def _after_change(self) -> None:
         self.refresh()
-
-    def refresh(self) -> None:
-        while self.list_layout.count():
-            item = self.list_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-
-        if self.workspace_id is None:
-            self.btn_new.setEnabled(False)
-            self.list_layout.addWidget(EmptyState(tr("ws.empty")))
-            return
-        self.btn_new.setEnabled(True)
-
-        if not self.repos.keys.list():
-            self.list_layout.addWidget(EmptyState(tr("agents.no_keys")))
-            return
-
-        agents = self.repos.agents.list(self.workspace_id)
-        if not agents:
-            self.list_layout.addWidget(EmptyState(tr("agents.empty")))
-            return
-        for agent in agents:
-            self.list_layout.addWidget(self._build_card(agent))
-        self.list_layout.addStretch(1)
-
-    def _build_card(self, agent: Agent) -> Card:
-        card = Card(self, spacing=6)
-        row = QHBoxLayout()
-
-        texts = QVBoxLayout()
-        texts.setSpacing(2)
-        head = QHBoxLayout()
-        name = QLabel(agent.name + ("  ⭐" if agent.is_supervisor else ""))
-        name.setObjectName("H2")
-        head.addWidget(name)
-        head.addWidget(StatusBadge(agent.status))
-        head.addStretch(1)
-        texts.addLayout(head)
-
-        p = preset(agent.provider)
-        meta = QLabel(f"{role_title(by_key(agent.role), current_language())}  ·  "
-                      f"{p.title}  ·  {agent.model or '—'}"
-                      f"  ·  T={agent.temperature}  ·  max={agent.max_tokens}")
-        meta.setObjectName("Dim")
-        texts.addWidget(meta)
-
-        if agent.tools:
-            tools = QLabel("Инструменты: " + ", ".join(agent.tools))
-            tools.setObjectName("Dim")
-            texts.addWidget(tools)
-
-        prompt_preview = agent.system_prompt.replace("\n", " ")[:160]
-        if prompt_preview:
-            preview = QLabel(prompt_preview + ("…" if len(agent.system_prompt) > 160 else ""))
-            preview.setObjectName("Dim")
-            preview.setWordWrap(True)
-            texts.addWidget(preview)
-
-        row.addLayout(texts, 1)
-
-        btn_edit = QPushButton(tr("common.edit"))
-        btn_edit.clicked.connect(lambda: self._edit(agent))
-        row.addWidget(btn_edit, 0, Qt.AlignmentFlag.AlignTop)
-
-        btn_del = QPushButton(tr("common.delete"))
-        btn_del.setObjectName("Danger")
-        btn_del.clicked.connect(lambda: self._delete(agent))
-        row.addWidget(btn_del, 0, Qt.AlignmentFlag.AlignTop)
-
-        card.body.addLayout(row)
-        return card
-
-    # -- действия ------------------------------------------------------------
-    def _create(self) -> None:
-        if self.workspace_id is None:
-            return
-        if not self.repos.keys.list():
-            warn(self, tr("agents.no_keys"))
-            return
-        dlg = AgentDialog(self, self.repos)
-        if dlg.exec() != QDialog.DialogCode.Accepted:
-            return
-        data = dlg.values()
-        if not data["name"] or not data["model"]:
-            warn(self, tr("agents.model"))
-            return
-        self.repos.agents.create(self.workspace_id, **data)
-        self.agents_changed.emit()
-        self.refresh()
-
-    def _edit(self, agent: Agent) -> None:
-        dlg = AgentDialog(self, self.repos, agent)
-        if dlg.exec() != QDialog.DialogCode.Accepted:
-            return
-        self.repos.agents.update(agent.id, **dlg.values())
-        self.agents_changed.emit()
-        self.refresh()
-
-    def _delete(self, agent: Agent) -> None:
-        if not confirm(self, tr("agents.delete_confirm")):
-            return
-        self.repos.agents.delete(agent.id)
-        self.agents_changed.emit()
-        self.refresh()
+        self.backend.task.refresh()
+        self.backend.prefs.refresh()
+        self.backend.dashboard.schedule()
 ````
 
-### `ui/pages/task_page.py`
+### `ui/bridge/c_task.py`
 
-*394 строк*
+*259 строк*
 
 ````python
-"""Этап 3 — постановка задачи и разбиение на подзадачи.
-
-Здесь пользователь формулирует общую задачу воркспейса, задаёт лимит токенов
-(пусто = без лимита, ответ на вопрос 7), выбирает формат результата и
-раскладывает работу на подзадачи — руками или автоматически через ИИ.
-"""
+"""Постановка задачи и подзадачи: вручную или разбиением через ИИ."""
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import (
-    QComboBox,
-    QDialog,
-    QDialogButtonBox,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QPlainTextEdit,
-    QPushButton,
-    QScrollArea,
-    QVBoxLayout,
-    QWidget,
-)
+from PySide6.QtCore import Property, QObject, Signal, Slot
 
 from app.i18n import tr
 from core.planner import match_agent_by_role, plan_subtasks
-from storage.models import Subtask, Task
-from storage.repositories import Repos
-from ui.widgets.common import Card, EmptyState, Header, StatusBadge, confirm, warn
+from ui.bridge.core import Controller, elide, error_text, fmt_money, fmt_tokens, status_title
+from ui.bridge.listmodel import DictListModel
 from utils.asyncutils import run_async
 
-RESULT_FORMATS = [
-    ("auto", "Определить автоматически"),
-    ("markdown", "Markdown-документ"),
-    ("docx", "Документ DOCX"),
-    ("pdf", "Документ PDF"),
-    ("zip", "ZIP-архив с файлами/кодом"),
-]
+FORMATS = ["auto", "markdown", "docx", "pdf", "zip"]
+FORMAT_ICONS = {"auto": "wand-sparkles", "markdown": "file-text", "docx": "file-type",
+                "pdf": "book-open", "zip": "file-archive"}
 
 
-class SubtaskDialog(QDialog):
-    """Ручное создание/редактирование подзадачи и назначение исполнителя."""
-
-    def __init__(self, parent: QWidget, repos: Repos, workspace_id: int,
-                 subtask: Subtask | None = None) -> None:
-        super().__init__(parent)
-        self.setWindowTitle(tr("task.add_subtask"))
-        self.setMinimumWidth(560)
-        lay = QVBoxLayout(self)
-        lay.setSpacing(10)
-
-        lay.addWidget(QLabel(tr("task.subtask_title")))
-        self.title = QLineEdit(subtask.title if subtask else "")
-        lay.addWidget(self.title)
-
-        lay.addWidget(QLabel(tr("common.description")))
-        self.description = QPlainTextEdit(subtask.description if subtask else "")
-        self.description.setMinimumHeight(140)
-        lay.addWidget(self.description)
-
-        lay.addWidget(QLabel(tr("task.assignee")))
-        self.assignee = QComboBox()
-        self.assignee.addItem(tr("task.unassigned"), None)
-        for agent in repos.agents.list(workspace_id):
-            if not agent.is_supervisor:
-                self.assignee.addItem(f"{agent.name} — {agent.model}", agent.id)
-        if subtask and subtask.agent_id:
-            idx = self.assignee.findData(subtask.agent_id)
-            if idx >= 0:
-                self.assignee.setCurrentIndex(idx)
-        lay.addWidget(self.assignee)
-
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        lay.addWidget(buttons)
-
-    def values(self) -> tuple[str, str, int | None]:
-        return (self.title.text().strip(),
-                self.description.toPlainText().strip(),
-                self.assignee.currentData())
+def parse_limit(raw: str) -> int | None:
+    raw = (raw or "").replace(" ", "").replace("_", "").strip()
+    if not raw:
+        return None           # пусто = без лимита
+    try:
+        value = int(raw)
+    except ValueError:
+        return None
+    return value if value > 0 else None
 
 
-class TaskPage(QWidget):
-    """Страница задачи текущего воркспейса."""
+class TaskController(Controller):
+    changed = Signal()
 
-    task_changed = Signal()
-    run_requested = Signal()   # пользователь нажал «Запустить агентов»
+    def __init__(self, backend) -> None:
+        super().__init__(backend)
+        self._subtasks = DictListModel(
+            ["id", "index", "title", "description", "agentId", "agentName", "status",
+             "statusTitle", "deps", "depTitles", "result", "resultPreview", "reworks",
+             "tokens", "cost"], parent=self)
+        self._set(hasTask=False, taskId=-1, title="", description="", format="auto",
+                  tokenLimit="", planning=False, agentOptions=[], status="",
+                  statusTitle="", dirty=False)
 
-    def __init__(self, repos: Repos) -> None:
-        super().__init__()
-        self.repos = repos
-        self.workspace_id: int | None = None
-        self.task: Task | None = None
+    hasTask = Property(bool, lambda s: s._s.get("hasTask", False), notify=changed)
+    taskId = Property(int, lambda s: s._s.get("taskId", -1), notify=changed)
+    title = Property(str, lambda s: s._s.get("title", ""), notify=changed)
+    description = Property(str, lambda s: s._s.get("description", ""), notify=changed)
+    format = Property(str, lambda s: s._s.get("format", "auto"), notify=changed)
+    tokenLimit = Property(str, lambda s: s._s.get("tokenLimit", ""), notify=changed)
+    planning = Property(bool, lambda s: s._s.get("planning", False), notify=changed)
+    status = Property(str, lambda s: s._s.get("status", ""), notify=changed)
+    statusTitle = Property(str, lambda s: s._s.get("statusTitle", ""), notify=changed)
+    agentOptions = Property("QVariantList", lambda s: s._s.get("agentOptions", []),
+                            notify=changed)
 
-        root = QVBoxLayout(self)
-        root.setContentsMargins(24, 24, 24, 24)
-        root.setSpacing(16)
+    def _formats(self) -> list[dict]:
+        return [{"key": k, "title": tr(f"fmt.{k}"), "icon": FORMAT_ICONS[k]} for k in FORMATS]
 
-        self.header = Header(tr("task.title"))
-        root.addWidget(self.header)
+    formats = Property("QVariantList", _formats, notify=changed)
 
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
-        root.addWidget(scroll, 1)
-        page = QWidget()
-        scroll.setWidget(page)
-        lay = QVBoxLayout(page)
-        lay.setContentsMargins(0, 0, 0, 0)
-        lay.setSpacing(14)
+    def _get_subtasks(self) -> QObject:
+        return self._subtasks
 
-        # --- карточка постановки задачи ---
-        self.task_card = Card(self)
-        lay.addWidget(self.task_card)
+    subtasks = Property(QObject, _get_subtasks, constant=True)
 
-        self.task_card.body.addWidget(QLabel(tr("task.name")))
-        self.title_edit = QLineEdit()
-        self.task_card.body.addWidget(self.title_edit)
+    # -- данные --------------------------------------------------------------
+    @Slot()
+    def refresh(self) -> None:
+        if not self.ready or self.ws_id is None:
+            self._subtasks.clear()
+            self._set(hasTask=False, taskId=-1, title="", description="", format="auto",
+                      tokenLimit="", agentOptions=[], status="", statusTitle="")
+            return
+        agents = self.repos.agents.list(self.ws_id)
+        options = [{"id": a.id, "name": a.name, "model": a.model} for a in agents
+                   if not a.is_supervisor]
+        task = self.repos.tasks.current(self.ws_id)
+        if task is None:
+            self._subtasks.clear()
+            self._set(hasTask=False, taskId=-1, title="", description="", format="auto",
+                      tokenLimit="", agentOptions=options, status="", statusTitle="")
+            return
+        self._set(hasTask=True, taskId=task.id, title=task.title,
+                  description=task.description, format=task.result_format or "auto",
+                  tokenLimit=str(task.token_limit) if task.token_limit else "",
+                  agentOptions=options, status=task.status,
+                  statusTitle=status_title(task.status))
+        self._fill_subtasks(task.id, {a.id: a.name for a in agents})
 
-        self.task_card.body.addWidget(QLabel(tr("task.body")))
-        self.body_edit = QPlainTextEdit()
-        self.body_edit.setPlaceholderText(tr("task.placeholder"))
-        self.body_edit.setMinimumHeight(220)
-        self.task_card.body.addWidget(self.body_edit)
+    def _fill_subtasks(self, task_id: int, names: dict[int, str]) -> None:
+        subtasks = self.repos.tasks.subtasks(task_id)
+        titles = {s.id: s.title for s in subtasks}
+        items = []
+        for i, s in enumerate(subtasks, 1):
+            deps = [int(t) for t in (s.depends_on or "").split(",") if t.strip().isdigit()]
+            items.append({
+                "id": s.id, "index": i, "title": s.title, "description": s.description,
+                "agentId": s.agent_id or -1,
+                "agentName": names.get(s.agent_id or -1, tr("task.unassigned")),
+                "status": s.status, "statusTitle": status_title(s.status),
+                "deps": deps, "depTitles": [titles[d] for d in deps if d in titles],
+                "result": s.result, "resultPreview": elide(s.result, 220),
+                "reworks": s.rework_count, "tokens": fmt_tokens(s.tokens_in + s.tokens_out),
+                "cost": fmt_money(s.cost_usd),
+            })
+        self._subtasks.set_items(items)
 
-        options = QHBoxLayout()
-        fmt_col = QVBoxLayout()
-        fmt_col.addWidget(QLabel(tr("task.result_format")))
-        self.format_box = QComboBox()
-        for key, label in RESULT_FORMATS:
-            self.format_box.addItem(label, key)
-        fmt_col.addWidget(self.format_box)
-        options.addLayout(fmt_col, 1)
+    def reset(self) -> None:
+        super().reset()
+        self._subtasks.clear()
 
-        limit_col = QVBoxLayout()
-        limit_col.addWidget(QLabel(tr("task.token_limit")))
-        self.token_limit = QLineEdit()
-        self.token_limit.setPlaceholderText(tr("task.token_limit_hint"))
-        limit_col.addWidget(self.token_limit)
-        options.addLayout(limit_col, 1)
-        self.task_card.body.addLayout(options)
+    def on_event(self, event) -> None:
+        from core.events import EventType
 
-        buttons = QHBoxLayout()
-        self.btn_save = QPushButton(tr("task.save"))
-        self.btn_save.setObjectName("Primary")
-        self.btn_save.clicked.connect(self._save_task)
-        buttons.addWidget(self.btn_save)
+        if event.type in (EventType.AGENT_STATUS, EventType.SUBTASK_STARTED,
+                          EventType.SUBTASK_FINISHED, EventType.SUBTASK_FAILED,
+                          EventType.REPORT_REVIEWED, EventType.APPROVAL_RESOLVED,
+                          EventType.RUN_FINISHED, EventType.RUN_STARTED):
+            self.refresh()
 
-        self.btn_run = QPushButton(tr("task.run"))
-        self.btn_run.clicked.connect(self._request_run)
-        buttons.addWidget(self.btn_run)
-        buttons.addStretch(1)
-        self.task_card.body.addLayout(buttons)
+    # -- задача -------------------------------------------------------------------
+    @Slot(str, str, str, str, result=str)
+    def saveTask(self, title: str, description: str, fmt: str, limit: str) -> str:  # noqa: N802
+        if self.ws_id is None:
+            return tr("ws.empty")
+        body = (description or "").strip()
+        if not body:
+            return tr("task.need_body")
+        title = (title or "").strip() or tr("task.untitled")
+        fmt = fmt if fmt in FORMATS else "auto"
+        token_limit = parse_limit(limit)
+        if (limit or "").strip() and token_limit is None:
+            return tr("task.bad_limit")
+        task = self.repos.tasks.current(self.ws_id)
+        if task is None:
+            self.repos.tasks.create(self.ws_id, title, body, fmt, token_limit)
+        else:
+            self.repos.tasks.update(task.id, title=title, description=body,
+                                    result_format=fmt, token_limit=token_limit)
+        self.refresh()
+        self.backend.dashboard.schedule()
+        return ""
 
-        # --- карточка подзадач ---
-        self.subtasks_header = Header(tr("task.subtasks"))
-        self.btn_add = QPushButton(tr("task.add_subtask"))
-        self.btn_add.clicked.connect(self._add_subtask)
-        self.subtasks_header.add_action(self.btn_add)
-        self.btn_auto = QPushButton(tr("task.autosplit"))
-        self.btn_auto.setObjectName("Primary")
-        self.btn_auto.clicked.connect(self._autosplit)
-        self.subtasks_header.add_action(self.btn_auto)
-        lay.addWidget(self.subtasks_header)
+    @Slot(result=str)
+    def newTask(self) -> str:  # noqa: N802
+        """Начать новую задачу: прежняя остаётся в истории, экспорт её видит."""
+        if self.backend.running:
+            return tr("toast.run_active_text")
+        if self.ws_id is None:
+            return tr("ws.empty")
+        self.repos.tasks.create(self.ws_id, tr("task.untitled"), "", "auto", None)
+        self.refresh()
+        return ""
 
-        self.subtasks_box = QWidget()
-        self.subtasks_layout = QVBoxLayout(self.subtasks_box)
-        self.subtasks_layout.setContentsMargins(0, 0, 0, 0)
-        self.subtasks_layout.setSpacing(8)
-        lay.addWidget(self.subtasks_box)
-        lay.addStretch(1)
+    # -- подзадачи --------------------------------------------------------------------
+    def _ensure_task(self) -> int | None:
+        task = self.repos.tasks.current(self.ws_id) if self.ws_id else None
+        return task.id if task else None
 
-    # -- загрузка ------------------------------------------------------------
-    def set_workspace(self, ws_id: int | None) -> None:
-        self.workspace_id = ws_id
+    @Slot("QVariantMap", result=str)
+    def saveSubtask(self, data: dict) -> str:  # noqa: N802
+        task_id = self._ensure_task()
+        if task_id is None:
+            return tr("task.save_first")
+        title = str(data.get("title") or "").strip()
+        if not title:
+            return tr("task.need_subtask_title")
+        agent_id = int(data.get("agentId", -1))
+        deps = [int(d) for d in (data.get("deps") or []) if int(d) != int(data.get("id", -2))]
+        sid = int(data.get("id", -1))
+        if sid >= 0 and self._creates_cycle(task_id, sid, deps):
+            return tr("task.dep_cycle")
+        description = str(data.get("description") or "").strip()
+        if sid >= 0:
+            self.repos.tasks.update_subtask(
+                sid, title=title, description=description,
+                agent_id=agent_id if agent_id >= 0 else None,
+                depends_on=",".join(str(d) for d in deps))
+        else:
+            st = self.repos.tasks.add_subtask(task_id, title, description,
+                                              agent_id if agent_id >= 0 else None)
+            if deps:
+                self.repos.tasks.update_subtask(st.id, depends_on=",".join(map(str, deps)))
+        self.refresh()
+        return ""
+
+    def _creates_cycle(self, task_id: int, sid: int, deps: list[int]) -> bool:
+        graph = {s.id: [int(t) for t in (s.depends_on or "").split(",") if t.strip().isdigit()]
+                 for s in self.repos.tasks.subtasks(task_id)}
+        graph[sid] = deps
+        seen: set[int] = set()
+        stack = list(deps)
+        while stack:
+            node = stack.pop()
+            if node == sid:
+                return True
+            if node in seen:
+                continue
+            seen.add(node)
+            stack.extend(graph.get(node, []))
+        return False
+
+    @Slot(int)
+    def removeSubtask(self, sid: int) -> None:  # noqa: N802
+        task_id = self._ensure_task()
+        self.repos.tasks.delete_subtask(sid)
+        # Ссылки на удалённую подзадачу из зависимостей других тоже убираем.
+        if task_id is not None:
+            for s in self.repos.tasks.subtasks(task_id):
+                deps = [t for t in (s.depends_on or "").split(",") if t.strip() and t.strip() != str(sid)]
+                if ",".join(deps) != (s.depends_on or ""):
+                    self.repos.tasks.update_subtask(s.id, depends_on=",".join(deps))
         self.refresh()
 
-    def refresh(self) -> None:
-        enabled = self.workspace_id is not None
-        for widget in (self.title_edit, self.body_edit, self.format_box,
-                       self.token_limit, self.btn_save, self.btn_add,
-                       self.btn_auto, self.btn_run):
-            widget.setEnabled(enabled)
-        if not enabled:
-            self._clear_subtasks()
-            self.subtasks_layout.addWidget(EmptyState(tr("ws.empty")))
+    @Slot(int, int)
+    def move(self, sid: int, delta: int) -> None:
+        task_id = self._ensure_task()
+        if task_id is None:
             return
-
-        self.task = self.repos.tasks.current(self.workspace_id)
-        if self.task:
-            self.title_edit.setText(self.task.title)
-            self.body_edit.setPlainText(self.task.description)
-            idx = self.format_box.findData(self.task.result_format)
-            self.format_box.setCurrentIndex(max(0, idx))
-            self.token_limit.setText(str(self.task.token_limit) if self.task.token_limit else "")
-        else:
-            self.title_edit.clear()
-            self.body_edit.clear()
-            self.format_box.setCurrentIndex(0)
-            self.token_limit.clear()
-        self._render_subtasks()
-
-    def _clear_subtasks(self) -> None:
-        while self.subtasks_layout.count():
-            item = self.subtasks_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-
-    def _render_subtasks(self) -> None:
-        self._clear_subtasks()
-        if self.task is None:
-            self.subtasks_layout.addWidget(EmptyState(tr("task.no_task")))
+        ids = [s.id for s in self.repos.tasks.subtasks(task_id)]
+        if sid not in ids:
             return
-        items = self.repos.tasks.subtasks(self.task.id)
-        if not items:
-            self.subtasks_layout.addWidget(EmptyState(tr("task.subtasks")))
-            return
-        agents = {a.id: a for a in self.repos.agents.list(self.workspace_id)}
-        for position, st in enumerate(items):
-            self.subtasks_layout.addWidget(
-                self._build_subtask_card(st, position, len(items), agents)
-            )
-
-    def _build_subtask_card(self, st: Subtask, position: int, total: int,
-                            agents: dict) -> Card:
-        card = Card(self, spacing=6)
-        row = QHBoxLayout()
-
-        texts = QVBoxLayout()
-        texts.setSpacing(2)
-        head = QHBoxLayout()
-        title = QLabel(f"{position + 1}. {st.title}")
-        title.setObjectName("H2")
-        title.setWordWrap(True)
-        head.addWidget(title, 1)
-        head.addWidget(StatusBadge(st.status))
-        texts.addLayout(head)
-
-        agent = agents.get(st.agent_id)
-        meta = QLabel(f"{tr('task.assignee')}: "
-                      f"{agent.name if agent else tr('task.unassigned')}")
-        meta.setObjectName("Dim")
-        texts.addWidget(meta)
-
-        if st.description:
-            desc = QLabel(st.description[:300] + ("…" if len(st.description) > 300 else ""))
-            desc.setObjectName("Dim")
-            desc.setWordWrap(True)
-            texts.addWidget(desc)
-        row.addLayout(texts, 1)
-
-        controls = QVBoxLayout()
-        controls.setSpacing(4)
-        move_row = QHBoxLayout()
-        btn_up = QPushButton("▲")
-        btn_up.setObjectName("Icon")
-        btn_up.setFixedWidth(36)
-        btn_up.setEnabled(position > 0)
-        btn_up.clicked.connect(lambda: self._move(st.id, -1))
-        move_row.addWidget(btn_up)
-        btn_down = QPushButton("▼")
-        btn_down.setObjectName("Icon")
-        btn_down.setFixedWidth(36)
-        btn_down.setEnabled(position < total - 1)
-        btn_down.clicked.connect(lambda: self._move(st.id, +1))
-        move_row.addWidget(btn_down)
-        controls.addLayout(move_row)
-
-        btn_edit = QPushButton(tr("common.edit"))
-        btn_edit.clicked.connect(lambda: self._edit_subtask(st))
-        controls.addWidget(btn_edit)
-
-        btn_del = QPushButton(tr("common.delete"))
-        btn_del.setObjectName("Danger")
-        btn_del.clicked.connect(lambda: self._delete_subtask(st))
-        controls.addWidget(btn_del)
-
-        row.addLayout(controls, 0)
-        card.body.addLayout(row)
-        return card
-
-    # -- действия ------------------------------------------------------------
-    def _parse_limit(self) -> int | None:
-        raw = self.token_limit.text().strip()
-        if not raw:
-            return None       # пусто = лимита нет
-        try:
-            value = int(raw.replace(" ", ""))
-            return value if value > 0 else None
-        except ValueError:
-            return None
-
-    def _save_task(self) -> bool:
-        if self.workspace_id is None:
-            return False
-        title = self.title_edit.text().strip() or "Без названия"
-        body = self.body_edit.toPlainText().strip()
-        if not body:
-            warn(self, tr("task.placeholder"))
-            return False
-        fmt = self.format_box.currentData()
-        limit = self._parse_limit()
-        if self.task is None:
-            self.task = self.repos.tasks.create(self.workspace_id, title, body, fmt, limit)
-        else:
-            self.repos.tasks.update(self.task.id, title=title, description=body,
-                                    result_format=fmt, token_limit=limit)
-            self.task = self.repos.tasks.get(self.task.id)
-        self.task_changed.emit()
-        self._render_subtasks()
-        return True
-
-    def _add_subtask(self) -> None:
-        if self.task is None and not self._save_task():
-            return
-        dlg = SubtaskDialog(self, self.repos, self.workspace_id)
-        if dlg.exec() != QDialog.DialogCode.Accepted:
-            return
-        title, description, agent_id = dlg.values()
-        if not title:
-            return
-        self.repos.tasks.add_subtask(self.task.id, title, description, agent_id)
-        self.task_changed.emit()
-        self._render_subtasks()
-
-    def _edit_subtask(self, st: Subtask) -> None:
-        dlg = SubtaskDialog(self, self.repos, self.workspace_id, st)
-        if dlg.exec() != QDialog.DialogCode.Accepted:
-            return
-        title, description, agent_id = dlg.values()
-        if not title:
-            return
-        self.repos.tasks.update_subtask(st.id, title=title, description=description,
-                                        agent_id=agent_id)
-        self.task_changed.emit()
-        self._render_subtasks()
-
-    def _delete_subtask(self, st: Subtask) -> None:
-        if not confirm(self, tr("common.delete") + "?"):
-            return
-        self.repos.tasks.delete_subtask(st.id)
-        self.task_changed.emit()
-        self._render_subtasks()
-
-    def _move(self, subtask_id: int, delta: int) -> None:
-        if self.task is None:
-            return
-        ids = [s.id for s in self.repos.tasks.subtasks(self.task.id)]
-        i = ids.index(subtask_id)
+        i = ids.index(sid)
         j = i + delta
         if 0 <= j < len(ids):
             ids[i], ids[j] = ids[j], ids[i]
             self.repos.tasks.reorder(ids)
-            self._render_subtasks()
+            self.refresh()
 
-    def _autosplit(self) -> None:
-        """Просит ИИ разбить задачу и сразу назначает исполнителей по ролям."""
-        if not self._save_task() or self.task is None:
+    @Slot(int)
+    def resetSubtask(self, sid: int) -> None:  # noqa: N802
+        """Вернуть подзадачу в очередь: следующий прогон выполнит её заново."""
+        if self.backend.running:
+            self.toast("warning", tr("toast.run_active"), tr("toast.run_active_text"))
             return
-        self.btn_auto.setEnabled(False)
-        self.btn_auto.setText("…")
+        self.repos.tasks.update_subtask(sid, status="idle")
+        self.refresh()
 
-        task_id = self.task.id
-        ws_id = self.workspace_id
-        title, body = self.task.title, self.task.description
-
-        async def job():
-            return await plan_subtasks(self.repos, ws_id, title, body)
+    @Slot()
+    def autosplit(self) -> None:
+        """ИИ разбивает задачу и сразу назначает исполнителей по ролям."""
+        task = self.repos.tasks.current(self.ws_id) if self.ws_id else None
+        if task is None or not task.description.strip():
+            self.toast("warning", tr("task.save_first"), "")
+            return
+        ws_id, task_id = self.ws_id, task.id
+        self._set(planning=True)
 
         def done(planned) -> None:
-            self._reset_auto_button()
+            self._set(planning=False)
             for item in planned:
                 agent_id = match_agent_by_role(self.repos, ws_id, item.assignee_role)
                 self.repos.tasks.add_subtask(task_id, item.title, item.description, agent_id)
-            self.task_changed.emit()
-            self._render_subtasks()
+            self.refresh()
+            self.toast("success", tr("toast.planned"), tr("toast.planned_n", n=len(planned)))
 
         def failed(exc: Exception) -> None:
-            self._reset_auto_button()
-            warn(self, str(exc))
+            self._set(planning=False)
+            self.toast("error", tr("toast.plan_failed"), error_text(exc))
 
-        run_async(job(), done, failed)
-
-    def _request_run(self) -> None:
-        """Сохраняет задачу и передаёт управление странице выполнения."""
-        if self._save_task():
-            self.run_requested.emit()
-
-    def _reset_auto_button(self) -> None:
-        self.btn_auto.setEnabled(True)
-        self.btn_auto.setText(tr("task.autosplit"))
+        run_async(plan_subtasks(self.repos, ws_id, task.title, task.description), done, failed)
 ````
 
-### `ui/pages/run_page.py`
+### `ui/bridge/c_run.py`
 
-*354 строк*
+*475 строк*
 
 ````python
-"""Этап 4 — страница выполнения: запуск агентов и наблюдение в реальном времени.
+"""Выполнение: запуск прогона, живые рассуждения агентов, граф, лента, решения.
 
-Слева — прогресс по подзадачам и статусы агентов, справа — лента событий:
-шаги рассуждений, вызовы инструментов, отчёты, расход токенов.
+Самое «горячее» место интерфейса: во время прогона события идут десятками
+в секунду. Поэтому фрагменты стриминга не пишутся в модель на каждое
+событие, а копятся и сбрасываются таймером раз в ~60 мс; ячейки графа и
+ленты обновляются точечно, без пересборки списков.
 """
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor, QTextCharFormat, QTextCursor
-from PySide6.QtWidgets import (
-    QHBoxLayout,
-    QLabel,
-    QProgressBar,
-    QPushButton,
-    QScrollArea,
-    QSplitter,
-    QTextEdit,
-    QVBoxLayout,
-    QWidget,
-)
+import html
+from collections import defaultdict
+
+from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot
 
 from app.i18n import tr
-from core.events import Event, EventBus, EventType
-from core.hitl import Decision
-from core.orchestrator import Orchestrator
-from storage.repositories import Repos
-from ui.theme import STATUS_COLORS, current_palette
-from ui.widgets.approval_panel import ApprovalPanel
-from ui.widgets.common import Card, EmptyState, Header, StatusBadge, confirm, warn
+from core.events import Event, EventType
+from core.hitl import DECISION_TITLES, Decision, Reason
+from ui.bridge.c_agents import ROLE_ICONS
+from ui.bridge.core import Controller, elide, error_text, fmt_money, fmt_tokens, status_title
+from ui.bridge.listmodel import DictListModel
 from utils.asyncutils import run_async
 
-#: цвет строки в ленте для каждого типа события
-FEED_COLORS = {
-    EventType.RUN_STARTED: "#6c8cff",
-    EventType.RUN_FINISHED: "#3ecf8e",
-    EventType.RUN_PAUSED: "#f0b429",
-    EventType.RUN_RESUMED: "#6c8cff",
-    EventType.RUN_STOPPED: "#f0b429",
-    EventType.AGENT_THINKING: "#99a1b3",
-    EventType.AGENT_TOOL_CALL: "#b07cff",
-    EventType.AGENT_TOOL_RESULT: "#7c8aa5",
-    EventType.SUBTASK_STARTED: "#6c8cff",
-    EventType.SUBTASK_FINISHED: "#3ecf8e",
-    EventType.SUBTASK_FAILED: "#ef5f6b",
-    EventType.REPORT_CREATED: "#3ecf8e",
-    EventType.SUMMARY_CREATED: "#b07cff",
-    EventType.INCIDENT_CREATED: "#ef5f6b",
-    EventType.USAGE: "#5f6a7d",
-    EventType.ERROR: "#ef5f6b",
+#: как часто сбрасывать накопленный стриминг в интерфейс
+STREAM_FLUSH_MS = 60
+#: сколько символов рассуждения держать в карточке агента
+STREAM_KEEP_CHARS = 9000
+FEED_LIMIT = 600
+SUPERVISOR_CARD = -1
+
+#: как окрашивать события в ленте
+FEED_TONES = {
+    EventType.RUN_STARTED: "accent", EventType.RUN_FINISHED: "success",
+    EventType.RUN_PAUSED: "warning", EventType.RUN_RESUMED: "accent",
+    EventType.RUN_STOPPED: "warning", EventType.AGENT_THINKING: "muted",
+    EventType.AGENT_TOOL_CALL: "tool", EventType.AGENT_TOOL_RESULT: "muted",
+    EventType.SUBTASK_STARTED: "accent", EventType.SUBTASK_PROGRESS: "info",
+    EventType.SUBTASK_FINISHED: "success", EventType.SUBTASK_FAILED: "error",
+    EventType.REPORT_CREATED: "success", EventType.REPORT_REVIEWED: "violet",
+    EventType.SUMMARY_CREATED: "violet", EventType.INCIDENT_CREATED: "error",
+    EventType.APPROVAL_REQUESTED: "warning", EventType.APPROVAL_RESOLVED: "info",
+    EventType.BUDGET_ALERT: "warning", EventType.BUDGET_EXCEEDED: "error",
+    EventType.BUDGET_EXTENDED: "info", EventType.USAGE: "muted",
+    EventType.LOG: "muted", EventType.ERROR: "error",
+}
+#: события, которые в ленте только шумят
+FEED_SKIP = {EventType.AGENT_STATUS, EventType.AGENT_DELTA, EventType.USAGE}
+
+DECISION_TONES = {"approve": "success", "rework": "warning", "skip": "muted",
+                  "abort": "error", "extend": "accent"}
+REASON_ICONS = {
+    Reason.CONFLICT.value: "split", Reason.NOT_ACCEPTED.value: "circle-x",
+    Reason.LOW_CONFIDENCE.value: "gauge", Reason.MILESTONE.value: "flag",
+    Reason.UNVERIFIED.value: "scan-eye", Reason.BUDGET.value: "wallet",
 }
 
-#: события, которые не засоряют ленту при большом числе агентов
-QUIET_EVENTS = {EventType.AGENT_STATUS}
+_COLORS = {"reasoning": "#8E88B4", "tool": "#22D3EE", "result": "#A7F3D0",
+           "marker": "#6F6A91", "error": "#FB7185"}
 
 
-class RunPage(QWidget):
-    """Управление прогоном и живая телеметрия."""
+class _Stream:
+    """Рассуждение одного агента как список окрашенных отрезков."""
 
-    def __init__(self, repos: Repos, bus: EventBus, orchestrator: Orchestrator) -> None:
-        super().__init__()
-        self.repos = repos
-        self.bus = bus
-        self.orchestrator = orchestrator
-        self.workspace_id: int | None = None
-        self._feed_lines = 0
+    def __init__(self) -> None:
+        self.segments: list[list[str]] = []    # [вид, текст]
+        self.dirty = False
 
-        root = QVBoxLayout(self)
-        root.setContentsMargins(24, 24, 24, 24)
-        root.setSpacing(14)
+    def add(self, kind: str, text: str) -> None:
+        if not text:
+            return
+        if self.segments and self.segments[-1][0] == kind:
+            self.segments[-1][1] += text
+        else:
+            self.segments.append([kind, text])
+        size = sum(len(s[1]) for s in self.segments)
+        while size > STREAM_KEEP_CHARS and len(self.segments) > 1:
+            size -= len(self.segments.pop(0)[1])
+        if size > STREAM_KEEP_CHARS:
+            self.segments[0][1] = "…" + self.segments[0][1][-STREAM_KEEP_CHARS:]
+        self.dirty = True
 
-        self.header = Header(tr("run.title"), tr("run.subtitle"))
-        self.btn_start = QPushButton(tr("run.start"))
-        self.btn_start.setObjectName("Primary")
-        self.btn_start.clicked.connect(self._start)
-        self.header.add_action(self.btn_start)
+    def reset(self) -> None:
+        self.segments.clear()
+        self.dirty = True
 
-        self.btn_pause = QPushButton(tr("run.pause"))
-        self.btn_pause.clicked.connect(self._toggle_pause)
-        self.btn_pause.setEnabled(False)
-        self.header.add_action(self.btn_pause)
+    def html(self) -> str:
+        parts = []
+        for kind, text in self.segments:
+            body = html.escape(text).replace("\n", "<br>")
+            if kind == "text":
+                parts.append(body)
+            elif kind == "reasoning":
+                parts.append(f'<i><font color="{_COLORS["reasoning"]}">{body}</font></i>')
+            else:
+                parts.append(f'<font color="{_COLORS.get(kind, "#A6A1C4")}">{body}</font>')
+        return "".join(parts)
 
-        self.btn_stop = QPushButton(tr("run.stop"))
-        self.btn_stop.setObjectName("Danger")
-        self.btn_stop.clicked.connect(self._stop)
-        self.btn_stop.setEnabled(False)
-        self.header.add_action(self.btn_stop)
-        root.addWidget(self.header)
 
-        # --- полоса прогресса и счётчики ---
-        top = Card(self, spacing=8)
-        self.progress = QProgressBar()
-        self.progress.setTextVisible(False)
-        top.body.addWidget(self.progress)
-        self.summary_label = QLabel(tr("run.idle"))
-        self.summary_label.setObjectName("Dim")
-        top.body.addWidget(self.summary_label)
-        root.addWidget(top)
+class RunController(Controller):
+    changed = Signal()
 
-        # --- запросы решений (human-in-the-loop) ---
-        self.approvals = ApprovalPanel(self._decide)
-        root.addWidget(self.approvals)
+    def __init__(self, backend) -> None:
+        super().__init__(backend)
+        self._streams_model = DictListModel(
+            ["id", "name", "icon", "modelName", "status", "statusTitle", "phase", "subtask",
+             "step", "maxSteps", "html", "lastTool", "tokens", "isSupervisor", "live"],
+            parent=self)
+        self._nodes = DictListModel(
+            ["id", "title", "agentName", "status", "statusTitle", "level", "row",
+             "reworks", "deps"], parent=self)
+        self._edges = DictListModel(
+            ["id", "source", "target", "fromLevel", "fromRow", "toLevel", "toRow", "state"],
+            parent=self)
+        self._feed = DictListModel(["id", "time", "agent", "tone", "kind", "message"],
+                                   parent=self)
+        self._approvals = DictListModel(
+            ["id", "reason", "reasonTitle", "icon", "question", "details", "agent",
+             "options", "created"], parent=self)
+        self._streams: dict[int, _Stream] = defaultdict(_Stream)
+        self._feed_seq = 0
+        self._max_steps = 10
+        self._flush = QTimer(self)
+        self._flush.setInterval(STREAM_FLUSH_MS)
+        self._flush.timeout.connect(self._flush_streams)
+        self._set(taskTitle="", done=0, total=0, errors=0, review=0, progress=0.0,
+                  canStart=False, blocker="", levels=0, maxRows=0, starting=False)
 
-        # --- две колонки ---
-        splitter = QSplitter(Qt.Orientation.Horizontal)
-        root.addWidget(splitter, 1)
+    # -- свойства -------------------------------------------------------------
+    def _p(name, type_=str, default="", sig=changed):  # noqa: N805
+        return Property(type_, lambda self: self._s.get(name, default), notify=sig)
 
-        left = QWidget()
-        left_lay = QVBoxLayout(left)
-        left_lay.setContentsMargins(0, 0, 0, 0)
-        left_lay.setSpacing(10)
+    taskTitle = _p("taskTitle")
+    done = _p("done", int, 0)
+    total = _p("total", int, 0)
+    errors = _p("errors", int, 0)
+    review = _p("review", int, 0)
+    progress = _p("progress", float, 0.0)
+    canStart = _p("canStart", bool, False)
+    blocker = _p("blocker")
+    levels = _p("levels", int, 0)
+    maxRows = _p("maxRows", int, 0)
+    starting = _p("starting", bool, False)
 
-        self.scroll = QScrollArea()
-        self.scroll.setWidgetResizable(True)
-        self.scroll.setFrameShape(QScrollArea.Shape.NoFrame)
-        left_lay.addWidget(self.scroll, 1)
-        self.panel = QWidget()
-        self.panel_layout = QVBoxLayout(self.panel)
-        self.panel_layout.setContentsMargins(0, 0, 0, 0)
-        self.panel_layout.setSpacing(8)
-        self.scroll.setWidget(self.panel)
-        splitter.addWidget(left)
+    def _m(attr):  # noqa: N805
+        return Property(QObject, lambda self: getattr(self, attr), constant=True)
 
-        right = QWidget()
-        right_lay = QVBoxLayout(right)
-        right_lay.setContentsMargins(0, 0, 0, 0)
-        right_lay.setSpacing(8)
-        feed_head = QHBoxLayout()
-        feed_title = QLabel(tr("run.feed"))
-        feed_title.setObjectName("H2")
-        feed_head.addWidget(feed_title, 1)
-        btn_clear = QPushButton(tr("run.clear_feed"))
-        btn_clear.clicked.connect(lambda: (self.feed.clear(),
-                                           setattr(self, "_feed_lines", 0)))
-        feed_head.addWidget(btn_clear)
-        right_lay.addLayout(feed_head)
+    streams = _m("_streams_model")
+    nodes = _m("_nodes")
+    edges = _m("_edges")
+    feed = _m("_feed")
+    approvals = _m("_approvals")
 
-        self.feed = QTextEdit()
-        self.feed.setReadOnly(True)
-        self.feed.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
-        right_lay.addWidget(self.feed, 1)
-        splitter.addWidget(right)
-        splitter.setSizes([520, 620])
-
-        self.bus.subscribe(self._on_event)
-
-    # -- данные --------------------------------------------------------------
-    def set_workspace(self, ws_id: int | None) -> None:
-        self.workspace_id = ws_id
-        self.refresh()
-
+    # -- данные ---------------------------------------------------------------
+    @Slot()
     def refresh(self) -> None:
-        self._clear_panel()
-        running = self.orchestrator.state.running
-        has_ws = self.workspace_id is not None
-        self.btn_start.setEnabled(has_ws and not running)
-        self.btn_pause.setEnabled(running)
-        self.btn_stop.setEnabled(running)
-
-        if not has_ws:
-            self.panel_layout.addWidget(EmptyState(tr("ws.empty")))
+        if not self.ready or self.ws_id is None:
+            self._set(taskTitle="", done=0, total=0, errors=0, review=0, progress=0.0,
+                      canStart=False, blocker=tr("ws.empty"), levels=0, maxRows=0)
+            self._nodes.clear()
+            self._edges.clear()
+            self._streams_model.clear()
             return
+        ws = self.repos.workspaces.get(self.ws_id)
+        if ws is not None:
+            self._max_steps = int(ws.settings.get("agent_max_steps", 10) or 10)
+        task = self.repos.tasks.current(self.ws_id)
+        subtasks = self.repos.tasks.subtasks(task.id) if task else []
+        agents = self.repos.agents.list(self.ws_id)
+        names = {a.id: a.name for a in agents}
 
-        task = self.repos.tasks.current(self.workspace_id)
-        if task is None:
-            self.panel_layout.addWidget(EmptyState(tr("task.no_task")))
-            self.btn_start.setEnabled(False)
-            return
+        blocker = ""
+        if task is None or not task.description.strip():
+            blocker = tr("run.no_task")
+        elif not subtasks:
+            blocker = tr("run.no_subtasks")
+        elif any(not s.agent_id for s in subtasks if s.status != "done"):
+            blocker = tr("run.unassigned_short")
+        elif all(s.status == "done" for s in subtasks):
+            blocker = tr("run.all_done")
 
-        subtasks = self.repos.tasks.subtasks(task.id)
-        agents = {a.id: a for a in self.repos.agents.list(self.workspace_id)}
         done = sum(1 for s in subtasks if s.status == "done")
-        review = sum(1 for s in subtasks if s.status == "review")
-        errors = sum(1 for s in subtasks if s.status == "error")
-        total = len(subtasks) or 1
-        self.progress.setMaximum(total)
-        self.progress.setValue(done + review)
-
-        tokens, cost = self.repos.budgets.workspace_totals(self.workspace_id)
-        limit = f" / {task.token_limit}" if task.token_limit else " (без лимита)"
-        self.summary_label.setText(
-            tr("run.summary", done=done + review, total=len(subtasks), errors=errors)
-            + f"  ·  {tokens}{limit} токенов  ·  ~${cost:.4f}"
-        )
-
-        # --- подзадачи ---
-        head = QLabel(tr("task.subtasks"))
-        head.setObjectName("H2")
-        self.panel_layout.addWidget(head)
-        if not subtasks:
-            self.panel_layout.addWidget(EmptyState(tr("run.no_subtasks")))
-        for i, st in enumerate(subtasks, 1):
-            self.panel_layout.addWidget(self._subtask_row(i, st, agents))
-
-        # --- агенты ---
-        head2 = QLabel(tr("agents.title"))
-        head2.setObjectName("H2")
-        self.panel_layout.addWidget(head2)
-        for agent in agents.values():
-            row = QWidget()
-            h = QHBoxLayout(row)
-            h.setContentsMargins(4, 2, 4, 2)
-            name = QLabel(agent.name + ("  ⭐" if agent.is_supervisor else ""))
-            h.addWidget(name, 1)
-            model = QLabel(agent.model)
-            model.setObjectName("Dim")
-            h.addWidget(model)
-            h.addWidget(StatusBadge(agent.status))
-            self.panel_layout.addWidget(row)
-        self.panel_layout.addStretch(1)
-
-    def _subtask_row(self, index: int, st, agents: dict) -> Card:
-        card = Card(self, spacing=4)
-        row = QHBoxLayout()
-        texts = QVBoxLayout()
-        texts.setSpacing(2)
-
-        title = QLabel(f"{index}. {st.title}")
-        title.setWordWrap(True)
-        texts.addWidget(title)
-
-        agent = agents.get(st.agent_id)
-        meta = QLabel(f"{agent.name if agent else tr('task.unassigned')}"
-                      f"  ·  {st.tokens_in + st.tokens_out} токенов"
-                      f"  ·  ~${st.cost_usd:.4f}")
-        meta.setObjectName("Dim")
-        texts.addWidget(meta)
-
-        if st.result:
-            preview = QLabel(st.result[:200].replace("\n", " ")
-                             + ("…" if len(st.result) > 200 else ""))
-            preview.setObjectName("Dim")
-            preview.setWordWrap(True)
-            texts.addWidget(preview)
-
-        row.addLayout(texts, 1)
-        row.addWidget(StatusBadge(st.status), 0, Qt.AlignmentFlag.AlignTop)
-        card.body.addLayout(row)
-        return card
-
-    def _clear_panel(self) -> None:
-        while self.panel_layout.count():
-            item = self.panel_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-
-    # -- события -------------------------------------------------------------
-    def _sync_approvals(self) -> None:
-        """Перерисовывает панель из состояния ворот согласования."""
-        gate = self.orchestrator.gate
-        self.approvals.set_requests(gate.pending() if gate else [])
-
-    def _decide(self, approval_id: int, decision: Decision, comment: str) -> None:
-        """Передаёт решение пользователя в ядро."""
-        gate = self.orchestrator.gate
-        if gate is None or not gate.resolve(approval_id, decision, comment):
-            # Вопрос уже снят (например, прогон остановлен) — просто обновляем вид.
-            self._sync_approvals()
-            return
+        self._set(taskTitle=task.title if task else "", done=done, total=len(subtasks),
+                  errors=sum(1 for s in subtasks if s.status == "error"),
+                  review=sum(1 for s in subtasks if s.status == "review"),
+                  progress=(done / len(subtasks)) if subtasks else 0.0,
+                  blocker=blocker, canStart=not blocker and not self.backend.running)
+        self._fill_graph(subtasks, names)
+        self._fill_streams(agents, subtasks)
         self._sync_approvals()
 
-    def _on_event(self, event: Event) -> None:
-        """Обработчик шины: пишет строку в ленту и обновляет панель."""
-        if event.type in QUIET_EVENTS:
+    def _fill_graph(self, subtasks, names: dict[int, str]) -> None:
+        deps = {s.id: [int(t) for t in (s.depends_on or "").split(",") if t.strip().isdigit()]
+                for s in subtasks}
+        ids = set(deps)
+        level: dict[int, int] = {}
+
+        def depth(sid: int, trail: frozenset[int]) -> int:
+            if sid in level:
+                return level[sid]
+            parents = [d for d in deps.get(sid, []) if d in ids and d not in trail]
+            value = 0 if not parents else 1 + max(depth(p, trail | {sid}) for p in parents)
+            level[sid] = value
+            return value
+
+        rows: dict[int, int] = defaultdict(int)
+        position: dict[int, tuple[int, int]] = {}
+        nodes = []
+        for s in subtasks:
+            lv = depth(s.id, frozenset())
+            row = rows[lv]
+            rows[lv] += 1
+            position[s.id] = (lv, row)
+            nodes.append({"id": s.id, "title": s.title,
+                          "agentName": names.get(s.agent_id or -1, tr("task.unassigned")),
+                          "status": s.status, "statusTitle": status_title(s.status),
+                          "level": lv, "row": row, "reworks": s.rework_count,
+                          "deps": len(deps[s.id])})
+        status = {s.id: s.status for s in subtasks}
+        edges = []
+        for sid, parents in deps.items():
+            for p in parents:
+                if p in position and sid in position:
+                    edges.append({
+                        "id": f"{p}-{sid}", "source": p, "target": sid,
+                        "fromLevel": position[p][0], "fromRow": position[p][1],
+                        "toLevel": position[sid][0], "toRow": position[sid][1],
+                        "state": ("active" if status.get(sid) in ("running", "rework")
+                                  else "done" if status.get(p) == "done" else "idle"),
+                    })
+        self._nodes.set_items(nodes)
+        self._edges.set_items(edges)
+        self._set(levels=(max(level.values()) + 1) if level else 0,
+                  maxRows=max(rows.values()) if rows else 0)
+
+    def _fill_streams(self, agents, subtasks) -> None:
+        current = {s.agent_id: s.title for s in subtasks
+                   if s.agent_id and s.status in ("running", "rework", "paused")}
+        usage = {aid: t for aid, t, _ in self.repos.budgets.usage_by_agent(self.ws_id)}
+        items = []
+        for a in agents:
+            if a.is_supervisor:
+                continue
+            old = self._streams_model.find(a.id)
+            prev = self._streams_model.items[old] if old >= 0 else {}
+            items.append({
+                "id": a.id, "name": a.name, "icon": ROLE_ICONS.get(a.role or "custom", "bot"),
+                "modelName": a.model, "status": a.status, "statusTitle": status_title(a.status),
+                "phase": prev.get("phase", "idle"), "subtask": current.get(a.id, prev.get("subtask", "")),
+                "step": prev.get("step", 0), "maxSteps": self._max_steps,
+                "html": self._streams[a.id].html(), "lastTool": prev.get("lastTool", ""),
+                "tokens": fmt_tokens(usage.get(a.id, 0)), "isSupervisor": False,
+                "live": a.status == "running",
+            })
+        old = self._streams_model.find(SUPERVISOR_CARD)
+        prev = self._streams_model.items[old] if old >= 0 else {}
+        items.append({
+            "id": SUPERVISOR_CARD, "name": tr("run.supervisor"), "icon": "shield-check",
+            "modelName": self.backend.supervisor.modelShort, "status": prev.get("status", "idle"),
+            "statusTitle": prev.get("statusTitle", status_title("idle")),
+            "phase": prev.get("phase", "idle"), "subtask": prev.get("subtask", ""),
+            "step": 0, "maxSteps": 0, "html": self._streams[SUPERVISOR_CARD].html(),
+            "lastTool": "", "tokens": fmt_tokens(usage.get(None, 0)), "isSupervisor": True,
+            "live": prev.get("live", False),
+        })
+        self._streams_model.set_items(items)
+
+    def _sync_approvals(self) -> None:
+        orch = self.backend.orchestrator
+        gate = orch.gate if orch else None
+        items = []
+        for req in (gate.pending() if gate else []):
+            items.append({
+                "id": req.id, "reason": req.reason.value,
+                "reasonTitle": tr(f"reason.{req.reason.value}"),
+                "icon": REASON_ICONS.get(req.reason.value, "hand"),
+                "question": req.question, "details": req.details,
+                "agent": req.agent_name,
+                "options": [{"value": d.value, "title": tr(f"decision.{d.value}"),
+                             "tone": DECISION_TONES.get(d.value, "muted")} for d in req.options],
+                "created": req.created_at,
+            })
+        self._approvals.set_items(items)
+
+    def reset(self) -> None:
+        super().reset()
+        self._flush.stop()
+        self._streams.clear()
+        for model in (self._streams_model, self._nodes, self._edges, self._feed, self._approvals):
+            model.clear()
+
+    # -- события ----------------------------------------------------------------------
+    def on_event(self, event: Event) -> None:
+        kind = event.type
+        if kind not in FEED_SKIP:
+            self._append_feed(event)
+
+        if kind is EventType.AGENT_DELTA:
+            self._stream_for(event).add(event.payload.get("stream", "text"), event.message)
+            self._ensure_flush()
             return
-        self._append_feed(event)
+        if kind is EventType.RUN_STARTED:
+            for stream in self._streams.values():
+                stream.reset()
+            self._set(starting=False)
+            self._ensure_flush()
+        if kind is EventType.SUBTASK_STARTED and event.agent_id:
+            stream = self._streams[event.agent_id]
+            stream.reset()
+            stream.add("marker", f"{tr('run.subtask')}: {event.message}\n")
+            self._streams_model.update_row(event.agent_id, subtask=event.message,
+                                           phase="thinking", step=0, live=True)
+            self._ensure_flush()
+        elif kind is EventType.AGENT_THINKING and event.agent_id:
+            step = int(event.payload.get("step", 0) or 0)
+            if step > 1:
+                self._streams[event.agent_id].add("marker", f"\n\n{tr('run.step')} {step}\n")
+            self._streams_model.update_row(event.agent_id, step=step, phase="thinking")
+            self._ensure_flush()
+        elif kind is EventType.AGENT_THINKING and event.agent_name and not event.agent_id:
+            self._supervisor_line(event.message, phase="review")
+        elif kind is EventType.AGENT_TOOL_CALL and event.agent_id:
+            tool = event.payload.get("tool", "")
+            self._streams[event.agent_id].add("tool", f"\n⚙ {elide(event.message, 220)}\n")
+            self._streams_model.update_row(event.agent_id, phase="tool", lastTool=tool)
+            self._ensure_flush()
+        elif kind is EventType.AGENT_TOOL_RESULT and event.agent_id:
+            text = event.message.split("→", 1)[-1].strip()
+            self._streams[event.agent_id].add("reasoning", f"↳ {elide(text, 200)}\n")
+            self._streams_model.update_row(event.agent_id, phase="thinking")
+            self._ensure_flush()
+        elif kind is EventType.SUBTASK_FINISHED and event.agent_id:
+            self._streams_model.update_row(event.agent_id, phase="done", live=False)
+        elif kind is EventType.SUBTASK_FAILED and event.agent_id:
+            self._streams[event.agent_id].add("error", f"\n✕ {event.message}\n")
+            self._streams_model.update_row(event.agent_id, phase="error", live=False)
+            self._ensure_flush()
+        elif kind is EventType.REPORT_REVIEWED:
+            self._supervisor_line(event.message, phase="idle",
+                                  verdict=event.payload.get("verdict", ""))
+        elif kind is EventType.SUMMARY_CREATED:
+            self._supervisor_line(event.message, phase="idle")
+        elif kind is EventType.AGENT_STATUS and event.agent_id:
+            status = event.payload.get("status", event.message)
+            self._streams_model.update_row(event.agent_id, status=status,
+                                           statusTitle=status_title(status),
+                                           live=status == "running")
+            if event.subtask_id:
+                self._nodes.update_row(event.subtask_id, status=status,
+                                       statusTitle=status_title(status))
+                self._update_edges(event.subtask_id, status)
 
-        if event.type in (EventType.APPROVAL_REQUESTED, EventType.APPROVAL_RESOLVED):
+        if kind in (EventType.APPROVAL_REQUESTED, EventType.APPROVAL_RESOLVED,
+                    EventType.RUN_FINISHED, EventType.RUN_STOPPED):
             self._sync_approvals()
-
-        if event.type in (EventType.SUBTASK_STARTED, EventType.SUBTASK_FINISHED,
-                          EventType.SUBTASK_FAILED, EventType.REPORT_CREATED,
-                          EventType.RUN_STARTED, EventType.RUN_FINISHED,
-                          EventType.RUN_STOPPED):
+        if kind in (EventType.SUBTASK_FINISHED, EventType.SUBTASK_FAILED,
+                    EventType.REPORT_REVIEWED, EventType.RUN_STARTED,
+                    EventType.RUN_FINISHED, EventType.APPROVAL_RESOLVED):
             self.refresh()
+        if kind is EventType.RUN_FINISHED:
+            self._supervisor_line("", phase="idle", live=False)
+            for row in list(self._streams_model.items):
+                self._streams_model.update_row(row["id"], live=False)
 
-        if event.type in (EventType.RUN_FINISHED, EventType.RUN_STOPPED):
-            # Прогон закончился — висящих вопросов быть не должно.
-            self._sync_approvals()
+    def _update_edges(self, subtask_id: int, status: str) -> None:
+        for edge in self._edges.items:
+            if edge["target"] == subtask_id:
+                state = "active" if status in ("running", "rework") else edge["state"]
+                self._edges.update_row(edge["id"], state=state)
 
-        if event.type == EventType.RUN_FINISHED:
-            self.btn_start.setEnabled(True)
-            self.btn_pause.setEnabled(False)
-            self.btn_stop.setEnabled(False)
-            self.btn_pause.setText(tr("run.pause"))
+    def _stream_for(self, event: Event) -> _Stream:
+        return self._streams[event.agent_id if event.agent_id else SUPERVISOR_CARD]
+
+    def _supervisor_line(self, message: str, phase: str, verdict: str = "",
+                         live: bool | None = None) -> None:
+        if message:
+            kind = {"ok": "result", "rework": "tool", "conflict": "error",
+                    "unverified": "error"}.get(verdict, "reasoning" if phase == "review" else "text")
+            self._streams[SUPERVISOR_CARD].add(kind, f"{message}\n")
+            self._ensure_flush()
+        working = phase == "review"
+        self._streams_model.update_row(
+            SUPERVISOR_CARD, phase=phase, live=working if live is None else live,
+            status="running" if working else "idle",
+            statusTitle=status_title("running" if working else "idle"))
+
+    def _ensure_flush(self) -> None:
+        if not self._flush.isActive():
+            self._flush.start()
+
+    def _flush_streams(self) -> None:
+        idle = True
+        for agent_id, stream in self._streams.items():
+            if stream.dirty:
+                stream.dirty = False
+                idle = False
+                self._streams_model.update_row(agent_id, html=stream.html())
+        if idle and not self.backend.running:
+            self._flush.stop()
 
     def _append_feed(self, event: Event) -> None:
-        """Добавляет цветную строку; лента подрезается, чтобы не расти вечно."""
-        if self._feed_lines > 1500:
-            self.feed.clear()
-            self._feed_lines = 0
+        self._feed_seq += 1
+        self._feed.append({
+            "id": self._feed_seq, "time": event.time_short,
+            "agent": event.agent_name or tr("run.system"),
+            "tone": FEED_TONES.get(event.type, "muted"), "kind": event.type.value,
+            "message": elide(event.message, 400),
+        }, limit=FEED_LIMIT)
 
-        cursor = self.feed.textCursor()
-        cursor.movePosition(QTextCursor.MoveOperation.End)
-
-        dim = QTextCharFormat()
-        dim.setForeground(QColor(STATUS_COLORS["idle"]))
-        cursor.insertText(f"{event.time_short}  ", dim)
-
-        if event.agent_name:
-            name_fmt = QTextCharFormat()
-            name_fmt.setForeground(QColor(current_palette()["text"]))
-            cursor.insertText(f"[{event.agent_name}] ", name_fmt)
-
-        body = QTextCharFormat()
-        body.setForeground(QColor(FEED_COLORS.get(event.type, "#c8cedb")))
-        cursor.insertText(f"{event.message}\n", body)
-
-        self._feed_lines += 1
-        self.feed.setTextCursor(cursor)
-        self.feed.ensureCursorVisible()
-
-    # -- действия ------------------------------------------------------------
-    def _start(self) -> None:
-        if self.workspace_id is None:
+    # -- действия ---------------------------------------------------------------------
+    @Slot()
+    def start(self) -> None:
+        orch = self.backend.orchestrator
+        if orch is None or self.ws_id is None or orch.state.running:
             return
-        task = self.repos.tasks.current(self.workspace_id)
-        if task is None:
-            warn(self, tr("task.no_task"))
+        self.refresh()
+        if self._s.get("blocker"):
+            self.toast("warning", tr("run.cannot_start"), self._s["blocker"])
             return
-        subtasks = self.repos.tasks.subtasks(task.id)
-        if not subtasks:
-            warn(self, tr("run.no_subtasks"))
-            return
-        missing = [s.title for s in subtasks if not s.agent_id and s.status != "done"]
-        if missing:
-            warn(self, tr("run.unassigned") + "\n· " + "\n· ".join(missing[:8]))
-            return
+        task = self.repos.tasks.current(self.ws_id)
+        self._set(starting=True, canStart=False)
 
-        self.btn_start.setEnabled(False)
-        self.btn_pause.setEnabled(True)
-        self.btn_stop.setEnabled(True)
-
-        ws_id, task_id = self.workspace_id, task.id
+        def done(state) -> None:
+            self._set(starting=False)
+            self.refresh()
+            self.backend.dashboard.schedule()
 
         def failed(exc: Exception) -> None:
-            self.btn_start.setEnabled(True)
-            self.btn_pause.setEnabled(False)
-            self.btn_stop.setEnabled(False)
-            warn(self, str(exc))
+            self._set(starting=False)
+            self.refresh()
+            self.toast("error", tr("run.cannot_start"), error_text(exc))
 
-        run_async(self.orchestrator.run_task(ws_id, task_id), None, failed)
+        run_async(orch.run_task(self.ws_id, task.id), done, failed)
 
-    def _toggle_pause(self) -> None:
-        if self.orchestrator.state.paused:
-            self.orchestrator.resume()
-            self.btn_pause.setText(tr("run.pause"))
+    @Slot()
+    def togglePause(self) -> None:  # noqa: N802
+        orch = self.backend.orchestrator
+        if orch is None:
+            return
+        if orch.state.paused:
+            orch.resume()
         else:
-            self.orchestrator.pause()
-            self.btn_pause.setText(tr("run.resume"))
+            orch.pause()
 
-    def _stop(self) -> None:
-        if confirm(self, tr("run.stop_confirm")):
-            self.orchestrator.stop()
+    @Slot()
+    def stop(self) -> None:
+        orch = self.backend.orchestrator
+        if orch is not None:
+            orch.stop()
+
+    @Slot(int, str, str, result=bool)
+    def decide(self, approval_id: int, decision: str, comment: str) -> bool:
+        orch = self.backend.orchestrator
+        gate = orch.gate if orch else None
+        ok = bool(gate and gate.resolve(approval_id, decision, comment))
+        self._sync_approvals()
+        return ok
+
+    @Slot()
+    def clearFeed(self) -> None:  # noqa: N802
+        self._feed.clear()
+
+    @Slot(int, result=str)
+    def fullText(self, agent_id: int) -> str:  # noqa: N802
+        """Текст рассуждения без разметки — для копирования в буфер."""
+        return "".join(t for _, t in self._streams[agent_id].segments)
+
+
+def decision_title(value: str) -> str:
+    try:
+        return DECISION_TITLES[Decision(value)]
+    except ValueError:
+        return value
+
+
+__all__ = ["RunController", "fmt_money"]
 ````
 
-### `ui/pages/supervisor_page.py`
+### `ui/bridge/c_supervisor.py`
 
-*373 строк*
+*176 строк*
 
 ````python
-"""Этап 5 — страница супервайзера.
-
-Три раздела: кто сейчас работает супервайзером, лента анонимных сводок и
-история инцидентов с возможностью закрыть эскалированный вручную.
-"""
+"""Супервайзер: сводки, инциденты и история решений человека."""
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (
-    QDialog,
-    QDialogButtonBox,
-    QHBoxLayout,
-    QLabel,
-    QPlainTextEdit,
-    QPushButton,
-    QScrollArea,
-    QTabWidget,
-    QVBoxLayout,
-    QWidget,
-)
+from PySide6.QtCore import Property, QObject, Signal, Slot
 
 from app.config import DEFAULT_WORKSPACE_SETTINGS
 from app.i18n import tr
-from core.events import Event, EventBus, EventType
-from core.orchestrator import Orchestrator
-from storage.db import local_time
-from storage.models import Incident
-from storage.repositories import Repos
-from ui.widgets.common import Card, EmptyState, Header, warn
+from core.events import EventType
+from core.hitl import parse_payload
+from ui.bridge.core import Controller, error_text, when
+from ui.bridge.listmodel import DictListModel
 from utils.asyncutils import run_async
 
-SEVERITY_COLORS = {"low": "#99a1b3", "medium": "#f0b429", "high": "#ef5f6b"}
-SEVERITY_TITLES = {"low": "низкая", "medium": "средняя", "high": "высокая"}
-STATUS_TITLES = {
-    "open": "открыт",
-    "auto_resolved": "разрешён автоматически",
-    "escalated": "требует решения",
-    "resolved": "закрыт",
-}
-REASON_LABELS = {
-    "conflict": "Конфликт данных",
-    "not_accepted": "Результат не принят",
-    "low_confidence": "Низкая уверенность",
-    "milestone": "Завершён этап",
-}
-KIND_TITLES = {
-    "conflict": "конфликт данных",
-    "factual_error": "фактическая ошибка",
-    "contradiction": "противоречие",
-    "off_scope": "выход за рамки задания",
-}
+SEVERITY_TONES = {"low": "muted", "medium": "warning", "high": "error"}
+DECISION_TONES = {"approve": "success", "rework": "warning", "skip": "muted",
+                  "abort": "error", "extend": "accent", "cancelled": "muted", "": "accent"}
 
 
-class ResolveDialog(QDialog):
-    """Ручное закрытие инцидента с объяснением решения."""
+class SupervisorController(Controller):
+    changed = Signal()
 
-    def __init__(self, parent: QWidget, incident: Incident) -> None:
-        super().__init__(parent)
-        self.setWindowTitle(tr("sup.resolve"))
-        self.setMinimumWidth(520)
-        lay = QVBoxLayout(self)
-        lay.setSpacing(10)
+    def __init__(self, backend) -> None:
+        super().__init__(backend)
+        self._summaries = DictListModel(["id", "when", "trigger", "triggerTitle",
+                                         "recipients", "content"], parent=self)
+        self._incidents = DictListModel(
+            ["id", "kind", "kindTitle", "severity", "severityTitle", "tone", "status",
+             "statusTitle", "open", "description", "resolution", "when"], parent=self)
+        self._decisions = DictListModel(
+            ["id", "reason", "reasonTitle", "decision", "decisionTitle", "tone",
+             "question", "agent", "comment", "when"], parent=self)
+        self._set(configured=False, modelTitle="", modelShort="", mode="api",
+                  summarizing=False, openIncidents=0)
 
-        problem = QLabel(incident.description)
-        problem.setWordWrap(True)
-        lay.addWidget(problem)
+    def _p(name, type_=str, default="", sig=changed):  # noqa: N805
+        return Property(type_, lambda self: self._s.get(name, default), notify=sig)
 
-        lay.addWidget(QLabel(tr("sup.resolution")))
-        self.text = QPlainTextEdit(incident.resolution)
-        self.text.setMinimumHeight(120)
-        lay.addWidget(self.text)
+    configured = _p("configured", bool, False)
+    modelTitle = _p("modelTitle")
+    modelShort = _p("modelShort")
+    mode = _p("mode")
+    summarizing = _p("summarizing", bool, False)
+    openIncidents = _p("openIncidents", int, 0)
 
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        lay.addWidget(buttons)
+    def _m(attr):  # noqa: N805
+        return Property(QObject, lambda self: getattr(self, attr), constant=True)
 
-    def value(self) -> str:
-        return self.text.toPlainText().strip()
+    summaries = _m("_summaries")
+    incidents = _m("_incidents")
+    decisions = _m("_decisions")
 
+    def _settings(self) -> dict:
+        ws = self.repos.workspaces.get(self.ws_id) if self.ws_id else None
+        return {**DEFAULT_WORKSPACE_SETTINGS, **(ws.settings if ws else {})}
 
-class SupervisorPage(QWidget):
-    """Сводки и инциденты текущего воркспейса."""
-
-    def __init__(self, repos: Repos, bus: EventBus, orchestrator: Orchestrator) -> None:
-        super().__init__()
-        self.repos = repos
-        self.bus = bus
-        self.orchestrator = orchestrator
-        self.workspace_id: int | None = None
-
-        root = QVBoxLayout(self)
-        root.setContentsMargins(24, 24, 24, 24)
-        root.setSpacing(14)
-
-        self.header = Header(tr("sup.title"), tr("sup.subtitle"))
-        self.btn_summary = QPushButton(tr("sup.make_summary"))
-        self.btn_summary.setObjectName("Primary")
-        self.btn_summary.clicked.connect(self._make_summary)
-        self.header.add_action(self.btn_summary)
-        root.addWidget(self.header)
-
-        self.model_label = QLabel("")
-        self.model_label.setObjectName("Dim")
-        self.model_label.setWordWrap(True)
-        root.addWidget(self.model_label)
-
-        self.tabs = QTabWidget()
-        root.addWidget(self.tabs, 1)
-
-        self.summaries_box, summaries_page = _scrollable()
-        self.tabs.addTab(summaries_page, tr("sup.summaries"))
-
-        self.incidents_box, incidents_page = _scrollable()
-        self.tabs.addTab(incidents_page, tr("sup.incidents"))
-
-        self.approvals_box, approvals_page = _scrollable()
-        self.tabs.addTab(approvals_page, tr("sup.approvals"))
-
-        self.bus.subscribe(self._on_event)
-
-    # -- данные --------------------------------------------------------------
-    def set_workspace(self, ws_id: int | None) -> None:
-        self.workspace_id = ws_id
-        self.refresh()
-
+    @Slot()
     def refresh(self) -> None:
-        _clear(self.summaries_box)
-        _clear(self.incidents_box)
-        _clear(self.approvals_box)
-
-        has_ws = self.workspace_id is not None
-        self.btn_summary.setEnabled(has_ws and not self.orchestrator.state.running)
-        if not has_ws:
-            self.model_label.setText("")
-            self.summaries_box.addWidget(EmptyState(tr("ws.empty")))
-            self.incidents_box.addWidget(EmptyState(tr("ws.empty")))
-            self.approvals_box.addWidget(EmptyState(tr("ws.empty")))
+        if not self.ready or self.ws_id is None:
+            for m in (self._summaries, self._incidents, self._decisions):
+                m.clear()
+            self._set(configured=False, modelTitle="", modelShort="", openIncidents=0)
             return
-
-        self.model_label.setText(self._describe_model())
-        self._render_summaries()
-        self._render_incidents()
-        self._render_approvals()
-
-    def _describe_model(self) -> str:
-        ws = self.repos.workspaces.get(self.workspace_id)
-        if ws is None:
-            return ""
-        s = {**DEFAULT_WORKSPACE_SETTINGS, **ws.settings}
-        if s.get("supervisor_mode") == "local":
-            return tr("sup.model_local",
-                      model=s.get("supervisor_local_model", "—"),
-                      url=s.get("supervisor_local_base_url", "—"))
-        agent = self.repos.agents.get(int(s["supervisor_agent_id"])) \
-            if s.get("supervisor_agent_id") else None
-        if agent is None:
-            agent = next((a for a in self.repos.agents.list(self.workspace_id)
-                          if a.is_supervisor), None)
-        if agent is None:
-            return tr("sup.not_configured")
-        return tr("sup.model_api", name=agent.name, model=agent.model)
-
-    def _render_summaries(self) -> None:
-        summaries = self.repos.reports.list_summaries(self.workspace_id, limit=30)
-        if not summaries:
-            self.summaries_box.addWidget(EmptyState(tr("sup.no_summaries")))
-            return
+        self._describe_model()
         triggers = {"timer": tr("sup.by_timer"), "event": tr("sup.by_event"),
                     "manual": tr("sup.by_hand"), "final": tr("sup.by_final")}
-        for item in summaries:
-            card = Card(self, spacing=6)
-            head = QHBoxLayout()
-            when = QLabel(local_time(item.created_at))
-            when.setObjectName("Dim")
-            head.addWidget(when)
-            trigger = QLabel(triggers.get(item.trigger, item.trigger))
-            trigger.setObjectName("Dim")
-            head.addWidget(trigger)
-            head.addStretch(1)
-            count = len([x for x in item.delivered_to.split(",") if x])
-            recipients = QLabel(tr("sup.delivered", n=count))
-            recipients.setObjectName("Dim")
-            head.addWidget(recipients)
-            card.body.addLayout(head)
+        self._summaries.set_items([
+            {"id": s.id, "when": when(s.created_at), "trigger": s.trigger,
+             "triggerTitle": triggers.get(s.trigger, s.trigger),
+             "recipients": len([x for x in s.delivered_to.split(",") if x]),
+             "content": s.content}
+            for s in self.repos.reports.list_summaries(self.ws_id, limit=40)])
 
-            body = QLabel(item.content)
-            body.setWordWrap(True)
-            body.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-            card.body.addWidget(body)
-            self.summaries_box.addWidget(card)
-        self.summaries_box.addStretch(1)
+        incidents = self.repos.incidents.list(self.ws_id, limit=200)
+        self._incidents.set_items([
+            {"id": i.id, "kind": i.kind, "kindTitle": tr(f"kind.{i.kind}"),
+             "severity": i.severity, "severityTitle": tr(f"sev.{i.severity}"),
+             "tone": SEVERITY_TONES.get(i.severity, "warning"), "status": i.status,
+             "statusTitle": tr(f"inc.{i.status}"), "open": i.status in ("open", "escalated"),
+             "description": i.description, "resolution": i.resolution,
+             "when": when(i.created_at)}
+            for i in incidents])
+        self._set(openIncidents=sum(1 for i in incidents if i.status in ("open", "escalated")))
 
-    def _render_incidents(self) -> None:
-        incidents = self.repos.incidents.list(self.workspace_id, limit=200)
-        if not incidents:
-            self.incidents_box.addWidget(EmptyState(tr("sup.no_incidents")))
-            return
-        for incident in incidents:
-            self.incidents_box.addWidget(self._incident_card(incident))
-        self.incidents_box.addStretch(1)
-
-    def _incident_card(self, incident: Incident) -> Card:
-        card = Card(self, spacing=6)
-        row = QHBoxLayout()
-        texts = QVBoxLayout()
-        texts.setSpacing(3)
-
-        head = QHBoxLayout()
-        kind = QLabel(KIND_TITLES.get(incident.kind, incident.kind))
-        kind.setObjectName("H2")
-        head.addWidget(kind)
-
-        color = SEVERITY_COLORS.get(incident.severity, SEVERITY_COLORS["medium"])
-        severity = QLabel(SEVERITY_TITLES.get(incident.severity, incident.severity))
-        severity.setStyleSheet(
-            f"color: {color}; border: 1px solid {color}; border-radius: 9px;"
-            f"padding: 1px 9px; font-size: 12px; font-weight: 600;"
-        )
-        head.addWidget(severity)
-        head.addStretch(1)
-        when = QLabel(local_time(incident.created_at))
-        when.setObjectName("Dim")
-        head.addWidget(when)
-        texts.addLayout(head)
-
-        description = QLabel(incident.description)
-        description.setWordWrap(True)
-        texts.addWidget(description)
-
-        status = QLabel(f"{tr('common.status')}: "
-                        f"{STATUS_TITLES.get(incident.status, incident.status)}")
-        status.setObjectName("Dim")
-        texts.addWidget(status)
-
-        if incident.resolution:
-            resolution = QLabel(f"{tr('sup.resolution')}: {incident.resolution}")
-            resolution.setObjectName("Dim")
-            resolution.setWordWrap(True)
-            texts.addWidget(resolution)
-
-        row.addLayout(texts, 1)
-        if incident.status in ("open", "escalated"):
-            button = QPushButton(tr("sup.resolve"))
-            button.clicked.connect(lambda: self._resolve(incident))
-            row.addWidget(button, 0, Qt.AlignmentFlag.AlignTop)
-        card.body.addLayout(row)
-        return card
-
-    def _render_approvals(self) -> None:
-        """История точек human-in-the-loop: что спросили и что ответили."""
-        from core.hitl import parse_payload
-
-        rows = self.repos.approvals.history(self.workspace_id, limit=60)
-        if not rows:
-            self.approvals_box.addWidget(EmptyState(tr("sup.no_approvals")))
-            return
-
-        titles = {"approve": tr("sup.d_approve"), "rework": tr("sup.d_rework"),
-                  "skip": tr("sup.d_skip"), "abort": tr("sup.d_abort"),
-                  "cancelled": tr("sup.d_cancelled"), "": tr("sup.d_pending")}
-        colours = {"approve": "#3ecf8e", "rework": "#f0b429", "skip": "#99a1b3",
-                   "abort": "#ef5f6b", "cancelled": "#99a1b3", "": "#6c8cff"}
-
+        rows = self.repos.approvals.history(self.ws_id, limit=80)
+        items = []
         for row in rows:
             payload = parse_payload(row.get("payload_json", "{}"))
-            card = Card(self, spacing=5)
-
-            head = QHBoxLayout()
-            reason = QLabel(REASON_LABELS.get(row["reason"], row["reason"]))
-            reason.setObjectName("H2")
-            head.addWidget(reason, 1)
             decision = row.get("decision", "")
-            verdict = QLabel(titles.get(decision, decision))
-            colour = colours.get(decision, "#99a1b3")
-            verdict.setStyleSheet(
-                f"color: {colour}; border: 1px solid {colour}; border-radius: 9px;"
-                f"padding: 1px 9px; font-size: 12px; font-weight: 600;"
-            )
-            head.addWidget(verdict)
-            card.body.addLayout(head)
+            items.append({
+                "id": row["id"], "reason": row["reason"],
+                "reasonTitle": tr(f"reason.{row['reason']}"),
+                "decision": decision,
+                "decisionTitle": tr(f"hist.{decision or 'pending'}"),
+                "tone": DECISION_TONES.get(decision, "muted"),
+                "question": payload.get("question", ""),
+                "agent": payload.get("agent_name", ""), "comment": row.get("comment", ""),
+                "when": when(row.get("created_at")),
+            })
+        self._decisions.set_items(items)
 
-            question = QLabel(payload.get("question", ""))
-            question.setWordWrap(True)
-            card.body.addWidget(question)
-
-            meta_parts = [local_time(row["created_at"])]
-            if payload.get("agent_name"):
-                meta_parts.append(payload["agent_name"])
-            if row.get("comment"):
-                meta_parts.append(f"комментарий: {row['comment']}")
-            meta = QLabel("  ·  ".join(meta_parts))
-            meta.setObjectName("Dim")
-            meta.setWordWrap(True)
-            card.body.addWidget(meta)
-            self.approvals_box.addWidget(card)
-        self.approvals_box.addStretch(1)
-
-    # -- действия ------------------------------------------------------------
-    def _resolve(self, incident: Incident) -> None:
-        dialog = ResolveDialog(self, incident)
-        if dialog.exec() != QDialog.DialogCode.Accepted:
+    def _describe_model(self) -> None:
+        s = self._settings()
+        if s.get("supervisor_mode") == "local":
+            model = s.get("supervisor_local_model", "")
+            self._set(configured=bool(model), mode="local", modelShort=model,
+                      modelTitle=tr("sup.model_local", model=model,
+                                    url=s.get("supervisor_local_base_url", "")))
             return
-        self.repos.incidents.resolve(incident.id, "resolved",
-                                     dialog.value() or "Закрыто пользователем")
-        self.refresh()
-
-    def _make_summary(self) -> None:
-        """Ручная сводка вне прогона — удобно, чтобы освежить контекст агентов."""
-        if self.workspace_id is None:
+        agent = None
+        if s.get("supervisor_agent_id"):
+            agent = self.repos.agents.get(int(s["supervisor_agent_id"]))
+        if agent is None:
+            agent = next((a for a in self.repos.agents.list(self.ws_id) if a.is_supervisor), None)
+        if agent is None:
+            self._set(configured=False, mode="api", modelShort="",
+                      modelTitle=tr("sup.not_configured"))
             return
-        task = self.repos.tasks.current(self.workspace_id)
+        self._set(configured=True, mode="api", modelShort=agent.model,
+                  modelTitle=tr("sup.model_api", name=agent.name, model=agent.model))
+
+    def reset(self) -> None:
+        super().reset()
+        for m in (self._summaries, self._incidents, self._decisions):
+            m.clear()
+
+    def on_event(self, event) -> None:
+        if event.type in (EventType.SUMMARY_CREATED, EventType.INCIDENT_CREATED,
+                          EventType.REPORT_REVIEWED, EventType.RUN_FINISHED,
+                          EventType.APPROVAL_REQUESTED, EventType.APPROVAL_RESOLVED):
+            self.refresh()
+
+    @Slot()
+    def makeSummary(self) -> None:  # noqa: N802
+        """Сводка вручную — удобно освежить контекст агентов вне прогона."""
+        if self.ws_id is None:
+            return
+        task = self.repos.tasks.current(self.ws_id)
         if task is None:
-            warn(self, tr("task.no_task"))
+            self.toast("warning", tr("task.no_task"), "")
             return
-
-        ws = self.repos.workspaces.get(self.workspace_id)
-        settings = {**DEFAULT_WORKSPACE_SETTINGS, **(ws.settings if ws else {})}
         from core.supervisor.supervisor import Supervisor
 
-        supervisor = Supervisor(self.repos, self.bus, self.workspace_id, settings)
+        bus = self.backend.bus
+        supervisor = Supervisor(self.repos, bus, self.ws_id, self._settings())
         if not supervisor.available():
-            warn(self, tr("sup.not_configured"))
+            self.toast("warning", tr("sup.not_configured"), "")
             return
-
-        self.btn_summary.setEnabled(False)
+        self._set(summarizing=True)
 
         async def job() -> str:
             try:
@@ -11457,735 +11099,255 @@ class SupervisorPage(QWidget):
                 await supervisor.aclose()
 
         def done(content: str) -> None:
-            self.btn_summary.setEnabled(True)
-            if not content:
-                warn(self, tr("sup.nothing_to_summarize"))
+            self._set(summarizing=False)
+            if content:
+                self.toast("success", tr("toast.summary_done"), "")
+            else:
+                self.toast("info", tr("sup.nothing_to_summarize"), "")
             self.refresh()
 
         def failed(exc: Exception) -> None:
-            self.btn_summary.setEnabled(True)
-            warn(self, str(exc))
+            self._set(summarizing=False)
+            self.toast("error", tr("toast.summary_failed"), error_text(exc))
 
         run_async(job(), done, failed)
 
-    def _on_event(self, event: Event) -> None:
-        if event.type in (EventType.SUMMARY_CREATED, EventType.INCIDENT_CREATED,
-                          EventType.REPORT_REVIEWED, EventType.RUN_FINISHED,
-                          EventType.APPROVAL_REQUESTED, EventType.APPROVAL_RESOLVED):
-            self.refresh()
-
-
-def _scrollable() -> tuple[QVBoxLayout, QWidget]:
-    """Создаёт прокручиваемую страницу и возвращает её внутренний layout."""
-    scroll = QScrollArea()
-    scroll.setWidgetResizable(True)
-    scroll.setFrameShape(QScrollArea.Shape.NoFrame)
-    container = QWidget()
-    layout = QVBoxLayout(container)
-    layout.setContentsMargins(4, 8, 4, 8)
-    layout.setSpacing(10)
-    scroll.setWidget(container)
-    return layout, scroll
-
-
-def _clear(layout: QVBoxLayout) -> None:
-    while layout.count():
-        item = layout.takeAt(0)
-        if item.widget():
-            item.widget().deleteLater()
+    @Slot(int, str)
+    def resolveIncident(self, incident_id: int, text: str) -> None:  # noqa: N802
+        self.repos.incidents.resolve(incident_id, "resolved",
+                                     (text or "").strip() or tr("sup.closed_by_user"))
+        self.refresh()
+        self.backend.dashboard.schedule()
 ````
 
-### `ui/pages/dashboard_page.py`
+### `ui/bridge/c_dashboard.py`
 
-*461 строк*
+*188 строк*
 
 ````python
-"""Этап 6 — дашборд реального времени.
+"""Дашборд: метрики, прогресс, кривые расхода, агенты, лента и инциденты.
 
-Собирает в одном месте всё, что происходит в воркспейсе: статус каждого
-агента, прогресс по задаче и подзадачам, кривые расхода токенов и денег,
-объединённую ленту отчётов и сводок, историю инцидентов.
-
-Обновление идёт по событиям шины, но с троттлингом: во время прогона
-события летят пачками, и перерисовывать всё на каждое — лишняя работа.
-Таймер собирает их в один апдейт не чаще раза в секунду.
+Во время прогона события идут пачками, поэтому перерисовка собирается
+таймером не чаще раза в секунду; шаги рассуждений дашборд не интересуют.
 """
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, QTimer
-from PySide6.QtWidgets import (
-    QGridLayout,
-    QHBoxLayout,
-    QLabel,
-    QPushButton,
-    QScrollArea,
-    QVBoxLayout,
-    QWidget,
-)
+from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot
 
 from app.i18n import tr
-from core.events import Event, EventBus, EventType
-from storage.db import local_time
-from storage.repositories import Repos
-from ui.pages.supervisor_page import KIND_TITLES
-from ui.theme import STATUS_COLORS
-from ui.widgets.charts import Bar, BarChart, LineChart, SegmentBar, SeriesPoint
-from ui.widgets.common import Card, EmptyState, Header, StatusBadge
+from core.events import EventType
+from ui.bridge.c_agents import ROLE_ICONS
+from ui.bridge.core import Controller, elide, fmt_money, fmt_tokens, status_title, when
+from ui.bridge.listmodel import DictListModel
 
-#: не чаще одного перерисовывания в секунду
-REFRESH_THROTTLE_MS = 1000
-#: сколько записей показывать в ленте
-FEED_LIMIT = 40
-#: точек на кривой расхода
+THROTTLE_MS = 1000
 SERIES_LIMIT = 300
-
-AGENT_COLORS = ["#6c8cff", "#3ecf8e", "#f0b429", "#b07cff", "#ef5f6b",
-                "#4fc3f7", "#ff9e64", "#7ee787"]
-
-
-class Metric(QWidget):
-    """Одна крупная цифра с подписью."""
-
-    def __init__(self, caption: str, parent: QWidget | None = None) -> None:
-        super().__init__(parent)
-        lay = QVBoxLayout(self)
-        lay.setContentsMargins(0, 0, 0, 0)
-        lay.setSpacing(1)
-        self.value = QLabel("—")
-        self.value.setObjectName("H1")
-        lay.addWidget(self.value)
-        self.caption = QLabel(caption)
-        self.caption.setObjectName("Dim")
-        lay.addWidget(self.caption)
-
-    def set(self, value: str, colour: str = "") -> None:
-        self.value.setText(value)
-        self.value.setStyleSheet(f"color: {colour};" if colour else "")
-
-    def set_caption(self, caption: str) -> None:
-        self.caption.setText(caption)
+FEED_LIMIT = 40
+STATUS_ORDER = ["done", "review", "rework", "running", "paused", "error", "idle"]
+QUIET = {EventType.AGENT_THINKING, EventType.AGENT_DELTA, EventType.AGENT_TOOL_CALL,
+         EventType.AGENT_TOOL_RESULT}
 
 
-class DashboardPage(QWidget):
-    """Сводная картина по активному воркспейсу."""
+class DashboardController(Controller):
+    changed = Signal()
 
-    def __init__(self, repos: Repos, bus: EventBus) -> None:
-        super().__init__()
-        self.repos = repos
-        self.bus = bus
-        self.workspace_id: int | None = None
-
+    def __init__(self, backend) -> None:
+        super().__init__(backend)
+        self._agents = DictListModel(["id", "name", "icon", "status", "statusTitle",
+                                      "doing", "tokens", "cost", "share", "isSupervisor"],
+                                     parent=self)
+        self._feed = DictListModel(["id", "who", "when", "text", "tone", "badge",
+                                    "confidence"], parent=self)
+        self._incidents = DictListModel(["id", "kindTitle", "tone", "statusTitle",
+                                         "description", "when"], parent=self)
         self._timer = QTimer(self)
         self._timer.setSingleShot(True)
-        self._timer.setInterval(REFRESH_THROTTLE_MS)
+        self._timer.setInterval(THROTTLE_MS)
         self._timer.timeout.connect(self.refresh)
+        self._set(agentsCount=0, done=0, total=0, tokens=0, tokensText="0", cost=0.0,
+                  costText="$0", reworks=0, openIncidents=0, limitPct=-1.0,
+                  taskTitle="", segments=[], costSeries=[], tokenSeries=[], bars=[],
+                  supervisorShare=0.0)
 
-        root = QVBoxLayout(self)
-        root.setContentsMargins(24, 24, 24, 24)
-        root.setSpacing(14)
+    def _p(name, type_=str, default="", sig=changed):  # noqa: N805
+        return Property(type_, lambda self: self._s.get(name, default), notify=sig)
 
-        self.header = Header(tr("dash.title"), tr("dash.subtitle"))
-        refresh_button = QPushButton(tr("common.refresh"))
-        refresh_button.clicked.connect(self.refresh)
-        self.header.add_action(refresh_button)
-        root.addWidget(self.header)
+    agentsCount = _p("agentsCount", int, 0)
+    done = _p("done", int, 0)
+    total = _p("total", int, 0)
+    tokens = _p("tokens", float, 0.0)
+    tokensText = _p("tokensText")
+    cost = _p("cost", float, 0.0)
+    costText = _p("costText")
+    reworks = _p("reworks", int, 0)
+    openIncidents = _p("openIncidents", int, 0)
+    limitPct = _p("limitPct", float, -1.0)
+    taskTitle = _p("taskTitle")
+    supervisorShare = _p("supervisorShare", float, 0.0)
+    segments = _p("segments", "QVariantList", [])
+    costSeries = _p("costSeries", "QVariantList", [])
+    tokenSeries = _p("tokenSeries", "QVariantList", [])
+    bars = _p("bars", "QVariantList", [])
 
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
-        root.addWidget(scroll, 1)
-        page = QWidget()
-        scroll.setWidget(page)
-        body = QVBoxLayout(page)
-        body.setContentsMargins(0, 0, 0, 0)
-        body.setSpacing(14)
+    def _m(attr):  # noqa: N805
+        return Property(QObject, lambda self: getattr(self, attr), constant=True)
 
-        body.addWidget(self._build_metrics())
-        body.addWidget(self._build_progress())
+    agentsModel = _m("_agents")
+    feed = _m("_feed")
+    incidents = _m("_incidents")
 
-        charts_row = QHBoxLayout()
-        charts_row.setSpacing(14)
-        charts_row.addWidget(self._build_cost_chart(), 1)
-        charts_row.addWidget(self._build_agents_chart(), 1)
-        body.addLayout(charts_row)
-
-        body.addWidget(self._build_agents_card())
-
-        feeds_row = QHBoxLayout()
-        feeds_row.setSpacing(14)
-        feeds_row.addWidget(self._build_feed_card(), 3)
-        feeds_row.addWidget(self._build_incidents_card(), 2)
-        body.addLayout(feeds_row)
-        body.addStretch(1)
-
-        self.bus.subscribe(self._on_event)
-
-    # -- построение ----------------------------------------------------------
-    def _build_metrics(self) -> Card:
-        card = Card(self)
-        grid = QGridLayout()
-        grid.setSpacing(18)
-        self.m_agents = Metric(tr("dash.m_agents"))
-        self.m_subtasks = Metric(tr("dash.m_subtasks"))
-        self.m_tokens = Metric(tr("dash.m_tokens"))
-        self.m_cost = Metric(tr("dash.m_cost"))
-        self.m_reworks = Metric(tr("dash.m_reworks"))
-        self.m_open = Metric(tr("dash.m_open_incidents"))
-        for i, metric in enumerate((self.m_agents, self.m_subtasks, self.m_tokens,
-                                    self.m_cost, self.m_reworks, self.m_open)):
-            grid.addWidget(metric, 0, i)
-        card.body.addLayout(grid)
-        return card
-
-    def _build_progress(self) -> Card:
-        card = Card(self, spacing=8)
-        row = QHBoxLayout()
-        self.task_title = QLabel(tr("task.no_task"))
-        self.task_title.setObjectName("H2")
-        self.task_title.setWordWrap(True)
-        row.addWidget(self.task_title, 1)
-        self.progress_label = QLabel("")
-        self.progress_label.setObjectName("Dim")
-        row.addWidget(self.progress_label)
-        card.body.addLayout(row)
-
-        self.progress_bar = SegmentBar()
-        card.body.addWidget(self.progress_bar)
-
-        self.legend = QLabel("")
-        self.legend.setObjectName("Dim")
-        self.legend.setWordWrap(True)
-        card.body.addWidget(self.legend)
-        return card
-
-    def _build_cost_chart(self) -> Card:
-        card = Card(self, spacing=6)
-        self.cost_chart = LineChart(tr("dash.cost_chart"), unit="usd")
-        self.cost_chart.empty_text = tr("dash.no_usage")
-        card.body.addWidget(self.cost_chart)
-        self.tokens_chart = LineChart(tr("dash.tokens_chart"), unit="tokens")
-        self.tokens_chart.empty_text = tr("dash.no_usage")
-        card.body.addWidget(self.tokens_chart)
-        return card
-
-    def _build_agents_chart(self) -> Card:
-        card = Card(self, spacing=6)
-        self.agent_chart = BarChart(tr("dash.by_agent"), unit="tokens")
-        self.agent_chart.empty_text = tr("dash.no_usage")
-        card.body.addWidget(self.agent_chart)
-        return card
-
-    def _build_agents_card(self) -> Card:
-        card = Card(self, spacing=8)
-        title = QLabel(tr("dash.agents"))
-        title.setObjectName("H2")
-        card.body.addWidget(title)
-        self.agents_box = QVBoxLayout()
-        self.agents_box.setSpacing(4)
-        card.body.addLayout(self.agents_box)
-        return card
-
-    def _build_feed_card(self) -> Card:
-        card = Card(self, spacing=8)
-        title = QLabel(tr("dash.feed"))
-        title.setObjectName("H2")
-        card.body.addWidget(title)
-        self.feed_box = QVBoxLayout()
-        self.feed_box.setSpacing(6)
-        card.body.addLayout(self.feed_box)
-        return card
-
-    def _build_incidents_card(self) -> Card:
-        card = Card(self, spacing=8)
-        title = QLabel(tr("dash.incidents"))
-        title.setObjectName("H2")
-        card.body.addWidget(title)
-        self.incidents_box = QVBoxLayout()
-        self.incidents_box.setSpacing(6)
-        card.body.addLayout(self.incidents_box)
-        return card
-
-    # -- данные --------------------------------------------------------------
-    def set_workspace(self, ws_id: int | None) -> None:
-        self.workspace_id = ws_id
-        self.refresh()
-
-    def refresh(self) -> None:
-        _clear(self.agents_box)
-        _clear(self.feed_box)
-        _clear(self.incidents_box)
-
-        if self.workspace_id is None:
-            self.task_title.setText(tr("ws.empty"))
-            self.progress_label.setText("")
-            self.legend.setText("")
-            self.progress_bar.set_segments([])
-            for metric in (self.m_agents, self.m_subtasks, self.m_tokens,
-                           self.m_cost, self.m_reworks, self.m_open):
-                metric.set("—")
-            self.cost_chart.set_points([])
-            self.tokens_chart.set_points([])
-            self.agent_chart.set_bars([])
-            self.agents_box.addWidget(EmptyState(tr("ws.empty")))
-            return
-
-        agents = self.repos.agents.list(self.workspace_id)
-        task = self.repos.tasks.current(self.workspace_id)
-        subtasks = self.repos.tasks.subtasks(task.id) if task else []
-
-        self._fill_metrics(agents, task, subtasks)
-        self._fill_progress(task, subtasks)
-        self._fill_charts(agents)
-        self._fill_agents(agents, subtasks)
-        self._fill_feed()
-        self._fill_incidents()
-
-    def _fill_metrics(self, agents, task, subtasks) -> None:
-        tokens, cost = self.repos.budgets.workspace_totals(self.workspace_id)
-        counts = self.repos.budgets.incident_counts(self.workspace_id)
-        open_count = counts.get("open", 0) + counts.get("escalated", 0)
-        done = sum(1 for s in subtasks if s.status == "done")
-        reworks = sum(s.rework_count for s in subtasks)
-
-        self.m_agents.set(str(len(agents)))
-        self.m_subtasks.set(f"{done} / {len(subtasks)}" if subtasks else "—")
-        self.m_tokens.set(f"{tokens:,}".replace(",", " "))
-        self.m_cost.set(f"${cost:.4f}" if cost < 1 else f"${cost:,.2f}".replace(",", " "))
-        self.m_reworks.set(str(reworks), STATUS_COLORS["rework"] if reworks else "")
-        self.m_open.set(str(open_count), STATUS_COLORS["error"] if open_count else "")
-
-        if task and task.token_limit:
-            share = tokens / task.token_limit
-            self.m_tokens.set_caption(
-                tr("dash.m_tokens_limit", pct=f"{share * 100:.0f}",
-                   limit=f"{task.token_limit:,}".replace(",", " "))
-            )
-        else:
-            self.m_tokens.set_caption(tr("dash.m_tokens"))
-
-    def _fill_progress(self, task, subtasks) -> None:
-        if task is None:
-            self.task_title.setText(tr("task.no_task"))
-            self.progress_label.setText("")
-            self.legend.setText("")
-            self.progress_bar.set_segments([])
-            return
-
-        self.task_title.setText(task.title or tr("task.title"))
-        order = ["done", "review", "rework", "running", "error", "paused", "idle"]
-        buckets = {key: 0 for key in order}
-        for subtask in subtasks:
-            buckets[subtask.status] = buckets.get(subtask.status, 0) + 1
-
-        self.progress_bar.set_segments(
-            [(tr(f"status.{key}"), buckets.get(key, 0), STATUS_COLORS.get(key, "#888"))
-             for key in order]
-        )
-        done = buckets.get("done", 0)
-        total = len(subtasks)
-        percent = (done / total * 100) if total else 0
-        self.progress_label.setText(f"{done} / {total}  ·  {percent:.0f}%")
-        self.legend.setText("   ".join(
-            f"{tr(f'status.{key}')}: {buckets[key]}" for key in order if buckets.get(key)
-        ) or tr("task.subtasks"))
-
-    def _fill_charts(self, agents) -> None:
-        series = self.repos.budgets.usage_series(self.workspace_id, SERIES_LIMIT)
-        cost_points: list[SeriesPoint] = []
-        token_points: list[SeriesPoint] = []
-        cost_acc = 0.0
-        token_acc = 0
-        for created_at, tokens, cost in series:
-            cost_acc += cost
-            token_acc += tokens
-            label = local_time(created_at, "%H:%M")
-            cost_points.append(SeriesPoint(label, cost_acc))
-            token_points.append(SeriesPoint(label, float(token_acc)))
-        self.cost_chart.set_points(cost_points)
-        self.tokens_chart.set_points(token_points)
-
-        names = {a.id: a.name for a in agents}
-        bars: list[Bar] = []
-        for i, (agent_id, tokens, _cost) in enumerate(
-            self.repos.budgets.usage_by_agent(self.workspace_id)
-        ):
-            if not tokens:
-                continue
-            label = names.get(agent_id) if agent_id else tr("dash.supervisor_line")
-            bars.append(Bar(label or tr("dash.supervisor_line"), float(tokens),
-                            AGENT_COLORS[i % len(AGENT_COLORS)]))
-        self.agent_chart.set_bars(bars[:10])
-
-    def _fill_agents(self, agents, subtasks) -> None:
-        if not agents:
-            self.agents_box.addWidget(EmptyState(tr("agents.empty")))
-            return
-        usage = {agent_id: (tokens, cost) for agent_id, tokens, cost
-                 in self.repos.budgets.usage_by_agent(self.workspace_id)}
-        assigned: dict[int, str] = {}
-        for subtask in subtasks:
-            if subtask.agent_id and subtask.status in ("running", "rework"):
-                assigned[subtask.agent_id] = subtask.title
-
-        for agent in agents:
-            row = QWidget()
-            line = QHBoxLayout(row)
-            line.setContentsMargins(0, 0, 0, 0)
-            line.setSpacing(10)
-
-            name = QLabel(agent.name + ("  ⭐" if agent.is_supervisor else ""))
-            line.addWidget(name)
-
-            current = assigned.get(agent.id)
-            if current:
-                doing = QLabel("→ " + _elide(current, 38))
-                doing.setObjectName("Dim")
-                line.addWidget(doing)
-            line.addStretch(1)
-
-            tokens, cost = usage.get(agent.id, (0, 0.0))
-            spent = QLabel(f"{tokens:,}".replace(",", " ") + f" · ${cost:.4f}")
-            spent.setObjectName("Dim")
-            line.addWidget(spent)
-            line.addWidget(StatusBadge(agent.status))
-            self.agents_box.addWidget(row)
-
-    def _fill_feed(self) -> None:
-        """Объединённая лента отчётов и сводок, новое сверху."""
-        entries: list[tuple[str, str, str, str]] = []   # (время, метка, текст, цвет)
-        names = {a.id: a.name for a in self.repos.agents.list(self.workspace_id)}
-
-        for report in self.repos.reports.list_reports(self.workspace_id, limit=FEED_LIMIT):
-            verdict = {"ok": tr("dash.v_ok"), "rework": tr("dash.v_rework"),
-                       "conflict": tr("dash.v_conflict")}.get(report.review_verdict, "")
-            colour = {"ok": STATUS_COLORS["done"], "rework": STATUS_COLORS["rework"],
-                      "conflict": STATUS_COLORS["error"]}.get(
-                          report.review_verdict, STATUS_COLORS["idle"])
-            confidence = (f"  ·  {tr('dash.confidence')} {report.confidence:.2f}"
-                          if report.confidence is not None else "")
-            entries.append((
-                report.created_at,
-                names.get(report.agent_id, tr("dash.unknown_agent")),
-                f"{_elide(report.content.strip().replace(chr(10), ' '), 150)}"
-                f"{confidence}{('  ·  ' + verdict) if verdict else ''}",
-                colour,
-            ))
-
-        for summary in self.repos.reports.list_summaries(self.workspace_id,
-                                                         limit=FEED_LIMIT):
-            entries.append((
-                summary.created_at,
-                tr("dash.summary_line"),
-                _elide(summary.content.strip().replace("\n", " "), 150),
-                "#b07cff",
-            ))
-
-        entries.sort(key=lambda e: e[0], reverse=True)
-        if not entries:
-            self.feed_box.addWidget(EmptyState(tr("dash.no_feed")))
-            return
-
-        for created_at, who, text, colour in entries[:FEED_LIMIT]:
-            item = QWidget()
-            lay = QVBoxLayout(item)
-            lay.setContentsMargins(0, 0, 0, 0)
-            lay.setSpacing(1)
-
-            head = QHBoxLayout()
-            author = QLabel(who)
-            author.setStyleSheet(f"color: {colour}; font-weight: 600;")
-            head.addWidget(author)
-            head.addStretch(1)
-            when = QLabel(local_time(created_at, "%H:%M:%S"))
-            when.setObjectName("Dim")
-            head.addWidget(when)
-            lay.addLayout(head)
-
-            body = QLabel(text)
-            body.setObjectName("Dim")
-            body.setWordWrap(True)
-            lay.addWidget(body)
-            self.feed_box.addWidget(item)
-
-    def _fill_incidents(self) -> None:
-        incidents = self.repos.incidents.list(self.workspace_id, limit=FEED_LIMIT)
-        if not incidents:
-            self.incidents_box.addWidget(EmptyState(tr("sup.no_incidents")))
-            return
-        severity_colours = {"low": STATUS_COLORS["idle"], "medium": STATUS_COLORS["rework"],
-                            "high": STATUS_COLORS["error"]}
-        statuses = {"open": tr("dash.i_open"), "escalated": tr("dash.i_escalated"),
-                    "auto_resolved": tr("dash.i_auto"), "resolved": tr("dash.i_resolved")}
-        for incident in incidents:
-            item = QWidget()
-            lay = QVBoxLayout(item)
-            lay.setContentsMargins(0, 0, 0, 0)
-            lay.setSpacing(1)
-
-            head = QHBoxLayout()
-            kind = QLabel(KIND_TITLES.get(incident.kind, incident.kind))
-            kind.setStyleSheet(
-                f"color: {severity_colours.get(incident.severity, '#888')}; font-weight: 600;"
-            )
-            head.addWidget(kind)
-            head.addStretch(1)
-            status = QLabel(statuses.get(incident.status, incident.status))
-            status.setObjectName("Dim")
-            head.addWidget(status)
-            lay.addLayout(head)
-
-            description = QLabel(_elide(incident.description, 140))
-            description.setObjectName("Dim")
-            description.setWordWrap(True)
-            lay.addWidget(description)
-            self.incidents_box.addWidget(item)
-
-    # -- реакция на события --------------------------------------------------
-    def _on_event(self, event: Event) -> None:
-        """Ставит обновление в очередь, а не перерисовывает всё немедленно."""
-        if event.type in (EventType.AGENT_THINKING, EventType.AGENT_TOOL_CALL,
-                          EventType.AGENT_TOOL_RESULT):
-            return
-        if not self._timer.isActive():
+    def schedule(self) -> None:
+        if self.ready and not self._timer.isActive():
             self._timer.start()
 
+    def on_event(self, event) -> None:
+        if event.type not in QUIET:
+            self.schedule()
 
-def _elide(text: str, limit: int) -> str:
-    text = (text or "").strip()
-    return text if len(text) <= limit else text[: limit - 1] + "…"
+    def reset(self) -> None:
+        super().reset()
+        self._timer.stop()
+        for m in (self._agents, self._feed, self._incidents):
+            m.clear()
 
+    @Slot()
+    def refresh(self) -> None:
+        if not self.ready or self.ws_id is None:
+            for m in (self._agents, self._feed, self._incidents):
+                m.clear()
+            self._set(agentsCount=0, done=0, total=0, tokens=0.0, tokensText="0",
+                      cost=0.0, costText="$0", reworks=0, openIncidents=0, limitPct=-1.0,
+                      taskTitle="", segments=[], costSeries=[], tokenSeries=[], bars=[],
+                      supervisorShare=0.0)
+            return
+        ws_id = self.ws_id
+        agents = self.repos.agents.list(ws_id)
+        task = self.repos.tasks.current(ws_id)
+        subtasks = self.repos.tasks.subtasks(task.id) if task else []
+        tokens, cost = self.repos.budgets.workspace_totals(ws_id)
+        counts = self.repos.budgets.incident_counts(ws_id)
 
-def _clear(layout) -> None:
-    while layout.count():
-        item = layout.takeAt(0)
-        if item.widget():
-            item.widget().deleteLater()
+        buckets = {k: 0 for k in STATUS_ORDER}
+        for s in subtasks:
+            buckets[s.status] = buckets.get(s.status, 0) + 1
+        segments = [{"status": k, "title": status_title(k), "count": buckets[k]}
+                    for k in STATUS_ORDER if buckets.get(k)]
+
+        series = self.repos.budgets.usage_series(ws_id, SERIES_LIMIT)
+        cost_acc = token_acc = 0.0
+        cost_series, token_series = [], []
+        for created, t, c in series:
+            cost_acc += c
+            token_acc += t
+            label = when(created, "%H:%M")
+            cost_series.append({"label": label, "value": round(cost_acc, 6)})
+            token_series.append({"label": label, "value": token_acc})
+
+        names = {a.id: a for a in agents}
+        usage = self.repos.budgets.usage_by_agent(ws_id)
+        total_tokens = sum(t for _, t, _ in usage) or 1
+        bars = []
+        for agent_id, t, c in usage:
+            if not t:
+                continue
+            a = names.get(agent_id) if agent_id else None
+            label = a.name if a else (tr("dash.supervisor_line") if agent_id is None
+                                      else tr("dash.unknown_agent"))
+            bars.append({"label": label, "value": t, "text": fmt_tokens(t),
+                         "cost": fmt_money(c), "supervisor": agent_id is None})
+        supervisor_tokens = sum(t for aid, t, _ in usage if aid is None)
+
+        limit_pct = -1.0
+        if task and task.token_limit:
+            task_tokens, _ = self.repos.budgets.task_totals(task.id)
+            limit_pct = min(task_tokens / task.token_limit, 9.99)
+
+        self._set(agentsCount=len(agents), done=buckets.get("done", 0), total=len(subtasks),
+                  tokens=float(tokens), tokensText=fmt_tokens(tokens), cost=float(cost),
+                  costText=fmt_money(cost), reworks=sum(s.rework_count for s in subtasks),
+                  openIncidents=counts.get("open", 0) + counts.get("escalated", 0),
+                  limitPct=limit_pct, taskTitle=task.title if task else "",
+                  segments=segments, costSeries=cost_series, tokenSeries=token_series,
+                  bars=bars[:10], supervisorShare=supervisor_tokens / total_tokens)
+
+        per_agent = {aid: (t, c) for aid, t, c in usage}
+        doing = {s.agent_id: s.title for s in subtasks
+                 if s.agent_id and s.status in ("running", "rework")}
+        self._agents.set_items([
+            {"id": a.id, "name": a.name, "icon": ROLE_ICONS.get(a.role or "custom", "bot"),
+             "status": a.status, "statusTitle": status_title(a.status),
+             "doing": doing.get(a.id, ""),
+             "tokens": fmt_tokens(per_agent.get(a.id, (0, 0))[0]),
+             "cost": fmt_money(per_agent.get(a.id, (0, 0.0))[1]),
+             "share": per_agent.get(a.id, (0, 0))[0] / total_tokens,
+             "isSupervisor": a.is_supervisor}
+            for a in agents])
+        self._fill_feed(names)
+        self._incidents.set_items([
+            {"id": i.id, "kindTitle": tr(f"kind.{i.kind}"),
+             "tone": {"low": "muted", "medium": "warning", "high": "error"}.get(i.severity, "warning"),
+             "statusTitle": tr(f"inc.{i.status}"), "description": elide(i.description, 160),
+             "when": when(i.created_at)}
+            for i in self.repos.incidents.list(ws_id, limit=FEED_LIMIT)])
+
+    def _fill_feed(self, names: dict) -> None:
+        entries = []
+        verdicts = {"ok": ("dash.v_ok", "success"), "rework": ("dash.v_rework", "warning"),
+                    "conflict": ("dash.v_conflict", "error"),
+                    "unverified": ("dash.v_unverified", "error")}
+        for r in self.repos.reports.list_reports(self.ws_id, limit=FEED_LIMIT):
+            badge, tone = verdicts.get(r.review_verdict, ("", "muted"))
+            agent = names.get(r.agent_id)
+            entries.append({"id": f"r{r.id}", "who": agent.name if agent else tr("dash.unknown_agent"),
+                            "when_raw": r.created_at, "when": when(r.created_at, "%H:%M:%S"),
+                            "text": elide(r.content, 180), "tone": tone,
+                            "badge": tr(badge) if badge else "",
+                            "confidence": f"{r.confidence:.2f}" if r.confidence is not None else ""})
+        for s in self.repos.reports.list_summaries(self.ws_id, limit=FEED_LIMIT):
+            entries.append({"id": f"s{s.id}", "who": tr("dash.summary_line"),
+                            "when_raw": s.created_at, "when": when(s.created_at, "%H:%M:%S"),
+                            "text": elide(s.content, 180), "tone": "violet", "badge": "",
+                            "confidence": ""})
+        entries.sort(key=lambda e: e["when_raw"], reverse=True)
+        for e in entries:
+            e.pop("when_raw", None)
+        self._feed.set_items(entries[:FEED_LIMIT])
 ````
 
-### `ui/pages/budget_page.py`
+### `ui/bridge/c_budget.py`
 
-*225 строк*
+*117 строк*
 
 ````python
-"""Этап 9 — страница бюджетов и лимитов.
-
-Лимит ставится на трёх уровнях: весь проект, текущая задача, отдельный агент.
-Каждый — и по токенам, и по деньгам. Пустое поле означает «без ограничения»:
-так же, как лимит токенов при постановке задачи.
-"""
+"""Бюджеты: лимиты по токенам и деньгам на проект, задачу и каждого агента."""
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (
-    QDoubleSpinBox,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QProgressBar,
-    QPushButton,
-    QScrollArea,
-    QVBoxLayout,
-    QWidget,
-)
+from PySide6.QtCore import Property, QObject, Signal, Slot
 
 from app.i18n import tr
-from core.budget import SCOPE_TITLES, ScopeState, load_states
-from core.events import Event, EventBus, EventType
-from storage.repositories import Repos
-from ui.widgets.common import Card, EmptyState, Header, info
+from core.budget import load_states
+from core.events import EventType
+from ui.bridge.core import Controller, fmt_money, fmt_tokens
+from ui.bridge.listmodel import DictListModel
 
-#: цвет полосы в зависимости от того, насколько выбран бюджет
-BAR_COLORS = [(1.0, "#ef5f6b"), (0.8, "#f0b429"), (0.0, "#6c8cff")]
-
-
-def _bar_color(ratio: float) -> str:
-    for threshold, colour in BAR_COLORS:
-        if ratio >= threshold:
-            return colour
-    return BAR_COLORS[-1][1]
+SCOPE_ICONS = {"workspace": "layers", "task": "list-checks", "agent": "bot"}
 
 
-class LimitRow(Card):
-    """Одна строка: уровень, расход и поля лимитов."""
-
-    def __init__(self, parent: QWidget, state: ScopeState, on_change) -> None:
-        super().__init__(parent, spacing=8)
-        self.state = state
-        self.on_change = on_change
-
-        head = QHBoxLayout()
-        name = QLabel(state.name)
-        name.setObjectName("H2")
-        head.addWidget(name)
-        scope = QLabel(SCOPE_TITLES.get(state.scope, state.scope))
-        scope.setObjectName("Dim")
-        head.addWidget(scope)
-        head.addStretch(1)
-
-        spent = QLabel(tr("bud.spent",
-                          tokens=f"{state.tokens:,}".replace(",", " "),
-                          cost=f"{state.cost:.4f}"))
-        spent.setObjectName("Dim")
-        head.addWidget(spent)
-        self.body.addLayout(head)
-
-        if state.limit.is_set:
-            ratio = min(state.ratio(), 1.0)
-            bar = QProgressBar()
-            bar.setTextVisible(False)
-            bar.setValue(int(ratio * 100))
-            colour = _bar_color(state.ratio())
-            bar.setStyleSheet(
-                f"QProgressBar::chunk {{ background: {colour}; border-radius: 6px; }}"
-            )
-            self.body.addWidget(bar)
-
-            note = QLabel(tr("bud.used_pct", pct=f"{state.ratio() * 100:.0f}"))
-            note.setStyleSheet(f"color: {colour};")
-            if state.exceeded():
-                note.setText(tr("bud.exceeded"))
-            self.body.addWidget(note)
-
-        fields = QHBoxLayout()
-        tokens_col = QVBoxLayout()
-        tokens_col.addWidget(QLabel(tr("bud.token_limit")))
-        self.tokens_edit = QLineEdit(
-            str(state.limit.token_limit) if state.limit.token_limit else ""
-        )
-        self.tokens_edit.setPlaceholderText(tr("bud.no_limit"))
-        self.tokens_edit.editingFinished.connect(self._changed)
-        tokens_col.addWidget(self.tokens_edit)
-        fields.addLayout(tokens_col, 1)
-
-        cost_col = QVBoxLayout()
-        cost_col.addWidget(QLabel(tr("bud.cost_limit")))
-        self.cost_edit = QLineEdit(
-            f"{state.limit.cost_limit:g}" if state.limit.cost_limit else ""
-        )
-        self.cost_edit.setPlaceholderText(tr("bud.no_limit"))
-        self.cost_edit.editingFinished.connect(self._changed)
-        cost_col.addWidget(self.cost_edit)
-        fields.addLayout(cost_col, 1)
-
-        alert_col = QVBoxLayout()
-        alert_col.addWidget(QLabel(tr("bud.alert_at")))
-        self.alert_spin = QDoubleSpinBox()
-        self.alert_spin.setRange(0.1, 1.0)
-        self.alert_spin.setSingleStep(0.05)
-        self.alert_spin.setDecimals(2)
-        self.alert_spin.setValue(state.limit.alert_threshold or 0.8)
-        self.alert_spin.valueChanged.connect(self._changed)
-        alert_col.addWidget(self.alert_spin)
-        fields.addLayout(alert_col)
-        self.body.addLayout(fields)
-
-    def _changed(self) -> None:
-        self.on_change(self.state, self.values())
-
-    def values(self) -> tuple[int | None, float | None, float]:
-        return (_parse_int(self.tokens_edit.text()),
-                _parse_float(self.cost_edit.text()),
-                round(self.alert_spin.value(), 2))
-
-
-class BudgetPage(QWidget):
-    """Настройка лимитов и наблюдение за расходом."""
-
-    def __init__(self, repos: Repos, bus: EventBus) -> None:
-        super().__init__()
-        self.repos = repos
-        self.bus = bus
-        self.workspace_id: int | None = None
-
-        root = QVBoxLayout(self)
-        root.setContentsMargins(24, 24, 24, 24)
-        root.setSpacing(14)
-
-        self.header = Header(tr("bud.title"), tr("bud.subtitle"))
-        refresh = QPushButton(tr("common.refresh"))
-        refresh.clicked.connect(self.refresh)
-        self.header.add_action(refresh)
-        root.addWidget(self.header)
-
-        self.alerts = QLabel("")
-        self.alerts.setWordWrap(True)
-        self.alerts.setVisible(False)
-        root.addWidget(self.alerts)
-
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
-        root.addWidget(scroll, 1)
-        page = QWidget()
-        scroll.setWidget(page)
-        self.rows = QVBoxLayout(page)
-        self.rows.setContentsMargins(0, 0, 0, 0)
-        self.rows.setSpacing(10)
-
-        self.bus.subscribe(self._on_event)
-
-    def set_workspace(self, ws_id: int | None) -> None:
-        self.workspace_id = ws_id
-        self.refresh()
-
-    def refresh(self) -> None:
-        while self.rows.count():
-            item = self.rows.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-
-        if self.workspace_id is None:
-            self.rows.addWidget(EmptyState(tr("ws.empty")))
-            return
-
-        states = load_states(self.repos, self.workspace_id)
-        if not states:
-            self.rows.addWidget(EmptyState(tr("bud.nothing")))
-            return
-        for state in states:
-            self.rows.addWidget(LimitRow(self, state, self._save))
-        self.rows.addStretch(1)
-
-    def _save(self, state: ScopeState, values) -> None:
-        """Сохраняет лимит. Пустые поля означают «ограничения нет»."""
-        token_limit, cost_limit, threshold = values
-        if token_limit is None and cost_limit is None:
-            self.repos.budgets.delete_limit(state.scope, state.scope_id)
-        else:
-            self.repos.budgets.upsert(state.scope, state.scope_id,
-                                      token_limit, cost_limit, threshold)
-            self.repos.budgets.sync_used(state.scope, state.scope_id,
-                                         state.tokens, state.cost)
-        self.refresh()
-
-    def _on_event(self, event: Event) -> None:
-        if event.type not in (EventType.BUDGET_ALERT, EventType.BUDGET_EXCEEDED):
-            return
-        colour = "#ef5f6b" if event.type is EventType.BUDGET_EXCEEDED else "#f0b429"
-        self.alerts.setText(event.message)
-        self.alerts.setStyleSheet(
-            f"color: {colour}; border: 1px solid {colour}; border-radius: 8px;"
-            f"padding: 8px 12px;"
-        )
-        self.alerts.setVisible(True)
-        self.refresh()
-
-
-def _parse_int(raw: str) -> int | None:
-    raw = (raw or "").replace(" ", "").strip()
+def parse_int(raw: str) -> int | None:
+    raw = (raw or "").replace(" ", "").replace("_", "").strip()
     if not raw:
         return None
     try:
-        value = int(raw)
+        value = int(float(raw))
     except ValueError:
         return None
     return value if value > 0 else None
 
 
-def _parse_float(raw: str) -> float | None:
-    raw = (raw or "").replace(",", ".").replace("$", "").strip()
+def parse_money(raw: str) -> float | None:
+    raw = (raw or "").replace(",", ".").replace("$", "").replace(" ", "").strip()
     if not raw:
         return None
     try:
@@ -12193,775 +11355,7755 @@ def _parse_float(raw: str) -> float | None:
     except ValueError:
         return None
     return value if value > 0 else None
+
+
+class BudgetController(Controller):
+    changed = Signal()
+
+    def __init__(self, backend) -> None:
+        super().__init__(backend)
+        self._model = DictListModel(
+            ["id", "scope", "scopeId", "scopeTitle", "icon", "name", "tokens", "cost",
+             "tokenLimit", "costLimit", "threshold", "ratio", "exceeded", "isSet",
+             "tokensText", "costText"], parent=self)
+        self._set(alert="", alertTone="")
+
+    alert = Property(str, lambda s: s._s.get("alert", ""), notify=changed)
+    alertTone = Property(str, lambda s: s._s.get("alertTone", ""), notify=changed)
+
+    def _get_model(self) -> QObject:
+        return self._model
+
+    model = Property(QObject, _get_model, constant=True)
+
+    @Slot()
+    def refresh(self) -> None:
+        if not self.ready or self.ws_id is None:
+            self._model.clear()
+            return
+        items = []
+        for st in load_states(self.repos, self.ws_id):
+            items.append({
+                "id": f"{st.scope}:{st.scope_id}", "scope": st.scope, "scopeId": st.scope_id,
+                "scopeTitle": tr(f"scope.{st.scope}"), "icon": SCOPE_ICONS.get(st.scope, "wallet"),
+                "name": st.name, "tokens": st.tokens, "cost": st.cost,
+                "tokenLimit": str(st.limit.token_limit) if st.limit.token_limit else "",
+                "costLimit": f"{st.limit.cost_limit:g}" if st.limit.cost_limit else "",
+                "threshold": float(st.limit.alert_threshold or 0.8),
+                "ratio": float(st.ratio()), "exceeded": st.exceeded(),
+                "isSet": st.limit.is_set, "tokensText": fmt_tokens(st.tokens),
+                "costText": fmt_money(st.cost),
+            })
+        self._model.set_items(items)
+
+    def reset(self) -> None:
+        super().reset()
+        self._model.clear()
+
+    def on_event(self, event) -> None:
+        if event.type in (EventType.BUDGET_ALERT, EventType.BUDGET_EXCEEDED,
+                          EventType.BUDGET_EXTENDED):
+            tone = {EventType.BUDGET_EXCEEDED: "error",
+                    EventType.BUDGET_ALERT: "warning"}.get(event.type, "info")
+            self._set(alert=event.message, alertTone=tone)
+            self.refresh()
+        elif event.type in (EventType.RUN_FINISHED, EventType.USAGE):
+            # расход меняется во время прогона — но не чаще, чем пересчитает дашборд
+            if event.type is EventType.RUN_FINISHED:
+                self.refresh()
+
+    @Slot(str, int, str, str, float, result=str)
+    def save(self, scope: str, scope_id: int, token_limit: str, cost_limit: str,
+             threshold: float) -> str:
+        """Сохраняет лимит; пустые поля означают «без ограничения»."""
+        tokens = parse_int(token_limit)
+        cost = parse_money(cost_limit)
+        if (token_limit or "").strip() and tokens is None:
+            return tr("bud.bad_tokens")
+        if (cost_limit or "").strip() and cost is None:
+            return tr("bud.bad_cost")
+        threshold = min(max(float(threshold or 0.8), 0.1), 1.0)
+        if scope == "task":
+            # Лимит токенов задачи живёт и в форме задачи — держим их в согласии.
+            self.repos.tasks.update(scope_id, token_limit=tokens)
+        if tokens is None and cost is None:
+            self.repos.budgets.delete_limit(scope, scope_id)
+        else:
+            self.repos.budgets.upsert(scope, scope_id, tokens, cost, round(threshold, 2))
+        self.refresh()
+        self.backend.task.refresh()
+        return ""
+
+    @Slot()
+    def dismissAlert(self) -> None:  # noqa: N802
+        self._set(alert="", alertTone="")
 ````
 
-### `ui/pages/export_page.py`
+### `ui/bridge/c_export.py`
 
-*301 строк*
+*162 строк*
 
 ````python
-"""Этап 8 — страница экспорта результата.
-
-Формат подбирается автоматически по типу задачи и по тому, что реально
-наработано, но выбор всегда остаётся за пользователем: рядом с подсказкой
-написано, **почему** предложен именно этот формат.
-"""
+"""Экспорт результата: формат с объяснением выбора, состав, путь сохранения."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (
-    QCheckBox,
-    QComboBox,
-    QFileDialog,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QPushButton,
-    QScrollArea,
-    QVBoxLayout,
-    QWidget,
-)
+from PySide6.QtCore import Property, Signal, Slot
 
 from app.config import PATHS
 from app.i18n import tr
-from core.export.bundle import FORMAT_TITLES, ExportOptions, collect, detect_format
-from core.export.exporters import (
-    ExportError,
-    ExportResult,
-    export,
-    open_folder,
-    suggest_filename,
-)
-from storage.repositories import Repos
-from ui.widgets.common import Card, EmptyState, Header, warn
+from core.export.bundle import ExportOptions, collect, detect_format
+from core.export.exporters import ExportError, export, suggest_filename
+from ui.bridge.core import Controller, error_text
+
+FORMATS = [("markdown", "file-text"), ("docx", "file-type"), ("pdf", "book-open"),
+           ("zip", "file-archive")]
+OPTIONS = ["results", "reports", "summaries", "incidents", "decisions", "stats",
+           "files", "anon"]
+DEFAULT_OPTIONS = {"results": True, "reports": False, "summaries": False,
+                   "incidents": True, "decisions": False, "stats": True,
+                   "files": True, "anon": False}
 
 
-class ExportPage(QWidget):
-    """Сборка и выгрузка финального результата."""
-
-    def __init__(self, repos: Repos) -> None:
-        super().__init__()
-        self.repos = repos
-        self.workspace_id: int | None = None
-        self._bundle = None
-        self._last: ExportResult | None = None
-
-        root = QVBoxLayout(self)
-        root.setContentsMargins(24, 24, 24, 24)
-        root.setSpacing(14)
-
-        self.header = Header(tr("exp.title"), tr("exp.subtitle"))
-        self.btn_refresh = QPushButton(tr("common.refresh"))
-        self.btn_refresh.clicked.connect(self.refresh)
-        self.header.add_action(self.btn_refresh)
-        root.addWidget(self.header)
-
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
-        root.addWidget(scroll, 1)
-        page = QWidget()
-        scroll.setWidget(page)
-        body = QVBoxLayout(page)
-        body.setContentsMargins(0, 0, 0, 0)
-        body.setSpacing(14)
-
-        body.addWidget(self._build_format_card())
-        body.addWidget(self._build_content_card())
-        body.addWidget(self._build_output_card())
-        body.addStretch(1)
-
-    # -- карточки ------------------------------------------------------------
-    def _build_format_card(self) -> Card:
-        card = Card(self, spacing=10)
-        title = QLabel(tr("exp.format"))
-        title.setObjectName("H2")
-        card.body.addWidget(title)
-
-        row = QHBoxLayout()
-        self.format_box = QComboBox()
-        for key, label in FORMAT_TITLES.items():
-            self.format_box.addItem(label, key)
-        self.format_box.currentIndexChanged.connect(self._on_format_changed)
-        row.addWidget(self.format_box, 1)
-
-        self.btn_auto = QPushButton(tr("exp.use_auto"))
-        self.btn_auto.clicked.connect(self._apply_auto)
-        row.addWidget(self.btn_auto)
-        card.body.addLayout(row)
-
-        self.hint = QLabel("")
-        self.hint.setObjectName("Dim")
-        self.hint.setWordWrap(True)
-        card.body.addWidget(self.hint)
-
-        self.stats = QLabel("")
-        self.stats.setObjectName("Dim")
-        self.stats.setWordWrap(True)
-        card.body.addWidget(self.stats)
-        return card
-
-    def _build_content_card(self) -> Card:
-        card = Card(self, spacing=8)
-        title = QLabel(tr("exp.content"))
-        title.setObjectName("H2")
-        card.body.addWidget(title)
-
-        self.opt_results = QCheckBox(tr("exp.opt_results"))
-        self.opt_results.setChecked(True)
-        self.opt_reports = QCheckBox(tr("exp.opt_reports"))
-        self.opt_summaries = QCheckBox(tr("exp.opt_summaries"))
-        self.opt_incidents = QCheckBox(tr("exp.opt_incidents"))
-        self.opt_incidents.setChecked(True)
-        self.opt_decisions = QCheckBox(tr("exp.opt_decisions"))
-        self.opt_stats = QCheckBox(tr("exp.opt_stats"))
-        self.opt_stats.setChecked(True)
-        self.opt_files = QCheckBox(tr("exp.opt_files"))
-        self.opt_files.setChecked(True)
-        self.opt_anon = QCheckBox(tr("exp.opt_anon"))
-        self.opt_anon.setToolTip(tr("exp.opt_anon_hint"))
-
-        for box in (self.opt_results, self.opt_reports, self.opt_summaries,
-                    self.opt_incidents, self.opt_decisions, self.opt_stats,
-                    self.opt_files, self.opt_anon):
-            card.body.addWidget(box)
-        return card
-
-    def _build_output_card(self) -> Card:
-        card = Card(self, spacing=10)
-        title = QLabel(tr("exp.output"))
-        title.setObjectName("H2")
-        card.body.addWidget(title)
-
-        row = QHBoxLayout()
-        self.path_edit = QLineEdit()
-        row.addWidget(self.path_edit, 1)
-        browse = QPushButton(tr("exp.browse"))
-        browse.clicked.connect(self._browse)
-        row.addWidget(browse)
-        card.body.addLayout(row)
-
-        buttons = QHBoxLayout()
-        self.btn_export = QPushButton(tr("exp.export"))
-        self.btn_export.setObjectName("Primary")
-        self.btn_export.clicked.connect(self._export)
-        buttons.addWidget(self.btn_export)
-
-        self.btn_open = QPushButton(tr("exp.open_folder"))
-        self.btn_open.setEnabled(False)
-        self.btn_open.clicked.connect(self._open_folder)
-        buttons.addWidget(self.btn_open)
-        buttons.addStretch(1)
-        card.body.addLayout(buttons)
-
-        self.result_label = QLabel("")
-        self.result_label.setWordWrap(True)
-        self.result_label.setTextInteractionFlags(
-            Qt.TextInteractionFlag.TextSelectableByMouse
-        )
-        card.body.addWidget(self.result_label)
-
-        self.empty = EmptyState(tr("exp.nothing"))
-        self.empty.setVisible(False)
-        card.body.addWidget(self.empty)
-        return card
-
-    # -- данные --------------------------------------------------------------
-    def set_workspace(self, ws_id: int | None) -> None:
-        self.workspace_id = ws_id
-        self.refresh()
-
-    def refresh(self) -> None:
-        enabled = self.workspace_id is not None
-        for widget in (self.format_box, self.btn_auto, self.btn_export,
-                       self.path_edit):
-            widget.setEnabled(enabled)
-        if not enabled:
-            self.hint.setText(tr("ws.empty"))
-            self.stats.setText("")
-            return
-
-        try:
-            self._bundle = collect(self.repos, self.workspace_id)
-        except ValueError as exc:
-            self.hint.setText(str(exc))
-            return
-
-        done = sum(1 for s in self._bundle.subtasks if s.result.strip())
-        self.stats.setText(tr(
-            "exp.stats",
-            results=done,
-            total=len(self._bundle.subtasks),
-            files=len(self._bundle.files),
-            reports=len(self._bundle.reports),
-        ))
-
-        nothing = done == 0 and not self._bundle.files
-        self.empty.setVisible(nothing)
-        self.btn_export.setEnabled(not nothing)
-
-        self._apply_auto()
-
-    def _apply_auto(self) -> None:
-        """Подставляет автоопределённый формат и объясняет выбор."""
-        if self._bundle is None:
-            return
-        fmt, reason = detect_format(self._bundle)
-        index = self.format_box.findData(fmt)
-        if index >= 0:
-            self.format_box.setCurrentIndex(index)
-        self.hint.setText(tr("exp.auto_hint", reason=reason))
-        self._suggest_path()
-
-    def _on_format_changed(self) -> None:
-        self._suggest_path()
-        fmt = self.format_box.currentData()
-        # Файлы проекта имеют смысл только в архиве: в документ их не вложить.
-        self.opt_files.setEnabled(fmt == "zip")
-        if fmt != "zip":
-            self.opt_files.setToolTip(tr("exp.files_zip_only"))
-        else:
-            self.opt_files.setToolTip("")
-
-    def _suggest_path(self) -> None:
-        if self._bundle is None:
-            return
-        fmt = self.format_box.currentData()
-        PATHS.ensure()
-        self.path_edit.setText(
-            str(PATHS.exports_dir / suggest_filename(self._bundle, fmt))
-        )
-
-    def _options(self) -> ExportOptions:
-        return ExportOptions(
-            include_results=self.opt_results.isChecked(),
-            include_reports=self.opt_reports.isChecked(),
-            include_summaries=self.opt_summaries.isChecked(),
-            include_incidents=self.opt_incidents.isChecked(),
-            include_decisions=self.opt_decisions.isChecked(),
-            include_files=self.opt_files.isChecked(),
-            include_stats=self.opt_stats.isChecked(),
-            anonymize=self.opt_anon.isChecked(),
-        )
-
-    # -- действия ------------------------------------------------------------
-    def _browse(self) -> None:
-        current = Path(self.path_edit.text() or str(PATHS.exports_dir))
-        chosen, _ = QFileDialog.getSaveFileName(
-            self, tr("exp.output"), str(current)
-        )
-        if chosen:
-            self.path_edit.setText(chosen)
-
-    def _export(self) -> None:
-        if self._bundle is None:
-            return
-        raw = self.path_edit.text().strip()
-        if not raw:
-            warn(self, tr("exp.no_path"))
-            return
-
-        fmt = self.format_box.currentData()
-        path = Path(raw).expanduser()
-        self.btn_export.setEnabled(False)
-        try:
-            result = export(self._bundle, self._options(), fmt, path)
-        except ExportError as exc:
-            warn(self, str(exc))
-            return
-        except Exception as exc:  # noqa: BLE001
-            warn(self, f"{type(exc).__name__}: {exc}")
-            return
-        finally:
-            self.btn_export.setEnabled(True)
-
-        self._last = result
-        self.btn_open.setEnabled(True)
-        note = f"\n{result.note}" if result.note else ""
-        self.result_label.setText(
-            tr("exp.done", path=str(result.path), size=_human(result.size)) + note
-        )
-        self.result_label.setObjectName("Ok")
-        self.result_label.setStyleSheet("color: #3ecf8e;")
-
-    def _open_folder(self) -> None:
-        if self._last is None:
-            return
-        if not open_folder(self._last.path):
-            warn(self, tr("exp.open_failed", path=str(self._last.path.parent)))
-
-
-def _human(size: int) -> str:
+def human_size(size: int) -> str:
     value = float(size)
-    for unit in ("Б", "КБ", "МБ", "ГБ"):
+    for unit in ("B", "KB", "MB", "GB"):
         if value < 1024:
             return f"{value:.0f} {unit}"
         value /= 1024
-    return f"{value:.1f} ТБ"
+    return f"{value:.1f} TB"
+
+
+class ExportController(Controller):
+    changed = Signal()
+
+    def __init__(self, backend) -> None:
+        super().__init__(backend)
+        self._bundle = None
+        self._set(format="markdown", recommended="markdown", reason="", stats="",
+                  path="", canExport=False, options=dict(DEFAULT_OPTIONS),
+                  lastPath="", lastInfo="", exporting=False, nothing=True)
+
+    def _p(name, type_=str, default="", sig=changed):  # noqa: N805
+        return Property(type_, lambda self: self._s.get(name, default), notify=sig)
+
+    format = _p("format")
+    recommended = _p("recommended")
+    reason = _p("reason")
+    stats = _p("stats")
+    path = _p("path")
+    canExport = _p("canExport", bool, False)
+    options = _p("options", "QVariantMap", {})
+    lastPath = _p("lastPath")
+    lastInfo = _p("lastInfo")
+    exporting = _p("exporting", bool, False)
+    nothing = _p("nothing", bool, True)
+
+    def _formats(self) -> list[dict]:
+        return [{"key": k, "title": tr(f"exp.f_{k}"), "hint": tr(f"exp.fh_{k}"), "icon": icon}
+                for k, icon in FORMATS]
+
+    formats = Property("QVariantList", _formats, notify=changed)
+
+    def _option_list(self) -> list[dict]:
+        return [{"key": k, "title": tr(f"exp.opt_{k}")} for k in OPTIONS]
+
+    optionList = Property("QVariantList", _option_list, notify=changed)
+
+    @Slot()
+    def refresh(self) -> None:
+        if not self.ready or self.ws_id is None:
+            self._bundle = None
+            self._set(canExport=False, stats="", reason="", nothing=True)
+            return
+        try:
+            self._bundle = collect(self.repos, self.ws_id)
+        except ValueError as exc:
+            self._bundle = None
+            self._set(canExport=False, reason=str(exc), nothing=True)
+            return
+        b = self._bundle
+        done = sum(1 for s in b.subtasks if s.result.strip())
+        nothing = done == 0 and not b.files
+        fmt, reason = detect_format(b)
+        self._set(stats=tr("exp.stats", results=done, total=len(b.subtasks),
+                           files=len(b.files), reports=len(b.reports)),
+                  recommended=fmt, reason=reason, nothing=nothing,
+                  canExport=not nothing)
+        self.setFormat(fmt)
+
+    def reset(self) -> None:
+        super().reset()
+        self._bundle = None
+        self._set(format="markdown", options=dict(DEFAULT_OPTIONS), lastPath="", lastInfo="")
+
+    @Slot(str)
+    def setFormat(self, fmt: str) -> None:  # noqa: N802
+        if fmt not in dict(FORMATS):
+            return
+        path = ""
+        if self._bundle is not None:
+            PATHS.ensure()
+            path = str(PATHS.exports_dir / suggest_filename(self._bundle, fmt))
+        self._set(format=fmt, path=path)
+
+    @Slot(str, bool)
+    def setOption(self, key: str, value: bool) -> None:  # noqa: N802
+        options = dict(self._s.get("options", DEFAULT_OPTIONS))
+        options[key] = bool(value)
+        self._set(options=options)
+
+    @Slot(str)
+    def setPath(self, path: str) -> None:  # noqa: N802
+        self._set(path=(path or "").strip())
+
+    @Slot()
+    def browse(self) -> None:
+        from PySide6.QtWidgets import QFileDialog
+
+        current = self._s.get("path") or str(PATHS.exports_dir)
+        chosen, _ = QFileDialog.getSaveFileName(None, tr("exp.output"), current)
+        if chosen:
+            self._set(path=chosen)
+
+    @Slot()
+    def exportNow(self) -> None:  # noqa: N802
+        if self._bundle is None:
+            return
+        raw = (self._s.get("path") or "").strip()
+        if not raw:
+            self.toast("warning", tr("exp.no_path"), "")
+            return
+        o = self._s.get("options", DEFAULT_OPTIONS)
+        fmt = self._s.get("format", "markdown")
+        options = ExportOptions(
+            include_results=o.get("results", True), include_reports=o.get("reports", False),
+            include_summaries=o.get("summaries", False),
+            include_incidents=o.get("incidents", True),
+            include_decisions=o.get("decisions", False),
+            include_files=o.get("files", True) and fmt == "zip",
+            include_stats=o.get("stats", True), anonymize=o.get("anon", False))
+        self._set(exporting=True)
+        try:
+            result = export(self._bundle, options, fmt, Path(raw).expanduser())
+        except ExportError as exc:
+            self.toast("error", tr("toast.export_failed"), str(exc))
+            return
+        except Exception as exc:  # noqa: BLE001
+            self.toast("error", tr("toast.export_failed"), error_text(exc))
+            return
+        finally:
+            self._set(exporting=False)
+        info = f"{result.path.name} · {human_size(result.size)}"
+        if result.note:
+            info += f" · {result.note}"
+        self._set(lastPath=str(result.path), lastInfo=info)
+        self.toast("success", tr("toast.exported"), info)
+
+    @Slot()
+    def openFolder(self) -> None:  # noqa: N802
+        if self._s.get("lastPath"):
+            self.backend.openPath(self._s["lastPath"])
 ````
 
-### `ui/pages/settings_page.py`
+### `ui/bridge/c_prefs.py`
 
-*450 строк*
+*154 строк*
 
 ````python
-"""Страница настроек: приложение + настройки активного воркспейса.
-
-Здесь же выбирается режим супервайзера (ответ на вопрос 8): либо один из
-подключённых API-ключей/агентов, либо локальная модель через Ollama —
-например Qwen, которая работает офлайн и ничего не стоит.
-"""
+"""Настройки воркспейса: human-in-the-loop, супервайзер, выполнение, инструменты,
+песочница, доступные каталоги и безопасность профиля."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtWidgets import (
-    QCheckBox,
-    QComboBox,
-    QDoubleSpinBox,
-    QDialog,
-    QDialogButtonBox,
-    QFileDialog,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QListWidget,
-    QPushButton,
-    QScrollArea,
-    QSpinBox,
-    QVBoxLayout,
-    QWidget,
-)
+from PySide6.QtCore import Property, Signal, Slot
 
-from app.config import DEFAULT_WORKSPACE_SETTINGS, AppSettings
-from app.i18n import available_languages, current_language, set_language, tr
-from core.tools.sandbox import docker_available
-from storage.repositories import Repos
-from ui.widgets.common import Card, Header, info, warn
+from app.config import DEFAULT_WORKSPACE_SETTINGS
+from app.i18n import tr
+from core.tools.base import TOOL_GROUPS
+from core.tools.sandbox import docker_available_async
+from ui.bridge.core import Controller
+from utils.asyncutils import run_async
 
-MIN_PASSWORD_LEN = 8
+#: допустимые диапазоны числовых настроек: (минимум, максимум)
+RANGES = {
+    "hitl_confidence_threshold": (0.0, 1.0),
+    "summary_interval_minutes": (0, 600),
+    "agent_max_steps": (1, 50),
+    "max_rework_rounds": (0, 10),
+    "max_parallel_agents": (1, 32),
+    "sandbox_timeout_sec": (5, 600),
+    "sandbox_memory_mb": (64, 8192),
+}
+#: группы инструментов, которые можно включать на уровне воркспейса
+TOOL_SWITCHES = ["web_search", "files", "code_exec"]
 
 
-class PasswordDialog(QDialog):
-    """Смена пароля профиля с перешифровкой всех API-ключей."""
+class PrefsController(Controller):
+    changed = Signal()
 
-    def __init__(self, parent: QWidget) -> None:
-        super().__init__(parent)
-        self.setWindowTitle(tr("settings.change_password"))
-        self.setMinimumWidth(420)
-        lay = QVBoxLayout(self)
-        lay.setSpacing(10)
+    def __init__(self, backend) -> None:
+        super().__init__(backend)
+        self._set(ws={}, supervisorOptions=[], docker="unknown", hasSearchKey=False)
 
-        lay.addWidget(QLabel("Текущий пароль"))
-        self.old = QLineEdit()
-        self.old.setEchoMode(QLineEdit.EchoMode.Password)
-        lay.addWidget(self.old)
+    ws = Property("QVariantMap", lambda s: s._s.get("ws", {}), notify=changed)
+    supervisorOptions = Property("QVariantList", lambda s: s._s.get("supervisorOptions", []),
+                                 notify=changed)
+    docker = Property(str, lambda s: s._s.get("docker", "unknown"), notify=changed)
+    hasSearchKey = Property(bool, lambda s: s._s.get("hasSearchKey", False),
+                            notify=changed)
 
-        lay.addWidget(QLabel(tr("login.password")))
-        self.new1 = QLineEdit()
-        self.new1.setEchoMode(QLineEdit.EchoMode.Password)
-        lay.addWidget(self.new1)
+    def _tool_switches(self) -> list[dict]:
+        return [{"key": k, "title": tr(f"toolgroup.{k}")} for k in TOOL_SWITCHES]
 
-        lay.addWidget(QLabel(tr("login.password2")))
-        self.new2 = QLineEdit()
-        self.new2.setEchoMode(QLineEdit.EchoMode.Password)
-        lay.addWidget(self.new2)
+    toolSwitches = Property("QVariantList", _tool_switches, notify=changed)
 
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        lay.addWidget(buttons)
+    def _settings(self) -> dict:
+        ws = self.repos.workspaces.get(self.ws_id) if self.ws_id else None
+        return {**DEFAULT_WORKSPACE_SETTINGS, **(ws.settings if ws else {})}
 
-    def values(self) -> tuple[str, str, str]:
-        return self.old.text(), self.new1.text(), self.new2.text()
-
-
-class SettingsPage(QWidget):
-    """Настройки приложения и текущего воркспейса."""
-
-    theme_changed = object  # заменяется сигналом в main_window через callback
-
-    def __init__(self, repos: Repos, app_settings: AppSettings,
-                 on_theme_change=None, on_language_change=None) -> None:
-        super().__init__()
-        self.repos = repos
-        self.app_settings = app_settings
-        self.on_theme_change = on_theme_change
-        self.on_language_change = on_language_change
-        self.workspace_id: int | None = None
-
-        root = QVBoxLayout(self)
-        root.setContentsMargins(24, 24, 24, 24)
-        root.setSpacing(16)
-        root.addWidget(Header(tr("settings.title")))
-
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
-        root.addWidget(scroll, 1)
-        page = QWidget()
-        scroll.setWidget(page)
-        lay = QVBoxLayout(page)
-        lay.setContentsMargins(0, 0, 0, 0)
-        lay.setSpacing(14)
-
-        lay.addWidget(self._build_app_card())
-        self.ws_card = self._build_workspace_card()
-        lay.addWidget(self.ws_card)
-        lay.addWidget(self._build_security_card())
-        lay.addStretch(1)
-
-    # -- карточки ------------------------------------------------------------
-    def _build_app_card(self) -> Card:
-        card = Card(self)
-        title = QLabel("Приложение")
-        title.setObjectName("H2")
-        card.body.addWidget(title)
-
-        row = QHBoxLayout()
-        lang_col = QVBoxLayout()
-        lang_col.addWidget(QLabel(tr("settings.language")))
-        self.lang_box = QComboBox()
-        for code, label in available_languages():
-            self.lang_box.addItem(label, code)
-        idx = self.lang_box.findData(current_language())
-        self.lang_box.setCurrentIndex(max(0, idx))
-        self.lang_box.currentIndexChanged.connect(self._change_language)
-        lang_col.addWidget(self.lang_box)
-        row.addLayout(lang_col)
-
-        theme_col = QVBoxLayout()
-        theme_col.addWidget(QLabel(tr("settings.theme")))
-        self.theme_box = QComboBox()
-        self.theme_box.addItem("Тёмная", "dark")
-        self.theme_box.addItem("Светлая", "light")
-        self.theme_box.setCurrentIndex(0 if self.app_settings.theme == "dark" else 1)
-        self.theme_box.currentIndexChanged.connect(self._change_theme)
-        theme_col.addWidget(self.theme_box)
-        row.addLayout(theme_col)
-        row.addStretch(1)
-        card.body.addLayout(row)
-
-        note = QLabel(tr("settings.restart_note"))
-        note.setObjectName("Dim")
-        card.body.addWidget(note)
-        return card
-
-    def _build_workspace_card(self) -> Card:
-        card = Card(self)
-        title = QLabel("Воркспейс")
-        title.setObjectName("H2")
-        card.body.addWidget(title)
-
-        self.hitl = QCheckBox(tr("settings.hitl"))
-        self.hitl.stateChanged.connect(self._on_hitl_toggled)
-        card.body.addWidget(self.hitl)
-
-        hitl_row = QHBoxLayout()
-        conf_col = QVBoxLayout()
-        conf_col.addWidget(QLabel(tr("settings.hitl_threshold")))
-        self.hitl_threshold = QDoubleSpinBox()
-        self.hitl_threshold.setRange(0.0, 1.0)
-        self.hitl_threshold.setSingleStep(0.05)
-        self.hitl_threshold.setDecimals(2)
-        self.hitl_threshold.setToolTip(tr("settings.hitl_threshold_hint"))
-        self.hitl_threshold.valueChanged.connect(self._save_workspace)
-        conf_col.addWidget(self.hitl_threshold)
-        hitl_row.addLayout(conf_col)
-        hitl_row.addStretch(1)
-        card.body.addLayout(hitl_row)
-
-        self.hitl_milestone = QCheckBox(tr("settings.hitl_milestone"))
-        self.hitl_milestone.setToolTip(tr("settings.hitl_milestone_hint"))
-        self.hitl_milestone.stateChanged.connect(self._save_workspace)
-        card.body.addWidget(self.hitl_milestone)
-
-        card.body.addWidget(QLabel(tr("settings.supervisor_mode")))
-        self.sup_mode = QComboBox()
-        self.sup_mode.addItem(tr("settings.supervisor_api"), "api")
-        self.sup_mode.addItem(tr("settings.supervisor_local"), "local")
-        self.sup_mode.currentIndexChanged.connect(self._on_sup_mode)
-        card.body.addWidget(self.sup_mode)
-
-        self.sup_agent = QComboBox()
-        card.body.addWidget(self.sup_agent)
-        self.sup_agent.currentIndexChanged.connect(self._save_workspace)
-
-        local_row = QHBoxLayout()
-        local_col = QVBoxLayout()
-        local_col.addWidget(QLabel("Локальная модель (Ollama)"))
-        self.sup_local_model = QLineEdit()
-        self.sup_local_model.editingFinished.connect(self._save_workspace)
-        local_col.addWidget(self.sup_local_model)
-        local_row.addLayout(local_col, 1)
-
-        url_col = QVBoxLayout()
-        url_col.addWidget(QLabel("Base URL"))
-        self.sup_local_url = QLineEdit()
-        self.sup_local_url.editingFinished.connect(self._save_workspace)
-        url_col.addWidget(self.sup_local_url)
-        local_row.addLayout(url_col, 1)
-        card.body.addLayout(local_row)
-
-        interval_row = QHBoxLayout()
-        int_col = QVBoxLayout()
-        int_col.addWidget(QLabel(tr("settings.summary_interval")))
-        self.summary_interval = QSpinBox()
-        self.summary_interval.setRange(1, 600)
-        self.summary_interval.valueChanged.connect(self._save_workspace)
-        int_col.addWidget(self.summary_interval)
-        interval_row.addLayout(int_col)
-
-        steps_col = QVBoxLayout()
-        steps_col.addWidget(QLabel("Шагов ReAct на подзадачу"))
-        self.max_steps = QSpinBox()
-        self.max_steps.setRange(1, 50)
-        self.max_steps.valueChanged.connect(self._save_workspace)
-        steps_col.addWidget(self.max_steps)
-        interval_row.addLayout(steps_col)
-        interval_row.addStretch(1)
-        card.body.addLayout(interval_row)
-
-        self.summary_on_event = QCheckBox(tr("settings.summary_on_event"))
-        self.summary_on_event.stateChanged.connect(self._save_workspace)
-        card.body.addWidget(self.summary_on_event)
-
-        # --- песочница ---
-        sandbox_title = QLabel(tr("settings.sandbox"))
-        sandbox_title.setObjectName("H2")
-        card.body.addWidget(sandbox_title)
-
-        sandbox_row = QHBoxLayout()
-        back_col = QVBoxLayout()
-        back_col.addWidget(QLabel("Бэкенд"))
-        self.sandbox_backend = QComboBox()
-        self.sandbox_backend.addItem("Авто", "auto")
-        self.sandbox_backend.addItem("Отдельный процесс", "subprocess")
-        self.sandbox_backend.addItem("Docker", "docker")
-        self.sandbox_backend.currentIndexChanged.connect(self._save_workspace)
-        back_col.addWidget(self.sandbox_backend)
-        sandbox_row.addLayout(back_col, 1)
-
-        to_col = QVBoxLayout()
-        to_col.addWidget(QLabel("Таймаут, с"))
-        self.sandbox_timeout = QSpinBox()
-        self.sandbox_timeout.setRange(5, 600)
-        self.sandbox_timeout.valueChanged.connect(self._save_workspace)
-        to_col.addWidget(self.sandbox_timeout)
-        sandbox_row.addLayout(to_col)
-
-        mem_col = QVBoxLayout()
-        mem_col.addWidget(QLabel("Память, МБ"))
-        self.sandbox_memory = QSpinBox()
-        self.sandbox_memory.setRange(64, 8192)
-        self.sandbox_memory.setSingleStep(64)
-        self.sandbox_memory.valueChanged.connect(self._save_workspace)
-        mem_col.addWidget(self.sandbox_memory)
-        sandbox_row.addLayout(mem_col)
-        card.body.addLayout(sandbox_row)
-
-        self.docker_note = QLabel("")
-        self.docker_note.setObjectName("Dim")
-        self.docker_note.setWordWrap(True)
-        card.body.addWidget(self.docker_note)
-
-        # --- разрешённые каталоги ---
-        paths_title = QLabel(tr("settings.allowed_paths"))
-        paths_title.setObjectName("H2")
-        card.body.addWidget(paths_title)
-
-        self.paths_list = QListWidget()
-        self.paths_list.setMaximumHeight(120)
-        card.body.addWidget(self.paths_list)
-
-        paths_buttons = QHBoxLayout()
-        btn_add_path = QPushButton(tr("settings.add_path"))
-        btn_add_path.clicked.connect(self._add_path)
-        paths_buttons.addWidget(btn_add_path)
-        btn_del_path = QPushButton(tr("common.delete"))
-        btn_del_path.setObjectName("Danger")
-        btn_del_path.clicked.connect(self._remove_path)
-        paths_buttons.addWidget(btn_del_path)
-        paths_buttons.addStretch(1)
-        card.body.addLayout(paths_buttons)
-
-        warning = QLabel(
-            "Агенты получают доступ на чтение и запись в эти каталоги. "
-            "Не добавляйте сюда системные папки и каталоги с личными данными."
-        )
-        warning.setObjectName("Dim")
-        warning.setWordWrap(True)
-        card.body.addWidget(warning)
-        return card
-
-    def _build_security_card(self) -> Card:
-        card = Card(self)
-        title = QLabel("Безопасность")
-        title.setObjectName("H2")
-        card.body.addWidget(title)
-
-        text = QLabel(
-            "API-ключи зашифрованы AES-256-GCM. Ключ шифрования выводится из пароля "
-            "профиля функцией Argon2id и существует только в оперативной памяти."
-        )
-        text.setObjectName("Dim")
-        text.setWordWrap(True)
-        card.body.addWidget(text)
-
-        btn = QPushButton(tr("settings.change_password"))
-        btn.clicked.connect(self._change_password)
-        card.body.addWidget(btn)
-        return card
-
-    # -- загрузка/сохранение -------------------------------------------------
-    def set_workspace(self, ws_id: int | None) -> None:
-        self.workspace_id = ws_id
-        self.ws_card.setEnabled(ws_id is not None)
-        if ws_id is None:
-            return
-        ws = self.repos.workspaces.get(ws_id)
-        if ws is None:
-            return
-        s = {**DEFAULT_WORKSPACE_SETTINGS, **ws.settings}
-
-        self._loading = True
-        self.hitl.setChecked(bool(s["human_in_the_loop"]))
-        self.hitl_threshold.setValue(float(s.get("hitl_confidence_threshold", 0.5)))
-        self.hitl_milestone.setChecked(bool(s.get("hitl_pause_on_milestone", False)))
-        self._sync_hitl_enabled()
-        self.sup_mode.setCurrentIndex(0 if s["supervisor_mode"] == "api" else 1)
-
-        self.sup_agent.clear()
-        self.sup_agent.addItem(tr("common.none"), None)
-        for agent in self.repos.agents.list(ws_id):
-            self.sup_agent.addItem(f"{agent.name} — {agent.model}", agent.id)
-        idx = self.sup_agent.findData(s.get("supervisor_agent_id"))
-        self.sup_agent.setCurrentIndex(max(0, idx))
-
-        self.sup_local_model.setText(str(s["supervisor_local_model"]))
-        self.sup_local_url.setText(str(s["supervisor_local_base_url"]))
-        self.summary_interval.setValue(int(s["summary_interval_minutes"]))
-        self.summary_on_event.setChecked(bool(s["summary_on_event"]))
-        self.max_steps.setValue(int(s["agent_max_steps"]))
-
-        i = self.sandbox_backend.findData(s["sandbox_backend"])
-        self.sandbox_backend.setCurrentIndex(max(0, i))
-        self.sandbox_timeout.setValue(int(s["sandbox_timeout_sec"]))
-        self.sandbox_memory.setValue(int(s["sandbox_memory_mb"]))
-
-        self.paths_list.clear()
-        self.paths_list.addItems([str(p) for p in s.get("extra_allowed_paths", [])])
-
-        self.docker_note.setText(
-            "Docker найден — доступна полная изоляция сети и файловой системы."
-            if docker_available() else
-            "Docker не найден. Будет использован режим отдельного процесса: "
-            "ограничены CPU, память, размер файлов и переменные окружения, "
-            "но это не полная изоляция."
-        )
-        self._on_sup_mode()
-        self._loading = False
-
+    @Slot()
     def refresh(self) -> None:
-        """Перечитывает настройки: список агентов мог измениться после входа на страницу."""
-        self.set_workspace(self.workspace_id)
-
-    def _save_workspace(self) -> None:
-        if self.workspace_id is None or getattr(self, "_loading", False):
+        if not self.ready or self.ws_id is None:
+            self._set(ws={}, supervisorOptions=[], hasSearchKey=False)
             return
-        ws = self.repos.workspaces.get(self.workspace_id)
-        if ws is None:
+        s = self._settings()
+        view = {k: v for k, v in s.items() if k != "search_api_key"}
+        view["tools_enabled"] = self._groups(s.get("tools_enabled") or [])
+        view["extra_allowed_paths"] = [str(p) for p in s.get("extra_allowed_paths") or []]
+        view["supervisor_agent_id"] = int(s.get("supervisor_agent_id") or -1)
+        options = [{"id": -1, "title": tr("prefs.sup_auto")}] + [
+            {"id": a.id, "title": f"{a.name} · {a.model}"}
+            for a in self.repos.agents.list(self.ws_id)]
+        self._set(ws=view, supervisorOptions=options,
+                  hasSearchKey=bool(s.get("search_api_key")))
+        if self._s.get("docker") == "unknown":
+            self.checkDocker()
+
+    @staticmethod
+    def _groups(names: list[str]) -> list[str]:
+        """Настройка хранит смесь групп и имён инструментов — приводим к группам."""
+        groups = []
+        for group in TOOL_SWITCHES:
+            members = TOOL_GROUPS.get(group, [group])
+            if group in names or any(m in names for m in members):
+                groups.append(group)
+        return groups
+
+    def _save(self, **changes) -> None:
+        s = self._settings()
+        s.update(changes)
+        self.repos.workspaces.update(self.ws_id, settings=s)
+        self.refresh()
+
+    @Slot(str, "QVariant")
+    def setValue(self, key: str, value) -> None:  # noqa: N802
+        if self.ws_id is None or key not in DEFAULT_WORKSPACE_SETTINGS or key == "search_api_key":
             return
-        s = {**DEFAULT_WORKSPACE_SETTINGS, **ws.settings}
-        s.update({
-            "human_in_the_loop": self.hitl.isChecked(),
-            "hitl_confidence_threshold": round(self.hitl_threshold.value(), 2),
-            "hitl_pause_on_milestone": self.hitl_milestone.isChecked(),
-            "supervisor_mode": self.sup_mode.currentData(),
-            "supervisor_agent_id": self.sup_agent.currentData(),
-            "supervisor_local_model": self.sup_local_model.text().strip(),
-            "supervisor_local_base_url": self.sup_local_url.text().strip(),
-            "summary_interval_minutes": self.summary_interval.value(),
-            "summary_on_event": self.summary_on_event.isChecked(),
-            "agent_max_steps": self.max_steps.value(),
-            "sandbox_backend": self.sandbox_backend.currentData(),
-            "sandbox_timeout_sec": self.sandbox_timeout.value(),
-            "sandbox_memory_mb": self.sandbox_memory.value(),
-            "extra_allowed_paths": [self.paths_list.item(i).text()
-                                    for i in range(self.paths_list.count())],
-        })
-        self.repos.workspaces.update(self.workspace_id, settings=s)
+        default = DEFAULT_WORKSPACE_SETTINGS[key]
+        if key == "supervisor_agent_id":
+            value = int(value) if value is not None and int(value) >= 0 else None
+        elif isinstance(default, bool):
+            value = bool(value)
+        elif isinstance(default, int):
+            value = int(round(float(value)))
+        elif isinstance(default, float):
+            value = round(float(value), 2)
+        elif isinstance(default, str):
+            value = str(value or "").strip()
+        if key in RANGES and isinstance(value, (int, float)):
+            low, high = RANGES[key]
+            value = min(max(value, low), high)
+        self._save(**{key: value})
+        if key.startswith("supervisor"):
+            self.backend.supervisor.refresh()
 
-    def _on_hitl_toggled(self) -> None:
-        self._sync_hitl_enabled()
-        self._save_workspace()
-
-    def _sync_hitl_enabled(self) -> None:
-        """Настройки пауз бессмысленны при выключенном human-in-the-loop."""
-        enabled = self.hitl.isChecked()
-        self.hitl_threshold.setEnabled(enabled)
-        self.hitl_milestone.setEnabled(enabled)
-
-    def _on_sup_mode(self) -> None:
-        local = self.sup_mode.currentData() == "local"
-        self.sup_agent.setVisible(not local)
-        self.sup_local_model.setEnabled(local)
-        self.sup_local_url.setEnabled(local)
-        self._save_workspace()
-
-    # -- действия ------------------------------------------------------------
-    def _change_language(self) -> None:
-        code = self.lang_box.currentData()
-        set_language(code)
-        self.app_settings.language = code
-        self.app_settings.save()
-        if self.on_language_change:
-            self.on_language_change(code)
-
-    def _change_theme(self) -> None:
-        theme = self.theme_box.currentData()
-        self.app_settings.theme = theme
-        self.app_settings.save()
-        if self.on_theme_change:
-            self.on_theme_change(theme)
-
-    def _add_path(self) -> None:
-        folder = QFileDialog.getExistingDirectory(self, tr("settings.add_path"),
-                                                  str(Path.home()))
-        if folder:
-            self.paths_list.addItem(folder)
-            self._save_workspace()
-
-    def _remove_path(self) -> None:
-        for item in self.paths_list.selectedItems():
-            self.paths_list.takeItem(self.paths_list.row(item))
-        self._save_workspace()
-
-    def _change_password(self) -> None:
-        dlg = PasswordDialog(self)
-        if dlg.exec() != QDialog.DialogCode.Accepted:
-            return
-        old, new1, new2 = dlg.values()
-        if len(new1) < MIN_PASSWORD_LEN:
-            warn(self, tr("login.password_short"))
-            return
-        if new1 != new2:
-            warn(self, tr("login.password_mismatch"))
-            return
-        if self.repos.users.change_password(self.repos.session, old, new1):
-            info(self, "Пароль изменён, API-ключи перешифрованы.")
+    @Slot(str, bool)
+    def setTool(self, group: str, enabled: bool) -> None:  # noqa: N802
+        groups = set(self._s.get("ws", {}).get("tools_enabled", []))
+        if enabled:
+            groups.add(group)
         else:
-            warn(self, tr("login.bad_credentials"))
+            groups.discard(group)
+        self._save(tools_enabled=[g for g in TOOL_SWITCHES if g in groups])
+
+    @Slot(str)
+    def setSearchKey(self, secret: str) -> None:  # noqa: N802
+        """Ключ Tavily/Brave хранится зашифрованным мастер-ключом профиля."""
+        self._save(search_api_key=self.repos.secrets.seal((secret or "").strip()))
+        self.toast("success" if secret else "info",
+                   tr("toast.search_key_saved") if secret else tr("toast.search_key_removed"), "")
+
+    @Slot()
+    def addPath(self) -> None:  # noqa: N802
+        from PySide6.QtWidgets import QFileDialog
+
+        folder = QFileDialog.getExistingDirectory(None, tr("prefs.add_path"), str(Path.home()))
+        if folder:
+            paths = list(self._s.get("ws", {}).get("extra_allowed_paths", []))
+            if folder not in paths:
+                paths.append(folder)
+                self._save(extra_allowed_paths=paths)
+
+    @Slot(str)
+    def removePath(self, path: str) -> None:  # noqa: N802
+        paths = [p for p in self._s.get("ws", {}).get("extra_allowed_paths", []) if p != path]
+        self._save(extra_allowed_paths=paths)
+
+    @Slot()
+    def checkDocker(self) -> None:  # noqa: N802
+        self._set(docker="checking")
+        run_async(docker_available_async(),
+                  lambda ok: self._set(docker="yes" if ok else "no"),
+                  lambda exc: self._set(docker="no"))
+
+    @Slot(str, str, str, result=str)
+    def changePassword(self, old: str, new1: str, new2: str) -> str:  # noqa: N802
+        error = self.backend.change_password(old, new1, new2)
+        if not error:
+            self.toast("success", tr("toast.password_changed"), tr("toast.password_changed_text"))
+        return error
+````
+
+### `app/i18n_ui.py`
+
+*565 строк*
+
+````python
+"""Строки интерфейса версии 1.1 (Qt Quick).
+
+Вынесены отдельно от ``i18n.py``, чтобы словари не разрастались в один
+нечитаемый файл. При импорте ``app.i18n`` они вливаются в общие каталоги.
+"""
+
+from __future__ import annotations
+
+RU_UI: dict[str, str] = {
+    # --- общее ---
+    "common.copy": "Копировать",
+    # --- статусы (дополнение) ---
+    "status.stopped": "Остановлено",
+    "status.failed": "С ошибками",
+    "status.draft": "Черновик",
+    # --- вход ---
+    "login.tagline": "Команда ИИ-агентов под контролем супервайзера. Независимая проверка результатов, пауза для вашего решения и контроль расходов.",
+    "login.f1": "Агенты работают параллельно и не видят переписку друг друга",
+    "login.f2": "Супервайзер проверяет каждый отчёт и ищет противоречия",
+    "login.f3": "Ключи зашифрованы, данные не покидают этот компьютер",
+    "login.have_profile": "У меня уже есть профиль",
+    "login.local": "данные хранятся локально",
+    "login.need_username": "Введите имя профиля",
+    "login.s0": "", "login.s1": "слабый", "login.s2": "средний", "login.s3": "хороший",
+    "login.s4": "надёжный",
+    # --- навигация ---
+    "nav.g_project": "Проект",
+    "nav.g_work": "Работа",
+    "nav.g_resources": "Ресурсы",
+    "nav.local_profile": "локальный профиль",
+    "nav.search": "Переход и команды",
+    "top.no_ws": "Воркспейс не выбран",
+    "top.running": "Идёт прогон",
+    "top.paused": "На паузе",
+    "top.pending": "Ждут вашего решения: {n}",
+    "palette.title": "Быстрый переход",
+    "palette.placeholder": "Страница или действие…",
+    "palette.page": "страница",
+    "palette.action": "действие",
+    "palette.start": "Запустить агентов",
+    "palette.motion": "Переключить уровень анимаций",
+    # --- воркспейсы ---
+    "ws.subtitle": "Параллельные проекты: у каждого свои агенты, задача, файлы и настройки",
+    "ws.empty_title": "Нет ни одного воркспейса",
+    "ws.edit": "Изменить воркспейс",
+    "ws.active": "активный",
+    "ws.updated": "изменён {when}",
+    "ws.no_description": "Без описания",
+    "ws.desc_placeholder": "Коротко: о чём проект и для кого результат",
+    "ws.delete_title": "Удалить воркспейс?",
+    "ws.need_name": "Введите название проекта",
+    # --- ключи ---
+    "keys.empty_title": "Ключей пока нет",
+    "keys.edit": "Изменить ключ",
+    "keys.free": "бесплатно",
+    "keys.local": "локально",
+    "keys.stored": "ключ сохранён",
+    "keys.no_secret": "без ключа",
+    "keys.models_cached": "моделей в кэше: {n}",
+    "keys.testing": "Проверяю соединение…",
+    "keys.get_key": "Где взять ключ",
+    "keys.keep_secret": "оставьте пустым, чтобы не менять",
+    "keys.encrypted_note": "Ключ шифруется AES-256-GCM и не хранится открытым текстом",
+    "keys.delete_title": "Удалить ключ?",
+    "keys.need_secret": "Этому провайдеру нужен API-ключ",
+    "keys.need_url": "Укажите адрес сервера (Base URL)",
+    "keys.not_found": "Ключ не найден",
+    # --- агенты ---
+    "agents.edit": "Изменить агента",
+    "agents.empty_title": "Агентов пока нет",
+    "agents.no_keys_title": "Сначала нужен API-ключ",
+    "agents.no_prompt": "Системный промпт не задан",
+    "agents.duplicate": "Дублировать",
+    "agents.delete_title": "Удалить агента?",
+    "agents.tools": "Инструменты",
+    "agents.is_supervisor": "Может быть супервайзером",
+    "agents.is_supervisor_hint": "Помеченный агент проверяет отчёты, если в настройках не выбран другой",
+    "agents.key_missing": "ключ удалён",
+    "agents.free": "бесплатно",
+    "agents.need_name": "Введите имя агента",
+    "agents.need_key": "Выберите API-ключ",
+    "agents.need_model": "Укажите модель",
+    "tool.web_search": "Веб-поиск",
+    "tool.fetch_url": "Чтение страниц",
+    "tool.read_file": "Чтение файлов",
+    "tool.write_file": "Запись файлов",
+    "tool.list_dir": "Список файлов",
+    "tool.code_exec": "Запуск кода",
+    "toolgroup.web_search": "Веб-поиск и страницы",
+    "toolgroup.files": "Файлы проекта",
+    "toolgroup.code_exec": "Запуск кода",
+    # --- задача ---
+    "task.subtitle": "Сформулируйте задачу и разложите её на подзадачи вручную или с помощью ИИ",
+    "task.statement": "Постановка",
+    "task.untitled": "Без названия",
+    "task.token_limit_note": "Проверяется перед каждым вызовом модели, включая проверки супервайзера",
+    "task.subtasks_hint": "Зависимости задают порядок: результат предшественника уходит исполнителю как исходный материал",
+    "task.no_subtasks_title": "Подзадач пока нет",
+    "task.no_subtasks": "Добавьте их вручную или нажмите «Разбить автоматически»",
+    "task.edit_subtask": "Изменить подзадачу",
+    "task.delete_subtask": "Удалить подзадачу?",
+    "task.depends_on": "Зависит от",
+    "task.depends_hint": "Подзадача стартует только после того, как выбранные будут приняты",
+    "task.no_deps_possible": "Других подзадач пока нет",
+    "task.reworks": "доработок: {n}",
+    "task.rerun": "Выполнить заново",
+    "task.new_task": "Новая задача",
+    "task.new_task_confirm": "Текущая задача останется в истории, а форма очистится для новой. Продолжить?",
+    "task.need_body": "Опишите задачу: без формулировки агентам не с чем работать",
+    "task.bad_limit": "Лимит токенов должен быть целым положительным числом",
+    "task.save_first": "Сначала сохраните задачу",
+    "task.need_subtask_title": "Опишите, что нужно сделать",
+    "task.dep_cycle": "Такая зависимость замкнёт подзадачи в цикл",
+    "fmt.auto": "Авто", "fmt.markdown": "Markdown", "fmt.docx": "DOCX", "fmt.pdf": "PDF",
+    "fmt.zip": "ZIP",
+    # --- выполнение ---
+    "run.no_task": "Сначала поставьте задачу на вкладке «Задача»",
+    "run.unassigned_short": "Не у всех подзадач назначен исполнитель",
+    "run.all_done": "Все подзадачи выполнены. Чтобы повторить, верните нужные в очередь на вкладке «Задача»",
+    "run.cannot_start": "Прогон не запущен",
+    "run.k_done": "готово",
+    "run.k_review": "на проверке",
+    "run.k_errors": "ошибок",
+    "run.k_time": "время",
+    "run.k_tokens": "токенов",
+    "run.k_cost": "стоимость",
+    "run.live": "Рассуждения агентов",
+    "run.live_hint": "Текст модели появляется по мере генерации; курсивом — внутреннее рассуждение, голубым — вызовы инструментов",
+    "run.graph": "Граф подзадач",
+    "run.graph_empty": "Подзадач пока нет",
+    "run.feed_empty": "Событий пока нет",
+    "run.f_all": "Все",
+    "run.f_key": "Важные",
+    "run.f_errors": "Ошибки",
+    "run.show_details": "Подробности",
+    "run.hide_details": "Скрыть",
+    "run.comment_placeholder": "Комментарий исполнителю (необязательно)",
+    "run.ph_idle": "ожидает",
+    "run.ph_thinking": "думает",
+    "run.ph_tool": "инструмент",
+    "run.ph_review": "проверяет",
+    "run.ph_done": "готово",
+    "run.ph_error": "ошибка",
+    "run.step_of": "шаг {n} из {m}",
+    "run.step": "Шаг",
+    "run.subtask": "Подзадача",
+    "run.waiting": "Ждёт подзадачу",
+    "run.stream_empty": "Рассуждение появится, когда агент начнёт работу",
+    "run.sup_empty": "Здесь будут проверки и сводки супервайзера",
+    "run.copy_stream": "Скопировать рассуждение",
+    "run.to_latest": "К последнему",
+    "run.supervisor": "Супервайзер",
+    "run.system": "Система",
+    "reason.conflict": "Конфликт данных",
+    "reason.not_accepted": "Результат не принят",
+    "reason.low_confidence": "Низкая уверенность",
+    "reason.milestone": "Завершён этап",
+    "reason.unverified": "Результат не проверен",
+    "reason.budget": "Исчерпан лимит бюджета",
+    "decision.approve": "Принять",
+    "decision.rework": "На доработку",
+    "decision.skip": "Пропустить",
+    "decision.abort": "Остановить прогон",
+    "decision.extend": "Поднять лимит на 50%",
+    # --- супервайзер ---
+    "sup.checklist": "Проверяет каждый отчёт: соответствие заданию, логика, факты, согласованность с проектом",
+    "sup.configure_hint": "Выберите агента-супервайзера или локальную модель в настройках",
+    "sup.mode_api": "через API",
+    "sup.mode_local": "локально",
+    "sup.no_summaries_title": "Сводок пока нет",
+    "sup.no_incidents_title": "Инцидентов нет",
+    "sup.no_approvals_title": "Решений пока не было",
+    "sup.closed_by_user": "Закрыто пользователем",
+    "kind.conflict": "Конфликт данных",
+    "kind.factual_error": "Фактическая ошибка",
+    "kind.contradiction": "Противоречие",
+    "kind.off_scope": "Выход за рамки задания",
+    "kind.unverified": "Не проверено",
+    "sev.low": "низкая", "sev.medium": "средняя", "sev.high": "высокая",
+    "inc.open": "открыт", "inc.escalated": "требует решения",
+    "inc.auto_resolved": "разрешён автоматически", "inc.resolved": "закрыт",
+    "hist.approve": "принято", "hist.rework": "на доработку", "hist.skip": "пропущено",
+    "hist.abort": "прогон остановлен", "hist.extend": "лимит поднят",
+    "hist.cancelled": "снято без решения", "hist.pending": "ожидает решения",
+    # --- дашборд ---
+    "dash.m_tokens_pct": "токенов · {pct}% от лимита задачи",
+    "dash.spend": "Расход нарастающим итогом",
+    "dash.money": "Деньги",
+    "dash.tokens": "Токены",
+    "dash.sup_share": "супервайзер {pct}%",
+    "dash.v_unverified": "не проверено",
+    # --- бюджеты ---
+    "bud.h_before": "Лимит проверяется до вызова модели, а не после: лишний запрос просто не уходит",
+    "bud.h_ask": "С включённым human-in-the-loop система спросит, поднять ли лимит, вместо того чтобы оборвать работу",
+    "bud.h_log": "Расход считается по журналу вызовов, поэтому перезапуск приложения его не обнуляет",
+    "bud.nothing_title": "Ограничивать пока нечего",
+    "bud.tokens_short": "ток.",
+    "bud.bad_tokens": "Лимит токенов должен быть целым положительным числом",
+    "bud.bad_cost": "Лимит стоимости должен быть положительным числом",
+    "scope.workspace": "проект",
+    "scope.task": "задача",
+    "scope.agent": "агент",
+    # --- экспорт ---
+    "exp.recommended": "рекомендуем",
+    "exp.f_markdown": "Markdown", "exp.f_docx": "Word", "exp.f_pdf": "PDF", "exp.f_zip": "ZIP-архив",
+    "exp.fh_markdown": "Лёгкий текст для заметок, вики и репозиториев",
+    "exp.fh_docx": "Документ для отчёта, который будут читать и править",
+    "exp.fh_pdf": "Готовый к отправке документ с кириллицей",
+    "exp.fh_zip": "Отчёт, манифест и все файлы проекта со структурой",
+    # --- настройки ---
+    "settings.subtitle": "Интерфейс и настройки активного воркспейса",
+    "settings.interface": "Интерфейс",
+    "settings.motion": "Анимации",
+    "settings.motion_hint": "Полные: живой фон и выразительные переходы. Сдержанные: только короткие переходы. Выключены: интерфейс без движения",
+    "settings.motion_full": "Полные",
+    "settings.motion_reduced": "Сдержанные",
+    "settings.motion_off": "Выключены",
+    "settings.hitl_title": "Решения человека",
+    "settings.hitl_hint": "Система останавливается в критических точках и ждёт вашего решения",
+    "settings.never": "никогда",
+    "settings.supervisor_agent": "Агент-супервайзер",
+    "settings.sup_api_short": "Агент с API-ключом",
+    "settings.sup_local_short": "Локальная модель",
+    "settings.local_model": "Локальная модель",
+    "settings.off": "выкл.",
+    "settings.min": "мин",
+    "settings.summary_cost_hint": "Сводки после каждой подзадачи заметно увеличивают расход токенов",
+    "settings.anonymize": "Анонимные сводки",
+    "settings.anonymize_hint": "Агенты получают пересказ без указания, кто что написал",
+    "settings.execution": "Выполнение",
+    "settings.max_steps": "Шагов на подзадачу",
+    "settings.rework_rounds": "Автоматических доработок",
+    "settings.parallel": "Агентов одновременно",
+    "settings.tools": "Инструменты",
+    "settings.tools_hint": "Что вообще разрешено агентам этого воркспейса. Конкретному агенту можно сузить набор в его карточке",
+    "settings.search_backend": "Поисковый сервис",
+    "settings.search_key": "Ключ поискового API",
+    "settings.search_key_set": "ключ сохранён, введите новый, чтобы заменить",
+    "settings.fetch_pages": "Разрешить открывать найденные страницы",
+    "settings.sb_auto": "Авто",
+    "settings.sb_process": "Процесс",
+    "settings.sb_timeout": "Таймаут",
+    "settings.sb_memory": "Память",
+    "settings.docker_yes": "Docker доступен",
+    "settings.docker_no": "Docker не найден",
+    "settings.docker_recheck": "Проверить снова",
+    "settings.docker_note_yes": "Код агентов выполняется в контейнере без сети, с корнем только для чтения",
+    "settings.docker_note_no": "Код выполняется отдельным процессом: окружение очищено, но файловая система не изолирована. Для строгой изоляции установите Docker",
+    "settings.paths_warning": "Агенты получают доступ на чтение и запись в эти каталоги. Не добавляйте системные папки и каталоги с личными данными",
+    "settings.paths_empty": "Агентам доступен только рабочий каталог воркспейса",
+    "settings.security": "Безопасность и данные",
+    "settings.security_text": "API-ключи зашифрованы AES-256-GCM. Ключ шифрования выводится из пароля профиля функцией Argon2id и существует только в оперативной памяти",
+    "settings.open_data": "Открыть каталог данных",
+    "settings.old_password": "Текущий пароль",
+    "settings.password_note": "Все API-ключи будут перешифрованы новым паролем",
+    "prefs.sup_auto": "Автоматически (агент со звёздочкой)",
+    "prefs.add_path": "Выберите каталог",
+    # --- уведомления ---
+    "toast.profile_created": "Профиль создан",
+    "toast.recovered": "Прошлый сеанс завершился аварийно",
+    "toast.recovered_text": "Статусы незавершённого прогона приведены в порядок, его можно запустить снова",
+    "toast.run_active": "Идёт прогон",
+    "toast.run_active_text": "Дождитесь завершения или остановите прогон",
+    "toast.not_found": "Путь не найден",
+    "toast.copied": "Скопировано в буфер обмена",
+    "toast.run_done": "Прогон завершён",
+    "toast.run_failed": "Прогон завершён с ошибками",
+    "toast.run_review": "Прогон завершён, нужны ваши решения",
+    "toast.run_stopped": "Прогон остановлен",
+    "toast.need_decision": "Нужно ваше решение",
+    "toast.budget_alert": "Бюджет подходит к лимиту",
+    "toast.budget_exceeded": "Лимит бюджета исчерпан",
+    "toast.budget_extended": "Лимит поднят",
+    "toast.subtask_failed": "Подзадача не выполнена",
+    "toast.ws_created": "Воркспейс создан",
+    "toast.ws_deleted": "Воркспейс удалён",
+    "toast.key_saved": "Ключ сохранён",
+    "toast.key_deleted": "Ключ удалён",
+    "toast.agent_created": "Агент создан",
+    "toast.agent_saved": "Агент сохранён",
+    "toast.agent_deleted": "Агент удалён",
+    "toast.task_saved": "Задача сохранена",
+    "toast.planned": "Задача разбита",
+    "toast.planned_n": "Подзадач: {n}. Проверьте исполнителей и зависимости",
+    "toast.plan_failed": "Не удалось разбить задачу",
+    "toast.summary_done": "Сводка составлена и разослана",
+    "toast.summary_failed": "Сводка не составлена",
+    "toast.exported": "Экспорт готов",
+    "toast.export_failed": "Экспорт не удался",
+    "toast.search_key_saved": "Ключ поиска сохранён",
+    "toast.search_key_removed": "Ключ поиска удалён",
+    "toast.password_changed": "Пароль изменён",
+    "toast.password_changed_text": "API-ключи перешифрованы новым паролем",
+}
+
+EN_UI: dict[str, str] = {
+    "common.copy": "Copy",
+    "status.stopped": "Stopped",
+    "status.failed": "Failed",
+    "status.draft": "Draft",
+    "login.tagline": "A team of AI agents under a supervisor. Independent review of results, pauses for your decision and cost control.",
+    "login.f1": "Agents work in parallel and never see each other's chats",
+    "login.f2": "The supervisor reviews every report and looks for contradictions",
+    "login.f3": "Keys are encrypted, data never leaves this computer",
+    "login.have_profile": "I already have a profile",
+    "login.local": "data is stored locally",
+    "login.need_username": "Enter a profile name",
+    "login.s0": "", "login.s1": "weak", "login.s2": "fair", "login.s3": "good", "login.s4": "strong",
+    "nav.g_project": "Project",
+    "nav.g_work": "Work",
+    "nav.g_resources": "Resources",
+    "nav.local_profile": "local profile",
+    "nav.search": "Go to and commands",
+    "top.no_ws": "No workspace selected",
+    "top.running": "Run in progress",
+    "top.paused": "Paused",
+    "top.pending": "Awaiting your decision: {n}",
+    "palette.title": "Quick switch",
+    "palette.placeholder": "Page or action…",
+    "palette.page": "page",
+    "palette.action": "action",
+    "palette.start": "Run agents",
+    "palette.motion": "Toggle animation level",
+    "ws.subtitle": "Parallel projects, each with its own agents, task, files and settings",
+    "ws.empty_title": "No workspaces yet",
+    "ws.edit": "Edit workspace",
+    "ws.active": "active",
+    "ws.updated": "updated {when}",
+    "ws.no_description": "No description",
+    "ws.desc_placeholder": "In short: what the project is about and who needs the result",
+    "ws.delete_title": "Delete workspace?",
+    "ws.need_name": "Enter a project name",
+    "keys.empty_title": "No keys yet",
+    "keys.edit": "Edit key",
+    "keys.free": "free",
+    "keys.local": "local",
+    "keys.stored": "key stored",
+    "keys.no_secret": "no key",
+    "keys.models_cached": "models cached: {n}",
+    "keys.testing": "Testing connection…",
+    "keys.get_key": "Where to get a key",
+    "keys.keep_secret": "leave empty to keep the current key",
+    "keys.encrypted_note": "The key is encrypted with AES-256-GCM and never stored in plain text",
+    "keys.delete_title": "Delete key?",
+    "keys.need_secret": "This provider needs an API key",
+    "keys.need_url": "Enter the server address (Base URL)",
+    "keys.not_found": "Key not found",
+    "agents.edit": "Edit agent",
+    "agents.empty_title": "No agents yet",
+    "agents.no_keys_title": "An API key comes first",
+    "agents.no_prompt": "No system prompt",
+    "agents.duplicate": "Duplicate",
+    "agents.delete_title": "Delete agent?",
+    "agents.tools": "Tools",
+    "agents.is_supervisor": "Can act as supervisor",
+    "agents.is_supervisor_hint": "A marked agent reviews reports unless another one is chosen in settings",
+    "agents.key_missing": "key deleted",
+    "agents.free": "free",
+    "agents.need_name": "Enter an agent name",
+    "agents.need_key": "Choose an API key",
+    "agents.need_model": "Enter a model",
+    "tool.web_search": "Web search",
+    "tool.fetch_url": "Read pages",
+    "tool.read_file": "Read files",
+    "tool.write_file": "Write files",
+    "tool.list_dir": "List files",
+    "tool.code_exec": "Run code",
+    "toolgroup.web_search": "Web search and pages",
+    "toolgroup.files": "Project files",
+    "toolgroup.code_exec": "Run code",
+    "task.subtitle": "State the task and split it into subtasks by hand or with AI",
+    "task.statement": "Statement",
+    "task.untitled": "Untitled",
+    "task.token_limit_note": "Checked before every model call, supervisor reviews included",
+    "task.subtasks_hint": "Dependencies set the order: a predecessor's result goes to the assignee as input",
+    "task.no_subtasks_title": "No subtasks yet",
+    "task.no_subtasks": "Add them by hand or press Auto-split",
+    "task.edit_subtask": "Edit subtask",
+    "task.delete_subtask": "Delete subtask?",
+    "task.depends_on": "Depends on",
+    "task.depends_hint": "The subtask starts only after the selected ones are accepted",
+    "task.no_deps_possible": "There are no other subtasks yet",
+    "task.reworks": "reworks: {n}",
+    "task.rerun": "Run again",
+    "task.new_task": "New task",
+    "task.new_task_confirm": "The current task stays in history and the form is cleared for a new one. Continue?",
+    "task.need_body": "Describe the task: without it agents have nothing to work on",
+    "task.bad_limit": "The token limit must be a positive whole number",
+    "task.save_first": "Save the task first",
+    "task.need_subtask_title": "Describe what needs to be done",
+    "task.dep_cycle": "This dependency would create a cycle",
+    "fmt.auto": "Auto", "fmt.markdown": "Markdown", "fmt.docx": "DOCX", "fmt.pdf": "PDF",
+    "fmt.zip": "ZIP",
+    "run.no_task": "Define a task on the Task tab first",
+    "run.unassigned_short": "Some subtasks have no assignee",
+    "run.all_done": "All subtasks are done. To repeat, requeue them on the Task tab",
+    "run.cannot_start": "Run not started",
+    "run.k_done": "done",
+    "run.k_review": "in review",
+    "run.k_errors": "errors",
+    "run.k_time": "time",
+    "run.k_tokens": "tokens",
+    "run.k_cost": "cost",
+    "run.live": "Agent reasoning",
+    "run.live_hint": "Model output appears as it is generated; italic is inner reasoning, cyan is tool calls",
+    "run.graph": "Subtask graph",
+    "run.graph_empty": "No subtasks yet",
+    "run.feed_empty": "No events yet",
+    "run.f_all": "All",
+    "run.f_key": "Key",
+    "run.f_errors": "Errors",
+    "run.show_details": "Details",
+    "run.hide_details": "Hide",
+    "run.comment_placeholder": "Comment for the agent (optional)",
+    "run.ph_idle": "idle",
+    "run.ph_thinking": "thinking",
+    "run.ph_tool": "tool",
+    "run.ph_review": "reviewing",
+    "run.ph_done": "done",
+    "run.ph_error": "error",
+    "run.step_of": "step {n} of {m}",
+    "run.step": "Step",
+    "run.subtask": "Subtask",
+    "run.waiting": "Waiting for a subtask",
+    "run.stream_empty": "Reasoning appears when the agent starts working",
+    "run.sup_empty": "Supervisor reviews and summaries show up here",
+    "run.copy_stream": "Copy reasoning",
+    "run.to_latest": "Latest",
+    "run.supervisor": "Supervisor",
+    "run.system": "System",
+    "reason.conflict": "Data conflict",
+    "reason.not_accepted": "Result not accepted",
+    "reason.low_confidence": "Low confidence",
+    "reason.milestone": "Stage completed",
+    "reason.unverified": "Result not verified",
+    "reason.budget": "Budget limit reached",
+    "decision.approve": "Approve",
+    "decision.rework": "Send back",
+    "decision.skip": "Skip",
+    "decision.abort": "Stop run",
+    "decision.extend": "Raise limit by 50%",
+    "sup.checklist": "Reviews each report: scope, logic, facts, consistency with the project",
+    "sup.configure_hint": "Pick a supervisor agent or a local model in settings",
+    "sup.mode_api": "via API",
+    "sup.mode_local": "local",
+    "sup.no_summaries_title": "No summaries yet",
+    "sup.no_incidents_title": "No incidents",
+    "sup.no_approvals_title": "No decisions yet",
+    "sup.closed_by_user": "Closed by the user",
+    "kind.conflict": "Data conflict",
+    "kind.factual_error": "Factual error",
+    "kind.contradiction": "Contradiction",
+    "kind.off_scope": "Out of scope",
+    "kind.unverified": "Not verified",
+    "sev.low": "low", "sev.medium": "medium", "sev.high": "high",
+    "inc.open": "open", "inc.escalated": "needs a decision",
+    "inc.auto_resolved": "auto-resolved", "inc.resolved": "closed",
+    "hist.approve": "approved", "hist.rework": "sent back", "hist.skip": "skipped",
+    "hist.abort": "run stopped", "hist.extend": "limit raised",
+    "hist.cancelled": "dropped without a decision", "hist.pending": "awaiting decision",
+    "dash.m_tokens_pct": "tokens · {pct}% of the task limit",
+    "dash.spend": "Cumulative spending",
+    "dash.money": "Money",
+    "dash.tokens": "Tokens",
+    "dash.sup_share": "supervisor {pct}%",
+    "dash.v_unverified": "not verified",
+    "bud.h_before": "Limits are checked before a model call, not after: an extra request is simply not sent",
+    "bud.h_ask": "With human-in-the-loop on, the system asks whether to raise the limit instead of stopping work",
+    "bud.h_log": "Spending comes from the call log, so restarting the app does not reset it",
+    "bud.nothing_title": "Nothing to limit yet",
+    "bud.tokens_short": "tok.",
+    "bud.bad_tokens": "The token limit must be a positive whole number",
+    "bud.bad_cost": "The cost limit must be a positive number",
+    "scope.workspace": "project",
+    "scope.task": "task",
+    "scope.agent": "agent",
+    "exp.recommended": "recommended",
+    "exp.f_markdown": "Markdown", "exp.f_docx": "Word", "exp.f_pdf": "PDF", "exp.f_zip": "ZIP archive",
+    "exp.fh_markdown": "Light text for notes, wikis and repositories",
+    "exp.fh_docx": "A report people will read and edit",
+    "exp.fh_pdf": "A ready-to-send document with Cyrillic support",
+    "exp.fh_zip": "Report, manifest and all project files with structure",
+    "settings.subtitle": "Interface and the active workspace",
+    "settings.interface": "Interface",
+    "settings.motion": "Animations",
+    "settings.motion_hint": "Full: live background and expressive transitions. Reduced: short transitions only. Off: no motion",
+    "settings.motion_full": "Full",
+    "settings.motion_reduced": "Reduced",
+    "settings.motion_off": "Off",
+    "settings.hitl_title": "Human decisions",
+    "settings.hitl_hint": "The system stops at critical points and waits for your decision",
+    "settings.never": "never",
+    "settings.supervisor_agent": "Supervisor agent",
+    "settings.sup_api_short": "Agent with API key",
+    "settings.sup_local_short": "Local model",
+    "settings.local_model": "Local model",
+    "settings.off": "off",
+    "settings.min": "min",
+    "settings.summary_cost_hint": "Summaries after every subtask noticeably increase token spending",
+    "settings.anonymize": "Anonymous summaries",
+    "settings.anonymize_hint": "Agents get a retelling without who wrote what",
+    "settings.execution": "Execution",
+    "settings.max_steps": "Steps per subtask",
+    "settings.rework_rounds": "Automatic rework rounds",
+    "settings.parallel": "Agents at once",
+    "settings.tools": "Tools",
+    "settings.tools_hint": "What agents of this workspace may use at all. Each agent can narrow the set in its card",
+    "settings.search_backend": "Search service",
+    "settings.search_key": "Search API key",
+    "settings.search_key_set": "key saved, enter a new one to replace it",
+    "settings.fetch_pages": "Allow opening found pages",
+    "settings.sb_auto": "Auto",
+    "settings.sb_process": "Process",
+    "settings.sb_timeout": "Timeout",
+    "settings.sb_memory": "Memory",
+    "settings.docker_yes": "Docker available",
+    "settings.docker_no": "Docker not found",
+    "settings.docker_recheck": "Check again",
+    "settings.docker_note_yes": "Agent code runs in a container without network, with a read-only root",
+    "settings.docker_note_no": "Code runs as a separate process: the environment is clean, but the file system is not isolated. Install Docker for strict isolation",
+    "settings.paths_warning": "Agents get read and write access to these folders. Do not add system folders or folders with personal data",
+    "settings.paths_empty": "Agents can only access the workspace folder",
+    "settings.security": "Security and data",
+    "settings.security_text": "API keys are encrypted with AES-256-GCM. The encryption key is derived from the profile password with Argon2id and exists only in memory",
+    "settings.open_data": "Open data folder",
+    "settings.old_password": "Current password",
+    "settings.password_note": "All API keys will be re-encrypted with the new password",
+    "prefs.sup_auto": "Automatic (starred agent)",
+    "prefs.add_path": "Choose a folder",
+    "toast.profile_created": "Profile created",
+    "toast.recovered": "The previous session ended unexpectedly",
+    "toast.recovered_text": "Statuses of the unfinished run were fixed, you can start it again",
+    "toast.run_active": "A run is in progress",
+    "toast.run_active_text": "Wait until it finishes or stop the run",
+    "toast.not_found": "Path not found",
+    "toast.copied": "Copied to clipboard",
+    "toast.run_done": "Run finished",
+    "toast.run_failed": "Run finished with errors",
+    "toast.run_review": "Run finished, your decisions are needed",
+    "toast.run_stopped": "Run stopped",
+    "toast.need_decision": "Your decision is needed",
+    "toast.budget_alert": "Budget is close to the limit",
+    "toast.budget_exceeded": "Budget limit reached",
+    "toast.budget_extended": "Limit raised",
+    "toast.subtask_failed": "Subtask failed",
+    "toast.ws_created": "Workspace created",
+    "toast.ws_deleted": "Workspace deleted",
+    "toast.key_saved": "Key saved",
+    "toast.key_deleted": "Key deleted",
+    "toast.agent_created": "Agent created",
+    "toast.agent_saved": "Agent saved",
+    "toast.agent_deleted": "Agent deleted",
+    "toast.task_saved": "Task saved",
+    "toast.planned": "Task split",
+    "toast.planned_n": "Subtasks: {n}. Check assignees and dependencies",
+    "toast.plan_failed": "Could not split the task",
+    "toast.summary_done": "Summary created and broadcast",
+    "toast.summary_failed": "Summary not created",
+    "toast.exported": "Export ready",
+    "toast.export_failed": "Export failed",
+    "toast.search_key_saved": "Search key saved",
+    "toast.search_key_removed": "Search key removed",
+    "toast.password_changed": "Password changed",
+    "toast.password_changed_text": "API keys were re-encrypted with the new password",
+}
 ````
 
 
-## Служебное
+## Интерфейс: QML
+
+### `ui/qml/Main.qml`
+
+*69 строк*
+
+````qml
+import QtQuick
+import QtQuick.Controls.Basic as T
+import Ao
+
+// Главное окно: живой фон, экран входа или оболочка приложения, уведомления.
+T.ApplicationWindow {
+    id: window
+    width: 1440
+    height: 900
+    minimumWidth: 1180
+    minimumHeight: 720
+    visible: true
+    color: Theme.bg
+    title: backend.loggedIn ? backend.appName + " · " + backend.username : backend.appName
+    font.family: Theme.fontFamily
+
+    Component.onCompleted: {
+        Theme.fontFamily = fonts.sans
+        Theme.monoFamily = fonts.mono
+        Theme.iconFamily = fonts.icons
+        Theme.motion = Qt.binding(function() { return backend.motionLevel })
+    }
+
+    Aurora {
+        anchors.fill: parent
+        intensity: backend.loggedIn ? 0.75 : 1.0
+        Behavior on intensity { NumberAnimation { duration: Theme.slow } }
+    }
+
+    // Экран входа и оболочка сменяют друг друга плавным «растворением».
+    Loader {
+        id: loginLoader
+        anchors.fill: parent
+        active: opacity > 0
+        opacity: backend.loggedIn ? 0 : 1
+        visible: opacity > 0
+        source: "Login.qml"
+        Behavior on opacity { NumberAnimation { duration: Theme.slow; easing.type: Easing.InOutQuad } }
+    }
+    Loader {
+        id: shellLoader
+        anchors.fill: parent
+        active: backend.loggedIn
+        opacity: backend.loggedIn ? 1 : 0
+        visible: opacity > 0
+        source: "Shell.qml"
+        Behavior on opacity { NumberAnimation { duration: Theme.slow; easing.type: Easing.InOutQuad } }
+        transform: Scale {
+            origin.x: shellLoader.width / 2; origin.y: shellLoader.height / 2
+            xScale: backend.loggedIn ? 1 : 0.985; yScale: xScale
+            Behavior on xScale { NumberAnimation { duration: Theme.slow; easing.type: Easing.OutCubic } }
+        }
+    }
+
+    Toasts {
+        id: toasts
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.topMargin: 18
+        anchors.rightMargin: 18
+        height: parent.height - 36
+        z: 1000
+    }
+
+    Connections {
+        target: backend
+        function onToast(kind, title, message) { toasts.show(kind, title, message) }
+    }
+}
+````
+
+### `ui/qml/Login.qml`
+
+*303 строк*
+
+````qml
+import QtQuick
+import QtQuick.Controls.Basic as T
+import QtQuick.Layouts
+import Ao
+
+// Экран входа: слева — знак и суть продукта, справа — карточка входа или
+// создания профиля с индикатором надёжности пароля.
+Item {
+    id: root
+    property bool signUp: backend.profiles.length === 0
+    property string error: ""
+    property real appear: 0
+    Component.onCompleted: appear = 1
+    Behavior on appear { NumberAnimation { duration: Theme.slow * 2; easing.type: Easing.OutCubic } }
+
+    Connections {
+        target: backend
+        function onAuthFinished(ok, message) {
+            root.error = ok ? "" : message
+            if (!ok) shake.restart()
+        }
+    }
+
+    RowLayout {
+        anchors.fill: parent
+        spacing: 0
+
+        // --- бренд --------------------------------------------------------------
+        Item {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            ColumnLayout {
+                anchors.centerIn: parent
+                width: Math.min(parent.width - 120, 520)
+                spacing: 22
+                opacity: root.appear
+                transform: Translate { y: (1 - root.appear) * 24 }
+
+                OrbitLogo { size: 132; Layout.alignment: Qt.AlignLeft; speed: 0.8 }
+                AText {
+                    text: backend.appName
+                    size: 44
+                    weight: Font.Bold
+                    Layout.fillWidth: true
+                }
+                AText {
+                    text: i18n.t["login.tagline"]
+                    size: Theme.fsH3
+                    dim: true
+                    wrapMode: Text.Wrap
+                    elide: Text.ElideNone
+                    Layout.fillWidth: true
+                    lineHeight: 1.25
+                }
+                ColumnLayout {
+                    Layout.topMargin: 6
+                    spacing: 14
+                    Repeater {
+                        model: [
+                            { icon: "users", text: i18n.t["login.f1"] },
+                            { icon: "shield-check", text: i18n.t["login.f2"] },
+                            { icon: "lock", text: i18n.t["login.f3"] }
+                        ]
+                        delegate: RowLayout {
+                            required property var modelData
+                            required property int index
+                            spacing: 12
+                            opacity: root.appear
+                            Rectangle {
+                                width: 34; height: 34; radius: 11
+                                color: Theme.alpha(Theme.violet, 0.14)
+                                border.color: Theme.alpha(Theme.violetSoft, 0.25)
+                                Icon { anchors.centerIn: parent; name: modelData.icon; size: 16; color: Theme.violetSoft }
+                            }
+                            AText { text: modelData.text; dim: true; Layout.fillWidth: true; wrapMode: Text.Wrap; elide: Text.ElideNone }
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- форма ---------------------------------------------------------------
+        Item {
+            Layout.preferredWidth: 560
+            Layout.fillHeight: true
+
+            Card {
+                id: card
+                anchors.centerIn: parent
+                width: 420
+                padding: 30
+                radius: Theme.radiusXL
+                opacity: root.appear
+                transform: [
+                    Translate { id: shakeShift; x: 0 },
+                    Translate { y: (1 - root.appear) * 36 }
+                ]
+
+                SequentialAnimation {
+                    id: shake
+                    NumberAnimation { target: shakeShift; property: "x"; to: -10; duration: 50 }
+                    NumberAnimation { target: shakeShift; property: "x"; to: 10; duration: 70 }
+                    NumberAnimation { target: shakeShift; property: "x"; to: -6; duration: 60 }
+                    NumberAnimation { target: shakeShift; property: "x"; to: 0; duration: 60 }
+                }
+
+                ColumnLayout {
+                    width: parent.width
+                    spacing: 16
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        AText {
+                            text: root.signUp ? i18n.t["login.create_title"] : i18n.t["login.title"]
+                            size: Theme.fsH1
+                            weight: Font.Bold
+                            Layout.fillWidth: true
+                            wrapMode: Text.Wrap
+                            elide: Text.ElideNone
+                        }
+                        Segmented {
+                            options: i18n.languages.map(function(l) { return { value: l.code, title: l.code.toUpperCase() } })
+                            value: i18n.lang
+                            onPicked: function(v) { backend.setLanguage(v) }
+                        }
+                    }
+                    AText {
+                        text: i18n.t["login.subtitle"]
+                        dim: true
+                        wrapMode: Text.Wrap
+                        elide: Text.ElideNone
+                        Layout.fillWidth: true
+                    }
+
+                    // --- вход ---
+                    ColumnLayout {
+                        visible: !root.signUp
+                        Layout.fillWidth: true
+                        spacing: 14
+                        Select {
+                            id: profile
+                            Layout.fillWidth: true
+                            label: i18n.t["login.username"]
+                            icon: "user"
+                            options: backend.profiles
+                            value: backend.lastUsername
+                            onPicked: function(v) { password.text = backend.savedPassword(v); password.focusInput() }
+                        }
+                        Field {
+                            id: password
+                            Layout.fillWidth: true
+                            label: i18n.t["login.password"]
+                            icon: "lock"
+                            password: true
+                            onAccepted: signInButton.clicked()
+                            Component.onCompleted: {
+                                text = backend.savedPassword(backend.lastUsername)
+                                focusInput()
+                            }
+                        }
+                        Toggle {
+                            id: remember
+                            Layout.fillWidth: true
+                            label: i18n.t["login.remember"]
+                            checked: backend.rememberDefault
+                            enabled: backend.keyringAvailable
+                        }
+                    }
+
+                    // --- создание профиля ---
+                    ColumnLayout {
+                        visible: root.signUp
+                        Layout.fillWidth: true
+                        spacing: 14
+                        Rectangle {
+                            Layout.fillWidth: true
+                            radius: Theme.radius
+                            color: Theme.alpha(Theme.warning, 0.08)
+                            border.color: Theme.alpha(Theme.warning, 0.3)
+                            implicitHeight: warn.implicitHeight + 22
+                            RowLayout {
+                                id: warn
+                                anchors.fill: parent
+                                anchors.margins: 11
+                                spacing: 10
+                                Icon { name: "triangle-alert"; color: Theme.warning; Layout.alignment: Qt.AlignTop }
+                                AText {
+                                    text: i18n.t["login.warning"]
+                                    size: Theme.fsSmall
+                                    color: Theme.textDim
+                                    wrapMode: Text.Wrap
+                                    elide: Text.ElideNone
+                                    Layout.fillWidth: true
+                                }
+                            }
+                        }
+                        Field { id: newName; Layout.fillWidth: true; label: i18n.t["login.username"]; icon: "user" }
+                        Field {
+                            id: newPass
+                            Layout.fillWidth: true
+                            label: i18n.t["login.password"]
+                            icon: "lock"
+                            password: true
+                        }
+                        // Индикатор надёжности пароля.
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 6
+                            property int strength: backend.passwordStrength(newPass.text)
+                            Repeater {
+                                model: 4
+                                delegate: Rectangle {
+                                    required property int index
+                                    Layout.fillWidth: true
+                                    height: 4
+                                    radius: 2
+                                    color: index < parent.strength
+                                           ? (parent.strength <= 1 ? Theme.danger : parent.strength === 2 ? Theme.warning : Theme.success)
+                                           : Theme.surface3
+                                    Behavior on color { ColorAnimation { duration: Theme.normal } }
+                                }
+                            }
+                            AText {
+                                text: [i18n.t["login.s0"], i18n.t["login.s1"], i18n.t["login.s2"], i18n.t["login.s3"], i18n.t["login.s4"]][parent.strength]
+                                size: Theme.fsMicro
+                                mute: true
+                                Layout.preferredWidth: 80
+                                horizontalAlignment: Text.AlignRight
+                            }
+                        }
+                        Field {
+                            id: newPass2
+                            Layout.fillWidth: true
+                            label: i18n.t["login.password2"]
+                            icon: "lock"
+                            password: true
+                            error: newPass2.text !== "" && newPass2.text !== newPass.text ? i18n.t["login.password_mismatch"] : ""
+                            onAccepted: signUpButton.clicked()
+                        }
+                    }
+
+                    // Ошибка входа.
+                    Rectangle {
+                        Layout.fillWidth: true
+                        visible: root.error !== ""
+                        radius: Theme.radius
+                        color: Theme.alpha(Theme.danger, 0.1)
+                        border.color: Theme.alpha(Theme.danger, 0.35)
+                        implicitHeight: errText.implicitHeight + 18
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.margins: 9
+                            spacing: 8
+                            Icon { name: "circle-alert"; color: Theme.danger }
+                            AText { id: errText; text: root.error; color: Theme.danger; wrapMode: Text.Wrap; elide: Text.ElideNone; Layout.fillWidth: true; size: Theme.fsSmall }
+                        }
+                    }
+
+                    Button {
+                        id: signInButton
+                        visible: !root.signUp
+                        Layout.fillWidth: true
+                        Layout.topMargin: 4
+                        variant: "primary"
+                        iconName: "arrow-right"
+                        text: i18n.t["login.signin"]
+                        loading: backend.authBusy
+                        enabled: !backend.authBusy
+                        onClicked: backend.signIn(profile.combo.currentText, password.text, remember.checked)
+                    }
+                    Button {
+                        id: signUpButton
+                        visible: root.signUp
+                        Layout.fillWidth: true
+                        Layout.topMargin: 4
+                        variant: "primary"
+                        iconName: "sparkles"
+                        text: i18n.t["login.create"]
+                        loading: backend.authBusy
+                        enabled: !backend.authBusy
+                        onClicked: backend.signUp(newName.text, newPass.text, newPass2.text)
+                    }
+                    Button {
+                        visible: backend.profiles.length > 0
+                        Layout.fillWidth: true
+                        variant: "ghost"
+                        text: root.signUp ? i18n.t["login.have_profile"] : i18n.t["login.create"]
+                        onClicked: { root.signUp = !root.signUp; root.error = "" }
+                    }
+                }
+            }
+
+            AText {
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 22
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: backend.appName + " " + backend.appVersion + " · " + i18n.t["login.local"]
+                mute: true
+                size: Theme.fsSmall
+            }
+        }
+    }
+}
+````
+
+### `ui/qml/Shell.qml`
+
+*495 строк*
+
+````qml
+import QtQuick
+import QtQuick.Controls.Basic as T
+import QtQuick.Layouts
+import Ao
+
+// Оболочка после входа: боковая навигация, верхняя панель со статусом
+// прогона и страницы, которые загружаются при первом открытии и дальше
+// переключаются с анимацией.
+Item {
+    id: shell
+    // Стартовая страница выбирается один раз; дальше страницу меняет только
+    // пользователь. Связывание со статусом воркспейса сбрасывало бы выбор при
+    // каждом изменении состояния приложения.
+    property string page: ""
+    Component.onCompleted: page = backend.workspaceId >= 0 ? "dashboard" : "workspaces"
+
+    readonly property var sections: [
+        { title: i18n.t["nav.g_project"], items: [
+            { key: "workspaces", icon: "layers", title: i18n.t["nav.workspaces"] },
+            { key: "agents", icon: "bot", title: i18n.t["nav.agents"] },
+            { key: "task", icon: "list-checks", title: i18n.t["nav.task"] } ] },
+        { title: i18n.t["nav.g_work"], items: [
+            { key: "run", icon: "play", title: i18n.t["nav.run"] },
+            { key: "supervisor", icon: "shield-check", title: i18n.t["nav.supervisor"] },
+            { key: "dashboard", icon: "layout-dashboard", title: i18n.t["nav.dashboard"] } ] },
+        { title: i18n.t["nav.g_resources"], items: [
+            { key: "keys", icon: "key-round", title: i18n.t["nav.keys"] },
+            { key: "budget", icon: "wallet", title: i18n.t["nav.budget"] },
+            { key: "export", icon: "package", title: i18n.t["nav.export"] } ] }
+    ]
+    readonly property var pageFiles: ({
+        workspaces: "pages/Workspaces.qml", agents: "pages/Agents.qml", task: "pages/Task.qml",
+        run: "pages/Run.qml", supervisor: "pages/Supervisor.qml", dashboard: "pages/Dashboard.qml",
+        keys: "pages/Keys.qml", budget: "pages/Budget.qml", export: "pages/Export.qml",
+        settings: "pages/Settings.qml"
+    })
+    readonly property var order: ["workspaces", "agents", "task", "run", "supervisor",
+                                  "dashboard", "keys", "budget", "export", "settings"]
+
+    function go(key) { if (pageFiles[key]) page = key }
+
+    Connections {
+        target: backend
+        function onNavigateRequested(key) { shell.go(key) }
+    }
+
+    // Горячие клавиши: Ctrl+1…0 — страницы, Ctrl+K — палитра команд.
+    Repeater {
+        model: shell.order
+        delegate: Item {
+            required property string modelData
+            required property int index
+            Shortcut {
+                sequence: "Ctrl+" + ((index + 1) % 10)
+                onActivated: shell.go(modelData)
+            }
+        }
+    }
+    Shortcut { sequence: "Ctrl+K"; onActivated: palette.open() }
+
+    RowLayout {
+        anchors.fill: parent
+        spacing: 0
+
+        // --- боковая панель -----------------------------------------------------
+        Rectangle {
+            id: sidebar
+            Layout.preferredWidth: 248
+            Layout.fillHeight: true
+            color: Theme.alpha(Theme.sidebar, 0.86)
+            Rectangle { anchors.right: parent.right; width: 1; height: parent.height; color: Theme.border }
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 16
+                anchors.topMargin: 20
+                spacing: 4
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 6
+                    Layout.bottomMargin: 18
+                    spacing: 12
+                    OrbitLogo { size: 36 }
+                    ColumnLayout {
+                        spacing: 0
+                        AText { text: backend.appName; weight: Font.Bold; size: Theme.fsH3 }
+                        AText { text: "v" + backend.appVersion; mute: true; size: Theme.fsMicro; mono: true }
+                    }
+                }
+
+                // Быстрый поиск / палитра команд.
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.bottomMargin: 10
+                    height: 36
+                    radius: Theme.radius
+                    color: searchHover.hovered ? Theme.surface2 : Theme.input
+                    border.color: Theme.border
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 8
+                        spacing: 8
+                        Icon { name: "search"; size: 15; color: Theme.textMute }
+                        AText { text: i18n.t["nav.search"]; mute: true; size: Theme.fsSmall; Layout.fillWidth: true }
+                        Rectangle {
+                            radius: 5; color: Theme.surface3
+                            implicitWidth: kbd.implicitWidth + 10; implicitHeight: 20
+                            AText { id: kbd; anchors.centerIn: parent; text: "Ctrl K"; size: Theme.fsMicro; mono: true; dim: true }
+                        }
+                    }
+                    HoverHandler { id: searchHover; cursorShape: Qt.PointingHandCursor }
+                    TapHandler { onTapped: palette.open() }
+                }
+
+                // Навигация с «переезжающей» подсветкой.
+                Item {
+                    id: navArea
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+
+                    Rectangle {
+                        id: highlight
+                        property Item target: null
+                        x: 0
+                        width: navArea.width
+                        height: 38
+                        // Зависимость от высот нужна, чтобы позиция пересчиталась после раскладки.
+                        y: target ? (navColumn.height, sidebar.height, target.mapToItem(navArea, 0, 0).y) : -100
+                        radius: Theme.radius
+                        visible: target !== null
+                        gradient: Gradient {
+                            orientation: Gradient.Horizontal
+                            GradientStop { position: 0; color: Theme.alpha(Theme.violet, 0.28) }
+                            GradientStop { position: 1; color: Theme.alpha(Theme.cyan, 0.06) }
+                        }
+                        border.color: Theme.alpha(Theme.violetSoft, 0.25)
+                        Behavior on y { NumberAnimation { duration: Theme.normal; easing.type: Easing.OutCubic } }
+                        Rectangle {
+                            width: 3; height: 18; radius: 2
+                            anchors.verticalCenter: parent.verticalCenter
+                            x: 4
+                            gradient: Gradient {
+                                GradientStop { position: 0; color: Theme.violetSoft }
+                                GradientStop { position: 1; color: Theme.cyan }
+                            }
+                        }
+                    }
+
+                    Column {
+                        id: navColumn
+                        width: parent.width
+                        spacing: 2
+                        Repeater {
+                            model: shell.sections
+                            delegate: Column {
+                                id: section
+                                required property var modelData
+                                width: navColumn.width
+                                spacing: 2
+                                AText {
+                                    text: section.modelData.title.toUpperCase()
+                                    size: Theme.fsMicro
+                                    weight: Font.DemiBold
+                                    color: Theme.textFaint
+                                    leftPadding: 12
+                                    topPadding: 12
+                                    bottomPadding: 6
+                                    font.letterSpacing: 1.2
+                                }
+                                Repeater {
+                                    model: section.modelData.items
+                                    delegate: NavItem {
+                                        width: navColumn.width
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                NavItem {
+                    Layout.fillWidth: true
+                    modelData: ({ key: "settings", icon: "settings", title: i18n.t["nav.settings"] })
+                }
+
+                // Профиль и выход.
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.topMargin: 8
+                    height: 56
+                    radius: Theme.radius
+                    color: Theme.alpha(Theme.surface2, 0.7)
+                    border.color: Theme.border
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.margins: 10
+                        spacing: 10
+                        Rectangle {
+                            width: 34; height: 34; radius: 17
+                            gradient: Gradient {
+                                GradientStop { position: 0; color: Theme.violet }
+                                GradientStop { position: 1; color: Theme.teal }
+                            }
+                            AText {
+                                anchors.centerIn: parent
+                                text: backend.username.length ? backend.username[0].toUpperCase() : "?"
+                                weight: Font.Bold
+                                color: "white"
+                            }
+                        }
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 0
+                            AText { text: backend.username; weight: Font.DemiBold; Layout.fillWidth: true }
+                            AText { text: i18n.t["nav.local_profile"]; mute: true; size: Theme.fsMicro; Layout.fillWidth: true }
+                        }
+                        IconButton {
+                            iconName: "log-out"
+                            tip: i18n.t["nav.logout"]
+                            onClicked: backend.logout()
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- правая часть ------------------------------------------------------
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            spacing: 0
+
+            TopBar {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 60
+            }
+
+            Item {
+                id: stage
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                clip: true
+
+                Repeater {
+                    model: shell.order
+                    delegate: Loader {
+                        id: pageLoader
+                        required property string modelData
+                        readonly property bool current: shell.page === modelData
+                        property bool visited: false
+                        anchors.fill: parent
+                        active: visited || current
+                        visible: opacity > 0.01
+                        opacity: current ? 1 : 0
+                        source: shell.pageFiles[modelData]
+                        onCurrentChanged: if (current) { visited = true; slide.y = Theme.rich ? 16 : 0; slideIn.restart() }
+                        Behavior on opacity { NumberAnimation { duration: Theme.normal; easing.type: Easing.OutCubic } }
+                        transform: Translate { id: slide }
+                        NumberAnimation { id: slideIn; target: slide; property: "y"; to: 0; duration: Theme.slow; easing.type: Easing.OutCubic }
+                    }
+                }
+            }
+        }
+    }
+
+    // Строка навигации (используется и для «Настроек» внизу панели).
+    component NavItem: Item {
+        id: nav
+        required property var modelData
+        readonly property bool active: shell.page === modelData.key
+        height: 38
+        onActiveChanged: if (active) highlight.target = nav
+        Component.onCompleted: if (active) highlight.target = nav
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 14
+            anchors.rightMargin: 10
+            spacing: 12
+            Icon {
+                name: nav.modelData.icon
+                size: 17
+                color: nav.active ? Theme.violetSoft : (navMouse.containsMouse ? Theme.text : Theme.textMute)
+            }
+            AText {
+                text: nav.modelData.title
+                Layout.fillWidth: true
+                weight: nav.active ? Font.DemiBold : Font.Medium
+                color: nav.active ? Theme.text : (navMouse.containsMouse ? Theme.text : Theme.textDim)
+                Behavior on color { ColorAnimation { duration: Theme.fast } }
+            }
+            // Живые индикаторы: идёт прогон, ждут решения.
+            StatusDot {
+                visible: nav.modelData.key === "run" && backend.running
+                status: "running"
+            }
+            Badge {
+                visible: nav.modelData.key === "run" && backend.pendingApprovals > 0
+                text: backend.pendingApprovals
+                tone: "warning"
+                solid: true
+            }
+            Badge {
+                visible: nav.modelData.key === "supervisor" && backend.supervisor.openIncidents > 0
+                text: backend.supervisor.openIncidents
+                tone: "error"
+            }
+        }
+        MouseArea {
+            id: navMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: shell.go(nav.modelData.key)
+        }
+    }
+
+    // Верхняя панель: активный воркспейс и живой статус прогона.
+    component TopBar: Rectangle {
+        color: "transparent"
+        Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Theme.alpha(Theme.border, 0.7) }
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: Theme.pagePad
+            anchors.rightMargin: Theme.pagePad
+            spacing: 14
+
+            Icon { name: "layers"; size: 15; color: Theme.textMute }
+            T.AbstractButton {
+                id: wsButton
+                hoverEnabled: true
+                implicitHeight: 34
+                implicitWidth: wsRow.implicitWidth + 20
+                onClicked: shell.go("workspaces")
+                background: Rectangle {
+                    radius: Theme.radiusS
+                    color: wsButton.hovered ? Theme.surface2 : "transparent"
+                    Behavior on color { ColorAnimation { duration: Theme.fast } }
+                }
+                contentItem: Item {
+                    RowLayout {
+                        id: wsRow
+                        anchors.centerIn: parent
+                        spacing: 8
+                        AText {
+                            text: backend.workspaceName !== "" ? backend.workspaceName : i18n.t["top.no_ws"]
+                            weight: Font.DemiBold
+                            color: backend.workspaceName !== "" ? Theme.text : Theme.textMute
+                        }
+                        Icon { name: "chevron-down"; size: 14; color: Theme.textMute }
+                    }
+                }
+            }
+
+            Item { Layout.fillWidth: true }
+
+            // Статус прогона: пульсирующая точка, время, токены, стоимость.
+            Rectangle {
+                visible: backend.running
+                implicitHeight: 34
+                implicitWidth: runRow.implicitWidth + 24
+                radius: 17
+                color: Theme.alpha(Theme.cyan, 0.08)
+                border.color: Theme.alpha(Theme.cyan, 0.35)
+                RowLayout {
+                    id: runRow
+                    anchors.centerIn: parent
+                    spacing: 10
+                    StatusDot { status: backend.paused ? "paused" : "running" }
+                    AText { text: backend.paused ? i18n.t["top.paused"] : i18n.t["top.running"]; weight: Font.DemiBold; size: Theme.fsSmall }
+                    AText { text: backend.runElapsed; mono: true; size: Theme.fsSmall; dim: true }
+                    Rectangle { width: 1; height: 14; color: Theme.border }
+                    Icon { name: "coins"; size: 13; color: Theme.textMute }
+                    AText { text: backend.runTokens; mono: true; size: Theme.fsSmall; dim: true }
+                    AText { text: backend.runCost; mono: true; size: Theme.fsSmall; color: Theme.teal }
+                }
+                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: shell.go("run") }
+            }
+
+            // Колокольчик: ждут решения человека.
+            T.AbstractButton {
+                id: bell
+                visible: backend.pendingApprovals > 0
+                implicitWidth: 38; implicitHeight: 34
+                hoverEnabled: true
+                onClicked: shell.go("run")
+                background: Rectangle {
+                    radius: Theme.radiusS
+                    color: Theme.alpha(Theme.warning, bell.hovered ? 0.22 : 0.12)
+                    border.color: Theme.alpha(Theme.warning, 0.4)
+                }
+                contentItem: Icon {
+                    name: "bell"; size: 16; color: Theme.warning
+                    SequentialAnimation on rotation {
+                        running: Theme.rich && bell.visible
+                        loops: Animation.Infinite
+                        NumberAnimation { to: 14; duration: 90 }
+                        NumberAnimation { to: -12; duration: 110 }
+                        NumberAnimation { to: 8; duration: 90 }
+                        NumberAnimation { to: 0; duration: 90 }
+                        PauseAnimation { duration: 2200 }
+                    }
+                }
+                Tip { text: i18n.fmt(i18n.t["top.pending"], { n: backend.pendingApprovals }); shown: bell.hovered }
+            }
+
+            Button {
+                visible: !backend.running && shell.page !== "run"
+                compact: true
+                variant: "secondary"
+                iconName: "play"
+                text: i18n.t["run.start"]
+                enabled: backend.run.canStart
+                onClicked: { shell.go("run"); backend.run.start() }
+            }
+        }
+    }
+
+    CommandPalette { id: palette }
+
+    // Палитра команд: переход на страницы и частые действия с клавиатуры.
+    component CommandPalette: Sheet {
+        id: pal
+        sheetWidth: 560
+        title: i18n.t["palette.title"]
+        icon: "command"
+        property string query: ""
+        readonly property var entries: {
+            var list = []
+            for (var s = 0; s < shell.sections.length; ++s)
+                for (var i = 0; i < shell.sections[s].items.length; ++i) {
+                    var it = shell.sections[s].items[i]
+                    list.push({ kind: "page", key: it.key, icon: it.icon, title: it.title })
+                }
+            list.push({ kind: "page", key: "settings", icon: "settings", title: i18n.t["nav.settings"] })
+            list.push({ kind: "action", key: "start", icon: "play", title: i18n.t["palette.start"] })
+            list.push({ kind: "action", key: "summary", icon: "scroll-text", title: i18n.t["sup.make_summary"] })
+            list.push({ kind: "action", key: "motion", icon: "sparkles", title: i18n.t["palette.motion"] })
+            var q = pal.query.toLowerCase()
+            return q === "" ? list : list.filter(function(e) { return e.title.toLowerCase().indexOf(q) >= 0 })
+        }
+        property int selected: 0
+        onOpened: { query = ""; selected = 0; searchField.text = ""; searchField.focusInput() }
+
+        function run(entry) {
+            close()
+            if (!entry) return
+            if (entry.kind === "page") shell.go(entry.key)
+            else if (entry.key === "start") { shell.go("run"); backend.run.start() }
+            else if (entry.key === "summary") backend.supervisor.makeSummary()
+            else if (entry.key === "motion") backend.setMotion(backend.motion === "full" ? "reduced" : backend.motion === "reduced" ? "off" : "full")
+        }
+
+        Field {
+            id: searchField
+            Layout.fillWidth: true
+            icon: "search"
+            placeholder: i18n.t["palette.placeholder"]
+            onTextChanged: { pal.query = text; pal.selected = 0 }
+            onAccepted: pal.run(pal.entries[pal.selected])
+            onDownPressed: pal.selected = Math.min(pal.selected + 1, pal.entries.length - 1)
+            onUpPressed: pal.selected = Math.max(pal.selected - 1, 0)
+        }
+        Repeater {
+            model: pal.entries
+            delegate: Rectangle {
+                required property var modelData
+                required property int index
+                Layout.fillWidth: true
+                height: 40
+                radius: Theme.radius
+                color: index === pal.selected ? Theme.alpha(Theme.violet, 0.18)
+                     : (entryMouse.containsMouse ? Theme.surface2 : "transparent")
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 12
+                    spacing: 12
+                    Icon { name: modelData.icon; size: 16; color: index === pal.selected ? Theme.violetSoft : Theme.textMute }
+                    AText { text: modelData.title; Layout.fillWidth: true }
+                    AText { text: modelData.kind === "page" ? i18n.t["palette.page"] : i18n.t["palette.action"]; mute: true; size: Theme.fsMicro }
+                }
+                MouseArea {
+                    id: entryMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onEntered: pal.selected = index
+                    onClicked: pal.run(modelData)
+                }
+            }
+        }
+    }
+}
+````
+
+### `ui/qml/pages/Workspaces.qml`
+
+*204 строк*
+
+````qml
+import QtQuick
+import QtQuick.Layouts
+import Ao
+
+// Воркспейсы: параллельные проекты. Активный подсвечен, клик — сделать активным.
+Page {
+    id: page
+    title: i18n.t["ws.title"]
+    subtitle: i18n.t["ws.subtitle"]
+    icon: "layers"
+    readonly property var ctl: backend.workspaces
+
+    headerActions: [
+        Button {
+            variant: "primary"
+            iconName: "plus"
+            text: i18n.t["ws.new"]
+            onClicked: editor.edit(-1, "", "")
+        }
+    ]
+
+    EmptyState {
+        visible: page.ctl.model.count === 0
+        Layout.fillWidth: true
+        Layout.topMargin: 60
+        icon: "layers"
+        title: i18n.t["ws.empty_title"]
+        text: i18n.t["ws.empty"]
+        actionText: i18n.t["ws.new"]
+        onAction: editor.edit(-1, "", "")
+    }
+
+    GridLayout {
+        id: grid
+        Layout.fillWidth: true
+        visible: page.ctl.model.count > 0
+        columns: Math.max(1, Math.floor((page.contentWidth + 16) / 340))
+        columnSpacing: 16
+        rowSpacing: 16
+
+        Repeater {
+            model: page.ctl.model
+            delegate: Card {
+                id: wsCard
+                Layout.fillWidth: true
+                Layout.preferredHeight: 214
+                hoverable: true
+                glow: model.active
+                stagger: index
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: model.active ? Qt.ArrowCursor : Qt.PointingHandCursor
+                    onClicked: if (!model.active) page.ctl.select(model.id)
+                }
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: 10
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 12
+                        Rectangle {
+                            width: 40; height: 40; radius: 12
+                            gradient: Gradient {
+                                GradientStop { position: 0; color: model.active ? Theme.violet : Theme.surface3 }
+                                GradientStop { position: 1; color: model.active ? Theme.teal : Theme.surface2 }
+                            }
+                            AText {
+                                anchors.centerIn: parent
+                                text: model.name.length ? model.name[0].toUpperCase() : "?"
+                                weight: Font.Bold
+                                size: Theme.fsH2
+                                color: model.active ? "white" : Theme.textDim
+                            }
+                        }
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 2
+                            AText { text: model.name; weight: Font.DemiBold; size: Theme.fsH3; Layout.fillWidth: true }
+                            AText { text: i18n.fmt(i18n.t["ws.updated"], { when: model.updated }); mute: true; size: Theme.fsSmall }
+                        }
+                        Badge {
+                            visible: model.active
+                            text: i18n.t["ws.active"]
+                            tone: "violet"
+                            icon: "check"
+                        }
+                    }
+
+                    AText {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        text: model.description !== "" ? model.description : i18n.t["ws.no_description"]
+                        dim: model.description !== ""
+                        mute: model.description === ""
+                        wrapMode: Text.Wrap
+                        elide: Text.ElideRight
+                        maximumLineCount: 2
+                        verticalAlignment: Text.AlignTop
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 14
+                        Stat { glyph: "bot"; value: model.agents }
+                        Stat { glyph: "coins"; value: model.tokens }
+                        Stat { glyph: "dollar-sign"; value: model.cost; tint: Theme.teal }
+                        Item { Layout.fillWidth: true }
+                        IconButton {
+                            iconName: "pencil"
+                            tip: i18n.t["common.edit"]
+                            onClicked: editor.edit(model.id, model.name, model.description)
+                        }
+                        IconButton {
+                            iconName: "trash-2"
+                            danger: true
+                            tip: i18n.t["common.delete"]
+                            onClicked: confirm.ask(i18n.t["ws.delete_title"], i18n.t["ws.delete_confirm"],
+                                                   function() { page.ctl.remove(model.id) })
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        visible: model.taskTitle !== ""
+                        height: 30
+                        radius: Theme.radiusS
+                        color: Theme.alpha(Theme.surface3, 0.6)
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 10
+                            anchors.rightMargin: 10
+                            spacing: 8
+                            Icon { name: "list-checks"; size: 13; color: Theme.textMute }
+                            AText { text: model.taskTitle; size: Theme.fsSmall; dim: true; Layout.fillWidth: true }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    component Stat: Row {
+        property string glyph: ""
+        property var value
+        property color tint: Theme.textDim
+        spacing: 5
+        Icon { name: glyph; size: 13; color: Theme.textMute; anchors.verticalCenter: parent.verticalCenter }
+        AText { text: value; size: Theme.fsSmall; mono: true; color: tint; anchors.verticalCenter: parent.verticalCenter }
+    }
+
+    Confirm {
+        id: confirm
+        confirmText: i18n.t["common.delete"]
+        cancelText: i18n.t["common.cancel"]
+    }
+
+    Sheet {
+        id: editor
+        property int wsId: -1
+        property string error: ""
+        title: wsId >= 0 ? i18n.t["ws.edit"] : i18n.t["ws.new"]
+        icon: "layers"
+        sheetWidth: 480
+
+        function edit(id, name, description) {
+            wsId = id
+            error = ""
+            nameField.text = name
+            descField.text = description
+            open()
+            nameField.focusInput()
+        }
+        function save() {
+            var err = wsId >= 0 ? page.ctl.update(wsId, nameField.text, descField.text)
+                                : page.ctl.create(nameField.text, descField.text)
+            if (err === "") close(); else error = err
+        }
+
+        Field {
+            id: nameField
+            Layout.fillWidth: true
+            label: i18n.t["ws.name"]
+            icon: "layers"
+            error: editor.error
+            onAccepted: editor.save()
+        }
+        TextBox {
+            id: descField
+            Layout.fillWidth: true
+            label: i18n.t["common.description"]
+            placeholder: i18n.t["ws.desc_placeholder"]
+            minHeight: 100
+        }
+
+        footer: [
+            Item { Layout.fillWidth: true },
+            Button { text: i18n.t["common.cancel"]; variant: "ghost"; onClicked: editor.close() },
+            Button { text: i18n.t["common.save"]; variant: "primary"; iconName: "check"; onClicked: editor.save() }
+        ]
+    }
+}
+````
+
+### `ui/qml/pages/Keys.qml`
+
+*293 строк*
+
+````qml
+import QtQuick
+import QtQuick.Layouts
+import Ao
+
+// API-ключи: карточки подключений с живой проверкой и мастер добавления,
+// где провайдер выбирается плиткой, а адрес подставляется сам.
+Page {
+    id: page
+    title: i18n.t["keys.title"]
+    subtitle: i18n.t["keys.subtitle"]
+    icon: "key-round"
+    readonly property var ctl: backend.keys
+
+    headerActions: [
+        Button {
+            variant: "primary"
+            iconName: "plus"
+            text: i18n.t["keys.new"]
+            onClicked: editor.openNew()
+        }
+    ]
+
+    EmptyState {
+        visible: page.ctl.model.count === 0
+        Layout.fillWidth: true
+        Layout.topMargin: 60
+        icon: "key-round"
+        title: i18n.t["keys.empty_title"]
+        text: i18n.t["keys.empty"]
+        actionText: i18n.t["keys.new"]
+        onAction: editor.openNew()
+    }
+
+    Repeater {
+        model: page.ctl.model
+        delegate: Card {
+            Layout.fillWidth: true
+            hoverable: true
+            stagger: index
+            padding: 18
+
+            RowLayout {
+                width: parent.width
+                spacing: 16
+
+                Rectangle {
+                    width: 46; height: 46; radius: 14
+                    color: model.local ? Theme.alpha(Theme.teal, 0.14) : Theme.alpha(Theme.violet, 0.14)
+                    border.color: model.local ? Theme.alpha(Theme.teal, 0.35) : Theme.alpha(Theme.violetSoft, 0.3)
+                    Icon {
+                        anchors.centerIn: parent
+                        name: model.local ? "hard-drive" : "key-round"
+                        size: 20
+                        color: model.local ? Theme.teal : Theme.violetSoft
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 4
+                    RowLayout {
+                        spacing: 8
+                        AText { text: model.label; weight: Font.DemiBold; size: Theme.fsH3 }
+                        Badge { text: model.providerTitle; tone: "violet" }
+                        Badge { visible: model.free; text: i18n.t["keys.free"]; tone: "success" }
+                        Badge { visible: model.local; text: i18n.t["keys.local"]; tone: "accent"; icon: "hard-drive" }
+                    }
+                    AText { text: model.baseUrl; mute: true; mono: true; size: Theme.fsSmall; Layout.fillWidth: true }
+                    RowLayout {
+                        spacing: 8
+                        Icon {
+                            name: model.hasSecret ? "lock" : "circle-dot"
+                            size: 12
+                            color: model.hasSecret ? Theme.success : Theme.textMute
+                        }
+                        AText {
+                            text: model.hasSecret ? i18n.t["keys.stored"] : i18n.t["keys.no_secret"]
+                            size: Theme.fsSmall
+                            dim: true
+                        }
+                        AText {
+                            visible: model.models > 0
+                            text: "· " + i18n.fmt(i18n.t["keys.models_cached"], { n: model.models })
+                            size: Theme.fsSmall
+                            mute: true
+                        }
+                    }
+                    // Результат проверки соединения.
+                    RowLayout {
+                        visible: model.testState !== ""
+                        spacing: 8
+                        Spinner { visible: model.testState === "testing"; size: 14 }
+                        Icon {
+                            visible: model.testState !== "testing"
+                            name: model.testState === "ok" ? "circle-check" : "circle-x"
+                            size: 14
+                            color: model.testState === "ok" ? Theme.success : Theme.danger
+                        }
+                        AText {
+                            text: model.testState === "testing" ? i18n.t["keys.testing"] : model.testMessage
+                            size: Theme.fsSmall
+                            color: model.testState === "fail" ? Theme.danger
+                                 : model.testState === "ok" ? Theme.success : Theme.textDim
+                            Layout.maximumWidth: 560
+                            wrapMode: Text.Wrap
+                            elide: Text.ElideNone
+                        }
+                    }
+                }
+
+                Button {
+                    Layout.alignment: Qt.AlignTop
+                    compact: true
+                    iconName: "activity"
+                    text: i18n.t["common.test"]
+                    loading: model.testState === "testing"
+                    enabled: model.testState !== "testing"
+                    onClicked: page.ctl.test(model.id)
+                }
+                IconButton {
+                    Layout.alignment: Qt.AlignTop
+                    iconName: "pencil"
+                    tip: i18n.t["common.edit"]
+                    onClicked: editor.openEdit(model.id, model.provider, model.label, model.baseUrl)
+                }
+                IconButton {
+                    Layout.alignment: Qt.AlignTop
+                    iconName: "trash-2"
+                    danger: true
+                    tip: i18n.t["common.delete"]
+                    onClicked: confirm.ask(i18n.t["keys.delete_title"], i18n.t["keys.delete_confirm"],
+                                           function() { page.ctl.remove(model.id) })
+                }
+            }
+        }
+    }
+
+    Confirm {
+        id: confirm
+        confirmText: i18n.t["common.delete"]
+        cancelText: i18n.t["common.cancel"]
+    }
+
+    Sheet {
+        id: editor
+        property int keyId: -1
+        property string provider: "openai"
+        property string error: ""
+        readonly property var preset: {
+            var list = page.ctl.presets
+            for (var i = 0; i < list.length; ++i) if (list[i].key === provider) return list[i]
+            return list.length ? list[0] : ({})
+        }
+        title: keyId >= 0 ? i18n.t["keys.edit"] : i18n.t["keys.new"]
+        subtitle: i18n.t["keys.subtitle"]
+        icon: "key-round"
+        sheetWidth: 680
+
+        function openNew() {
+            keyId = -1; error = ""; provider = "openai"
+            labelField.text = ""; urlField.text = preset.baseUrl; secretField.text = ""
+            open()
+        }
+        function openEdit(id, prov, label, url) {
+            keyId = id; error = ""; provider = prov
+            labelField.text = label; urlField.text = url; secretField.text = ""
+            open()
+        }
+        function pick(key) {
+            provider = key
+            urlField.text = preset.baseUrl
+            if (labelField.text === "") labelField.text = ""
+        }
+        function save() {
+            var err = keyId >= 0 ? page.ctl.update(keyId, labelField.text, urlField.text, secretField.text)
+                                 : page.ctl.create(provider, labelField.text, urlField.text, secretField.text)
+            if (err === "") close(); else error = err
+        }
+
+        // Провайдеры плитками (только при создании: провайдер ключа не меняется).
+        AText { visible: editor.keyId < 0; text: i18n.t["keys.provider"]; size: Theme.fsSmall; weight: Font.Medium; dim: true }
+        GridLayout {
+            visible: editor.keyId < 0
+            Layout.fillWidth: true
+            columns: 4
+            columnSpacing: 10
+            rowSpacing: 10
+            Repeater {
+                model: page.ctl.presets
+                delegate: Rectangle {
+                    id: tile
+                    required property var modelData
+                    readonly property bool chosen: editor.provider === modelData.key
+                    Layout.fillWidth: true
+                    implicitHeight: 64
+                    radius: Theme.radius
+                    color: chosen ? Theme.alpha(Theme.violet, 0.16) : (tileMouse.containsMouse ? Theme.surface3 : Theme.surface2)
+                    border.color: chosen ? Theme.violet : Theme.border
+                    Behavior on color { ColorAnimation { duration: Theme.fast } }
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: 10
+                        spacing: 4
+                        AText { text: tile.modelData.title; weight: Font.DemiBold; size: Theme.fsSmall; Layout.fillWidth: true }
+                        RowLayout {
+                            spacing: 4
+                            Badge { visible: tile.modelData.free; text: i18n.t["keys.free"]; tone: "success" }
+                            Badge { visible: tile.modelData.local; text: i18n.t["keys.local"]; tone: "accent" }
+                        }
+                    }
+                    MouseArea {
+                        id: tileMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: editor.pick(tile.modelData.key)
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            visible: (editor.preset.notes || "") !== "" || (editor.preset.docsUrl || "") !== ""
+            radius: Theme.radius
+            color: Theme.alpha(Theme.cyan, 0.06)
+            border.color: Theme.alpha(Theme.cyan, 0.2)
+            implicitHeight: notesCol.implicitHeight + 20
+            ColumnLayout {
+                id: notesCol
+                anchors.fill: parent
+                anchors.margins: 10
+                spacing: 4
+                AText {
+                    visible: (editor.preset.notes || "") !== ""
+                    text: editor.preset.notes || ""
+                    size: Theme.fsSmall
+                    dim: true
+                    wrapMode: Text.Wrap
+                    elide: Text.ElideNone
+                    Layout.fillWidth: true
+                }
+                AText {
+                    visible: (editor.preset.docsUrl || "") !== ""
+                    text: "<a href=\"" + editor.preset.docsUrl + "\">" + i18n.t["keys.get_key"] + " ↗</a>"
+                    textFormat: Text.RichText
+                    size: Theme.fsSmall
+                    onLinkActivated: function(link) { Qt.openUrlExternally(link) }
+                    HoverHandler { cursorShape: Qt.PointingHandCursor }
+                }
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 12
+            Field {
+                id: labelField
+                Layout.fillWidth: true
+                label: i18n.t["keys.label"]
+                placeholder: editor.preset.title || ""
+                icon: "star"
+            }
+            Field {
+                id: urlField
+                Layout.fillWidth: true
+                Layout.preferredWidth: 2
+                label: i18n.t["keys.base_url"]
+                mono: true
+                icon: "globe"
+            }
+        }
+        Field {
+            id: secretField
+            Layout.fillWidth: true
+            label: i18n.t["keys.key"]
+            password: true
+            mono: true
+            icon: "lock"
+            placeholder: editor.keyId >= 0 ? i18n.t["keys.keep_secret"] : "sk-…"
+            hint: editor.preset.requiresKey === false ? i18n.t["keys.no_key_needed"] : ""
+            error: editor.error
+            onAccepted: editor.save()
+        }
+
+        footer: [
+            Icon { name: "shield-check"; size: 14; color: Theme.success },
+            AText { text: i18n.t["keys.encrypted_note"]; mute: true; size: Theme.fsSmall; Layout.fillWidth: true; wrapMode: Text.Wrap; elide: Text.ElideNone },
+            Button { text: i18n.t["common.cancel"]; variant: "ghost"; onClicked: editor.close() },
+            Button { text: i18n.t["common.save"]; variant: "primary"; iconName: "check"; onClicked: editor.save() }
+        ]
+    }
+}
+````
+
+### `ui/qml/pages/Agents.qml`
+
+*390 строк*
+
+````qml
+import QtQuick
+import QtQuick.Layouts
+import Ao
+
+// Агенты воркспейса: сетка карточек и редактор с шаблонами ролей,
+// загрузкой моделей, инструментами и системным промптом.
+Page {
+    id: page
+    title: i18n.t["agents.title"]
+    subtitle: i18n.t["agents.isolated_note"]
+    icon: "bot"
+    readonly property var ctl: backend.agents
+
+    headerActions: [
+        Button {
+            variant: "primary"
+            iconName: "plus"
+            text: i18n.t["agents.new"]
+            enabled: backend.workspaceId >= 0 && page.ctl.hasKeys
+            onClicked: editor.openNew()
+        }
+    ]
+
+    EmptyState {
+        visible: backend.workspaceId < 0
+        Layout.fillWidth: true
+        Layout.topMargin: 60
+        icon: "layers"
+        title: i18n.t["ws.empty_title"]
+        text: i18n.t["ws.empty"]
+        actionText: i18n.t["nav.workspaces"]
+        actionIcon: "arrow-right"
+        onAction: backend.navigate("workspaces")
+    }
+    EmptyState {
+        visible: backend.workspaceId >= 0 && !page.ctl.hasKeys
+        Layout.fillWidth: true
+        Layout.topMargin: 60
+        icon: "key-round"
+        title: i18n.t["agents.no_keys_title"]
+        text: i18n.t["agents.no_keys"]
+        actionText: i18n.t["keys.new"]
+        onAction: backend.navigate("keys")
+    }
+    EmptyState {
+        visible: backend.workspaceId >= 0 && page.ctl.hasKeys && page.ctl.model.count === 0
+        Layout.fillWidth: true
+        Layout.topMargin: 60
+        icon: "bot"
+        title: i18n.t["agents.empty_title"]
+        text: i18n.t["agents.empty"]
+        actionText: i18n.t["agents.new"]
+        onAction: editor.openNew()
+    }
+
+    GridLayout {
+        Layout.fillWidth: true
+        visible: page.ctl.model.count > 0
+        columns: Math.max(1, Math.floor((page.contentWidth + 16) / 360))
+        columnSpacing: 16
+        rowSpacing: 16
+
+        Repeater {
+            model: page.ctl.model
+            delegate: Card {
+                id: agentCard
+                Layout.fillWidth: true
+                Layout.preferredHeight: 232
+                hoverable: true
+                stagger: index
+                glow: model.status === "running"
+                glowColor: Theme.cyan
+                opacity: model.enabled ? enter : enter * 0.55
+                readonly property var toolList: model.toolTitles
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: 10
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 12
+                        Item {
+                            width: 46; height: 46
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: 23
+                                gradient: Gradient {
+                                    GradientStop { position: 0; color: model.isSupervisor ? Theme.magenta : Theme.violet }
+                                    GradientStop { position: 1; color: model.isSupervisor ? Theme.violetSoft : Theme.cyan }
+                                }
+                                opacity: 0.9
+                                Icon { anchors.centerIn: parent; name: model.icon; size: 20; color: "white" }
+                            }
+                            StatusDot {
+                                anchors.right: parent.right
+                                anchors.bottom: parent.bottom
+                                size: 11
+                                status: model.status
+                            }
+                        }
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 2
+                            RowLayout {
+                                spacing: 6
+                                AText { text: model.name; weight: Font.DemiBold; size: Theme.fsH3; Layout.maximumWidth: 180 }
+                                Icon { visible: model.isSupervisor; name: "star"; size: 14; color: Theme.warning }
+                            }
+                            AText { text: model.roleTitle + " · " + model.statusTitle; mute: true; size: Theme.fsSmall }
+                        }
+                        Toggle {
+                            checked: model.enabled
+                            onToggled: page.ctl.setEnabled(model.id, checked)
+                        }
+                    }
+
+                    RowLayout {
+                        spacing: 6
+                        Badge { text: model.modelName !== "" ? model.modelName : "—"; tone: "accent"; icon: "cpu" }
+                        Badge { visible: model.price !== ""; text: model.price; tone: "muted"; icon: "coins" }
+                    }
+
+                    AText {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        text: model.promptPreview !== "" ? model.promptPreview : i18n.t["agents.no_prompt"]
+                        dim: true
+                        size: Theme.fsSmall
+                        wrapMode: Text.Wrap
+                        elide: Text.ElideRight
+                        maximumLineCount: 3
+                        verticalAlignment: Text.AlignTop
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 6
+                        // Инструменты: сколько помещается; край плавно гаснет.
+                        Item {
+                            Layout.fillWidth: true
+                            height: 22
+                            clip: true
+                            Row {
+                                id: toolRow
+                                spacing: 6
+                                Repeater {
+                                    model: agentCard.toolList
+                                    delegate: Rectangle {
+                                        required property string modelData
+                                        required property int index
+                                        radius: 8
+                                        height: 22
+                                        width: toolText.implicitWidth + 14
+                                        color: Theme.surface3
+                                        AText { id: toolText; anchors.centerIn: parent; text: modelData; size: Theme.fsMicro; dim: true }
+                                    }
+                                }
+                            }
+                            Rectangle {
+                                visible: toolRow.width > parent.width
+                                anchors.right: parent.right
+                                width: 28
+                                height: parent.height
+                                gradient: Gradient {
+                                    orientation: Gradient.Horizontal
+                                    GradientStop { position: 0; color: "transparent" }
+                                    GradientStop { position: 1; color: agentCard.color }
+                                }
+                            }
+                        }
+                        IconButton { iconName: "copy"; tip: i18n.t["agents.duplicate"]; onClicked: page.ctl.duplicate(model.id) }
+                        IconButton {
+                            iconName: "pencil"
+                            tip: i18n.t["common.edit"]
+                            onClicked: editor.openEdit(page.ctl.model.get(index))
+                        }
+                        IconButton {
+                            iconName: "trash-2"
+                            danger: true
+                            tip: i18n.t["common.delete"]
+                            onClicked: confirm.ask(i18n.t["agents.delete_title"], i18n.t["agents.delete_confirm"],
+                                                   function() { page.ctl.remove(model.id) })
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Confirm {
+        id: confirm
+        confirmText: i18n.t["common.delete"]
+        cancelText: i18n.t["common.cancel"]
+    }
+
+    Sheet {
+        id: editor
+        property int agentId: -1
+        property string role: "analyst"
+        property string autoName: ""
+        property string autoPrompt: ""
+        property var tools: []
+        property var models: []
+        property string error: ""
+        property bool loadingModels: false
+        title: agentId >= 0 ? i18n.t["agents.edit"] : i18n.t["agents.new"]
+        subtitle: i18n.t["agents.isolated_note"]
+        icon: "bot"
+        sheetWidth: 760
+
+        function openNew() {
+            agentId = -1; error = ""
+            nameField.text = ""; promptBox.text = ""
+            autoName = ""; autoPrompt = ""
+            temp.value = 0.7; maxTok.value = 2048
+            supervisorToggle.checked = false
+            keySelect.value = page.ctl.keyOptions.length ? page.ctl.keyOptions[0].id : -1
+            applyTemplate("analyst")
+            refreshModels()
+            modelSelect.combo.editText = models.length ? models[0] : ""
+            open()
+        }
+        function openEdit(data) {
+            agentId = data.id; error = ""
+            role = data.role
+            nameField.text = data.name; autoName = ""
+            promptBox.text = data.prompt; autoPrompt = ""
+            tools = data.tools
+            temp.value = data.temperature; maxTok.value = data.maxTokens
+            supervisorToggle.checked = data.isSupervisor
+            keySelect.value = data.keyId
+            refreshModels()
+            modelSelect.combo.editText = data.modelName
+            open()
+        }
+        // Шаблон роли подставляет имя, промпт и инструменты, но не затирает
+        // то, что пользователь уже успел поправить руками.
+        function applyTemplate(key) {
+            role = key
+            var info = page.ctl.templateInfo(key)
+            if (nameField.text === "" || nameField.text === autoName) { nameField.text = info.name; autoName = info.name }
+            if (info.prompt !== "" && (promptBox.text === "" || promptBox.text === autoPrompt)) { promptBox.text = info.prompt; autoPrompt = info.prompt }
+            tools = info.tools
+        }
+        function refreshModels() { models = page.ctl.modelsForKey(keySelect.value === undefined ? -1 : keySelect.value) }
+        function toggleTool(name, on) {
+            var list = tools.slice()
+            var i = list.indexOf(name)
+            if (on && i < 0) list.push(name)
+            if (!on && i >= 0) list.splice(i, 1)
+            tools = list
+        }
+        function save() {
+            var err = page.ctl.save({
+                id: agentId, name: nameField.text, role: role, prompt: promptBox.text,
+                keyId: keySelect.value === undefined ? -1 : keySelect.value,
+                model: modelSelect.combo.editText, temperature: temp.value, maxTokens: maxTok.value,
+                tools: tools, isSupervisor: supervisorToggle.checked
+            })
+            if (err === "") close(); else error = err
+        }
+
+        Connections {
+            target: page.ctl
+            function onModelsLoaded(keyId, list, err) {
+                editor.loadingModels = false
+                if (err !== "") { editor.error = err; return }
+                var current = modelSelect.combo.editText
+                editor.models = list
+                modelSelect.combo.editText = current
+            }
+        }
+
+        AText { text: i18n.t["agents.template"]; size: Theme.fsSmall; weight: Font.Medium; dim: true }
+        Flow {
+            Layout.fillWidth: true
+            spacing: 8
+            Repeater {
+                model: page.ctl.templates
+                delegate: Chip {
+                    required property var modelData
+                    text: modelData.title
+                    iconName: modelData.icon
+                    checked: editor.role === modelData.key
+                    onClicked: editor.applyTemplate(modelData.key)
+                }
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 12
+            Field { id: nameField; Layout.fillWidth: true; label: i18n.t["agents.name"]; icon: "user" }
+            Select {
+                id: keySelect
+                Layout.fillWidth: true
+                label: i18n.t["agents.provider_key"]
+                icon: "key-round"
+                options: page.ctl.keyOptions.map(function(k) { return { value: k.id, title: k.title } })
+                onPicked: function(v) { keySelect.value = v; editor.refreshModels() }
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 12
+            Select {
+                id: modelSelect
+                Layout.fillWidth: true
+                label: i18n.t["agents.model"]
+                icon: "cpu"
+                editable: true
+                options: editor.models
+                placeholder: "gpt-4o-mini"
+            }
+            Button {
+                Layout.alignment: Qt.AlignBottom
+                iconName: "refresh-cw"
+                text: i18n.t["agents.load_models"]
+                loading: editor.loadingModels
+                onClicked: { editor.loadingModels = true; editor.error = ""; page.ctl.loadModels(keySelect.value) }
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 24
+            RangeSlider {
+                id: temp
+                Layout.fillWidth: true
+                label: i18n.t["agents.temperature"]
+                from: 0; to: 2; stepSize: 0.1; decimals: 1
+                onCommitted: function(v) { temp.value = v }
+            }
+            RangeSlider {
+                id: maxTok
+                Layout.fillWidth: true
+                label: i18n.t["agents.max_tokens"]
+                from: 256; to: 32768; stepSize: 256; decimals: 0
+                onCommitted: function(v) { maxTok.value = v }
+            }
+        }
+
+        AText { text: i18n.t["agents.tools"]; size: Theme.fsSmall; weight: Font.Medium; dim: true }
+        Flow {
+            Layout.fillWidth: true
+            spacing: 8
+            Repeater {
+                model: page.ctl.tools
+                delegate: Chip {
+                    required property var modelData
+                    text: modelData.title
+                    checked: editor.tools.indexOf(modelData.name) >= 0
+                    onClicked: editor.toggleTool(modelData.name, checked)
+                }
+            }
+        }
+
+        TextBox {
+            id: promptBox
+            Layout.fillWidth: true
+            label: i18n.t["agents.prompt"]
+            mono: true
+            minHeight: 190
+        }
+
+        Toggle {
+            id: supervisorToggle
+            Layout.fillWidth: true
+            label: i18n.t["agents.is_supervisor"]
+            hint: i18n.t["agents.is_supervisor_hint"]
+        }
+
+        AText {
+            visible: editor.error !== ""
+            text: editor.error
+            color: Theme.danger
+            wrapMode: Text.Wrap
+            elide: Text.ElideNone
+            Layout.fillWidth: true
+        }
+
+        footer: [
+            Item { Layout.fillWidth: true },
+            Button { text: i18n.t["common.cancel"]; variant: "ghost"; onClicked: editor.close() },
+            Button { text: i18n.t["common.save"]; variant: "primary"; iconName: "check"; onClicked: editor.save() }
+        ]
+    }
+}
+````
+
+### `ui/qml/pages/Task.qml`
+
+*407 строк*
+
+````qml
+import QtQuick
+import QtQuick.Layouts
+import Ao
+
+// Постановка задачи слева, подзадачи справа: ручные или от ИИ-планировщика,
+// с исполнителями и зависимостями.
+Page {
+    id: page
+    title: i18n.t["task.title"]
+    subtitle: i18n.t["task.subtitle"]
+    icon: "list-checks"
+    readonly property var ctl: backend.task
+    property string error: ""
+    property string fmt: ctl.format
+
+    Connections {
+        target: page.ctl
+        function onChanged() {
+            if (!titleField.input.activeFocus) titleField.text = page.ctl.title
+            if (!bodyBox.area.activeFocus) bodyBox.text = page.ctl.description
+            if (!limitField.input.activeFocus) limitField.text = page.ctl.tokenLimit
+            page.fmt = page.ctl.format
+        }
+    }
+    Component.onCompleted: {
+        titleField.text = ctl.title
+        bodyBox.text = ctl.description
+        limitField.text = ctl.tokenLimit
+    }
+
+    function save() {
+        error = ctl.saveTask(titleField.text, bodyBox.text, fmt, limitField.text)
+        if (error === "") backend.toast("success", i18n.t["toast.task_saved"], "")
+        return error === ""
+    }
+
+    headerActions: [
+        Button {
+            iconName: "square-pen"
+            text: i18n.t["task.new_task"]
+            visible: page.ctl.hasTask
+            enabled: !backend.running
+            onClicked: confirm.ask(i18n.t["task.new_task"], i18n.t["task.new_task_confirm"],
+                                   function() { var e = page.ctl.newTask(); if (e !== "") backend.toast("warning", e, "") }, false,
+                                   i18n.t["task.new_task"])
+        },
+        Button {
+            variant: "primary"
+            iconName: "play"
+            text: i18n.t["run.start"]
+            enabled: !backend.running && backend.workspaceId >= 0
+            onClicked: if (page.save()) { backend.navigate("run"); backend.run.start() }
+        }
+    ]
+
+    EmptyState {
+        visible: backend.workspaceId < 0
+        Layout.fillWidth: true
+        Layout.topMargin: 60
+        icon: "layers"
+        title: i18n.t["ws.empty_title"]
+        text: i18n.t["ws.empty"]
+        actionText: i18n.t["nav.workspaces"]
+        actionIcon: "arrow-right"
+        onAction: backend.navigate("workspaces")
+    }
+
+    RowLayout {
+        visible: backend.workspaceId >= 0
+        Layout.fillWidth: true
+        spacing: 18
+
+        // --- задача -----------------------------------------------------------
+        Card {
+            Layout.preferredWidth: Math.max(380, page.contentWidth * 0.42)
+            Layout.alignment: Qt.AlignTop
+            stagger: 0
+
+            ColumnLayout {
+                width: parent.width
+                spacing: 16
+
+                SectionTitle {
+                    Layout.fillWidth: true
+                    text: i18n.t["task.statement"]
+                    icon: "square-pen"
+                    Badge {
+                        visible: page.ctl.status !== ""
+                        text: page.ctl.statusTitle
+                        tone: page.ctl.status === "done" ? "success" : page.ctl.status === "running" ? "accent"
+                            : page.ctl.status === "failed" ? "error" : "muted"
+                    }
+                }
+                Field {
+                    id: titleField
+                    Layout.fillWidth: true
+                    label: i18n.t["task.name"]
+                    placeholder: i18n.t["task.untitled"]
+                    icon: "sparkles"
+                }
+                TextBox {
+                    id: bodyBox
+                    Layout.fillWidth: true
+                    label: i18n.t["task.body"]
+                    placeholder: i18n.t["task.placeholder"]
+                    minHeight: 240
+                }
+
+                AText { text: i18n.t["task.result_format"]; size: Theme.fsSmall; weight: Font.Medium; dim: true }
+                Segmented {
+                    Layout.fillWidth: true
+                    stretch: true
+                    options: page.ctl.formats.map(function(f) { return { value: f.key, title: f.title, icon: f.icon } })
+                    value: page.fmt
+                    onPicked: function(v) { page.fmt = v }
+                }
+
+                Field {
+                    id: limitField
+                    Layout.fillWidth: true
+                    label: i18n.t["task.token_limit"]
+                    placeholder: i18n.t["task.token_limit_hint"]
+                    hint: i18n.t["task.token_limit_note"]
+                    icon: "gauge"
+                    mono: true
+                }
+
+                AText {
+                    visible: page.error !== ""
+                    text: page.error
+                    color: Theme.danger
+                    wrapMode: Text.Wrap
+                    elide: Text.ElideNone
+                    Layout.fillWidth: true
+                }
+
+                Button {
+                    Layout.fillWidth: true
+                    variant: "primary"
+                    iconName: "check"
+                    text: i18n.t["task.save"]
+                    onClicked: page.save()
+                }
+            }
+        }
+
+        // --- подзадачи ----------------------------------------------------------
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignTop
+            spacing: 12
+
+            SectionTitle {
+                Layout.fillWidth: true
+                text: i18n.t["task.subtasks"] + (page.ctl.subtasks.count ? "  ·  " + page.ctl.subtasks.count : "")
+                hint: i18n.t["task.subtasks_hint"]
+                icon: "workflow"
+                Button {
+                    compact: true
+                    iconName: "plus"
+                    text: i18n.t["task.add_subtask"]
+                    onClicked: { if (!page.ctl.hasTask && !page.save()) return; subEditor.openNew() }
+                }
+                Button {
+                    compact: true
+                    variant: "primary"
+                    iconName: "wand-sparkles"
+                    text: i18n.t["task.autosplit"]
+                    loading: page.ctl.planning
+                    enabled: !page.ctl.planning
+                    onClicked: if (page.save()) page.ctl.autosplit()
+                }
+            }
+
+            // Пока ИИ планирует — «скелет» будущих карточек.
+            Repeater {
+                model: page.ctl.planning ? 3 : 0
+                delegate: Card {
+                    Layout.fillWidth: true
+                    padding: 16
+                    ColumnLayout {
+                        width: parent.width
+                        spacing: 10
+                        Skeleton { Layout.preferredWidth: parent.width * 0.55; height: 14 }
+                        Skeleton { Layout.fillWidth: true; height: 10 }
+                        Skeleton { Layout.preferredWidth: parent.width * 0.35; height: 10 }
+                    }
+                }
+            }
+
+            Card {
+                visible: page.ctl.subtasks.count === 0 && !page.ctl.planning
+                Layout.fillWidth: true
+                EmptyState {
+                    width: parent.width
+                    icon: "workflow"
+                    title: i18n.t["task.no_subtasks_title"]
+                    text: i18n.t["task.no_subtasks"]
+                }
+            }
+
+            ListView {
+                id: subList
+                Layout.fillWidth: true
+                Layout.preferredHeight: contentHeight
+                interactive: false
+                spacing: 10
+                model: page.ctl.subtasks
+                move: Transition { NumberAnimation { properties: "y"; duration: Theme.normal; easing.type: Easing.OutCubic } }
+                displaced: Transition { NumberAnimation { properties: "y"; duration: Theme.normal; easing.type: Easing.OutCubic } }
+                add: Transition {
+                    ParallelAnimation {
+                        NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.slow }
+                        NumberAnimation { property: "scale"; from: 0.96; to: 1; duration: Theme.slow; easing.type: Easing.OutBack }
+                    }
+                }
+                remove: Transition { NumberAnimation { property: "opacity"; to: 0; duration: Theme.normal } }
+
+                delegate: Card {
+                    width: subList.width
+                    padding: 16
+                    hoverable: true
+                    glow: model.status === "running"
+                    glowColor: Theme.cyan
+
+                    RowLayout {
+                        width: parent.width
+                        spacing: 14
+
+                        Rectangle {
+                            Layout.alignment: Qt.AlignTop
+                            width: 30; height: 30; radius: 15
+                            color: Theme.alpha(Theme.statusColor(model.status), 0.16)
+                            border.color: Theme.alpha(Theme.statusColor(model.status), 0.5)
+                            AText { anchors.centerIn: parent; text: model.index; weight: Font.Bold; size: Theme.fsSmall; color: Theme.statusColor(model.status) }
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 6
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 8
+                                AText { text: model.title; weight: Font.DemiBold; Layout.fillWidth: true; wrapMode: Text.Wrap; elide: Text.ElideNone }
+                                Badge {
+                                    text: model.statusTitle
+                                    tint: Theme.statusColor(model.status)
+                                }
+                            }
+                            Flow {
+                                Layout.fillWidth: true
+                                spacing: 6
+                                Badge {
+                                    text: model.agentName
+                                    icon: model.agentId >= 0 ? "bot" : "circle-alert"
+                                    tone: model.agentId >= 0 ? "violet" : "warning"
+                                }
+                                Repeater {
+                                    model: depsHolder.titles
+                                    delegate: Badge {
+                                        required property string modelData
+                                        text: modelData
+                                        icon: "git-branch"
+                                        tone: "muted"
+                                    }
+                                }
+                                Badge { visible: model.reworks > 0; text: i18n.fmt(i18n.t["task.reworks"], { n: model.reworks }); tone: "warning"; icon: "rotate-ccw" }
+                                Badge { visible: model.tokens !== "0"; text: model.tokens + " · " + model.cost; tone: "muted"; icon: "coins" }
+                            }
+                            Item { id: depsHolder; property var titles: model.depTitles; visible: false }
+                            AText {
+                                visible: model.description !== ""
+                                text: model.description
+                                dim: true
+                                size: Theme.fsSmall
+                                wrapMode: Text.Wrap
+                                maximumLineCount: 3
+                                Layout.fillWidth: true
+                            }
+                            Rectangle {
+                                visible: model.result !== ""
+                                Layout.fillWidth: true
+                                radius: Theme.radiusS
+                                color: Theme.alpha(Theme.success, 0.06)
+                                border.color: Theme.alpha(Theme.success, 0.2)
+                                implicitHeight: resultText.implicitHeight + 16
+                                AText {
+                                    id: resultText
+                                    anchors.fill: parent
+                                    anchors.margins: 8
+                                    text: model.resultPreview
+                                    size: Theme.fsSmall
+                                    dim: true
+                                    wrapMode: Text.Wrap
+                                    maximumLineCount: 3
+                                }
+                            }
+                        }
+
+                        ColumnLayout {
+                            Layout.alignment: Qt.AlignTop
+                            spacing: 2
+                            RowLayout {
+                                spacing: 2
+                                IconButton { iconName: "chevron-up"; size: 28; enabled: index > 0; tip: i18n.t["task.move_up"]; onClicked: page.ctl.move(model.id, -1) }
+                                IconButton { iconName: "chevron-down"; size: 28; enabled: index < subList.count - 1; tip: i18n.t["task.move_down"]; onClicked: page.ctl.move(model.id, 1) }
+                            }
+                            RowLayout {
+                                spacing: 2
+                                IconButton { iconName: "pencil"; size: 28; tip: i18n.t["common.edit"]; onClicked: subEditor.openEdit(page.ctl.subtasks.get(index)) }
+                                IconButton {
+                                    iconName: "trash-2"; size: 28; danger: true; tip: i18n.t["common.delete"]
+                                    onClicked: confirm.ask(i18n.t["task.delete_subtask"], model.title, function() { page.ctl.removeSubtask(model.id) })
+                                }
+                            }
+                            IconButton {
+                                visible: model.status === "done" || model.status === "error" || model.status === "review"
+                                iconName: "rotate-ccw"; size: 28; tip: i18n.t["task.rerun"]
+                                onClicked: page.ctl.resetSubtask(model.id)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Confirm {
+        id: confirm
+        confirmText: i18n.t["common.delete"]
+        cancelText: i18n.t["common.cancel"]
+    }
+
+    Sheet {
+        id: subEditor
+        property int subId: -1
+        property var deps: []
+        property int agentId: -1
+        property string error: ""
+        title: subId >= 0 ? i18n.t["task.edit_subtask"] : i18n.t["task.add_subtask"]
+        icon: "workflow"
+        sheetWidth: 620
+
+        function openNew() {
+            subId = -1; deps = []; error = ""
+            agentId = page.ctl.agentOptions.length ? page.ctl.agentOptions[0].id : -1
+            subTitle.text = ""; subDesc.text = ""
+            open(); subTitle.focusInput()
+        }
+        function openEdit(d) {
+            subId = d.id; deps = d.deps; error = ""
+            agentId = d.agentId
+            subTitle.text = d.title; subDesc.text = d.description
+            open()
+        }
+        function toggleDep(id, on) {
+            var list = deps.slice()
+            var i = list.indexOf(id)
+            if (on && i < 0) list.push(id)
+            if (!on && i >= 0) list.splice(i, 1)
+            deps = list
+        }
+        function save() {
+            var err = page.ctl.saveSubtask({ id: subId, title: subTitle.text, description: subDesc.text,
+                                             agentId: agentId, deps: deps })
+            if (err === "") close(); else error = err
+        }
+
+        Field { id: subTitle; Layout.fillWidth: true; label: i18n.t["task.subtask_title"]; icon: "square-pen"; error: subEditor.error }
+        TextBox { id: subDesc; Layout.fillWidth: true; label: i18n.t["common.description"]; minHeight: 120 }
+        Select {
+            Layout.fillWidth: true
+            label: i18n.t["task.assignee"]
+            icon: "bot"
+            options: [{ value: -1, title: i18n.t["task.unassigned"] }].concat(
+                         page.ctl.agentOptions.map(function(a) { return { value: a.id, title: a.name + " · " + a.model } }))
+            value: subEditor.agentId
+            onPicked: function(v) { subEditor.agentId = v }
+        }
+        SectionTitle { Layout.fillWidth: true; text: i18n.t["task.depends_on"]; hint: i18n.t["task.depends_hint"]; icon: "git-branch" }
+        Flow {
+            Layout.fillWidth: true
+            spacing: 8
+            Repeater {
+                model: page.ctl.subtasks
+                delegate: Chip {
+                    visible: model.id !== subEditor.subId
+                    text: model.index + ". " + model.title
+                    checked: subEditor.deps.indexOf(model.id) >= 0
+                    onClicked: subEditor.toggleDep(model.id, checked)
+                }
+            }
+        }
+        AText {
+            visible: page.ctl.subtasks.count <= (subEditor.subId >= 0 ? 1 : 0)
+            text: i18n.t["task.no_deps_possible"]
+            mute: true
+            size: Theme.fsSmall
+        }
+
+        footer: [
+            Item { Layout.fillWidth: true },
+            Button { text: i18n.t["common.cancel"]; variant: "ghost"; onClicked: subEditor.close() },
+            Button { text: i18n.t["common.save"]; variant: "primary"; iconName: "check"; onClicked: subEditor.save() }
+        ]
+    }
+}
+````
+
+### `ui/qml/pages/Run.qml`
+
+*580 строк*
+
+````qml
+import QtQuick
+import QtQuick.Controls.Basic as T
+import QtQuick.Layouts
+import QtQuick.Shapes
+import Ao
+
+// Выполнение: управление прогоном, решения человека, живые рассуждения
+// агентов, граф подзадач и лента событий.
+Page {
+    id: page
+    title: i18n.t["run.title"]
+    subtitle: backend.run.taskTitle !== "" ? backend.run.taskTitle : i18n.t["run.subtitle"]
+    icon: "play"
+    fill: true
+    readonly property var ctl: backend.run
+
+    headerActions: [
+        Button {
+            visible: !backend.running
+            variant: "primary"
+            iconName: "play"
+            text: i18n.t["run.start"]
+            loading: page.ctl.starting
+            enabled: page.ctl.canStart && !page.ctl.starting
+            onClicked: page.ctl.start()
+        },
+        Button {
+            visible: backend.running
+            iconName: backend.paused ? "circle-play" : "circle-pause"
+            text: backend.paused ? i18n.t["run.resume"] : i18n.t["run.pause"]
+            onClicked: page.ctl.togglePause()
+        },
+        Button {
+            visible: backend.running
+            variant: "danger"
+            iconName: "square"
+            text: i18n.t["run.stop"]
+            onClicked: confirm.ask(i18n.t["run.stop"], i18n.t["run.stop_confirm"],
+                                   function() { page.ctl.stop() }, true, i18n.t["run.stop"])
+        }
+    ]
+
+    // --- сводка прогона ------------------------------------------------------
+    Card {
+        Layout.fillWidth: true
+        padding: 16
+        RowLayout {
+            width: parent.width
+            spacing: 22
+            ProgressRing {
+                size: 64
+                thickness: 6
+                value: page.ctl.progress
+                label: page.ctl.total > 0 ? Math.round(page.ctl.progress * 100) + "%" : "—"
+            }
+            Kpi { caption: i18n.t["run.k_done"]; value: page.ctl.done + " / " + page.ctl.total; tint: Theme.success }
+            Kpi { caption: i18n.t["run.k_review"]; value: page.ctl.review; tint: page.ctl.review ? Theme.violetSoft : Theme.text }
+            Kpi { caption: i18n.t["run.k_errors"]; value: page.ctl.errors; tint: page.ctl.errors ? Theme.danger : Theme.text }
+            Kpi { caption: i18n.t["run.k_time"]; value: backend.runElapsed !== "" ? backend.runElapsed : "—" }
+            Kpi { caption: i18n.t["run.k_tokens"]; value: backend.running ? backend.runTokens : "—" }
+            Kpi { caption: i18n.t["run.k_cost"]; value: backend.running ? backend.runCost : "—"; tint: Theme.teal }
+            Item { Layout.fillWidth: true }
+            // Почему нельзя запустить — сразу видно, без попытки.
+            RowLayout {
+                visible: !backend.running && page.ctl.blocker !== ""
+                spacing: 8
+                Icon { name: "info"; size: 15; color: Theme.warning }
+                AText { text: page.ctl.blocker; color: Theme.warning; size: Theme.fsSmall; Layout.maximumWidth: 360; wrapMode: Text.Wrap; elide: Text.ElideNone }
+            }
+        }
+    }
+
+    // --- решения человека ------------------------------------------------------
+    Repeater {
+        model: page.ctl.approvals
+        delegate: Card {
+            id: ask
+            Layout.fillWidth: true
+            glow: true
+            glowColor: Theme.warning
+            padding: 18
+            stagger: 0
+            property bool expanded: false
+            readonly property var opts: model.options
+            readonly property int approvalId: model.id
+
+            ColumnLayout {
+                width: parent.width
+                spacing: 12
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 12
+                    Rectangle {
+                        width: 38; height: 38; radius: 12
+                        color: Theme.alpha(Theme.warning, 0.16)
+                        Icon { anchors.centerIn: parent; name: model.icon; size: 18; color: Theme.warning }
+                    }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 2
+                        RowLayout {
+                            spacing: 8
+                            AText { text: model.reasonTitle; weight: Font.Bold; color: Theme.warning }
+                            AText { visible: model.agent !== ""; text: "· " + model.agent; dim: true }
+                        }
+                        AText { text: model.question; Layout.fillWidth: true; wrapMode: Text.Wrap; elide: Text.ElideNone }
+                    }
+                    Button {
+                        visible: model.details !== ""
+                        compact: true
+                        variant: "ghost"
+                        iconName: ask.expanded ? "chevron-up" : "chevron-down"
+                        text: ask.expanded ? i18n.t["run.hide_details"] : i18n.t["run.show_details"]
+                        onClicked: ask.expanded = !ask.expanded
+                    }
+                }
+                Rectangle {
+                    visible: ask.expanded
+                    Layout.fillWidth: true
+                    radius: Theme.radius
+                    color: Theme.input
+                    border.color: Theme.border
+                    implicitHeight: Math.min(detailsText.implicitHeight + 20, 260)
+                    clip: true
+                    Flickable {
+                        anchors.fill: parent
+                        anchors.margins: 10
+                        contentHeight: detailsText.implicitHeight
+                        T.ScrollBar.vertical: ScrollBar {}
+                        AText {
+                            id: detailsText
+                            width: parent.width
+                            text: model.details
+                            dim: true
+                            size: Theme.fsSmall
+                            wrapMode: Text.Wrap
+                            elide: Text.ElideNone
+                        }
+                    }
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+                    Field {
+                        id: comment
+                        Layout.fillWidth: true
+                        placeholder: i18n.t["run.comment_placeholder"]
+                        icon: "message-square-text"
+                    }
+                    Repeater {
+                        model: ask.opts
+                        delegate: Button {
+                            required property var modelData
+                            text: modelData.title
+                            variant: modelData.value === "approve" || modelData.value === "extend" ? "primary"
+                                   : modelData.value === "abort" ? "danger" : "secondary"
+                            iconName: modelData.value === "approve" ? "check"
+                                    : modelData.value === "rework" ? "rotate-ccw"
+                                    : modelData.value === "skip" ? "skip-forward"
+                                    : modelData.value === "extend" ? "trending-up" : "octagon-x"
+                            onClicked: page.ctl.decide(ask.approvalId, modelData.value, comment.text)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // --- основная область --------------------------------------------------------
+    RowLayout {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        spacing: 18
+
+        // Живые рассуждения агентов.
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            spacing: 12
+            SectionTitle {
+                Layout.fillWidth: true
+                text: i18n.t["run.live"]
+                hint: i18n.t["run.live_hint"]
+                icon: "brain"
+            }
+            GridView {
+                id: streams
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                clip: true
+                model: page.ctl.streams
+                readonly property int cols: Math.max(1, Math.floor(width / 420))
+                cellWidth: Math.floor(width / cols)
+                cellHeight: Math.max(300, Math.floor(height / Math.ceil(Math.max(1, count) / cols)))
+                boundsBehavior: Flickable.StopAtBounds
+                T.ScrollBar.vertical: ScrollBar {}
+                delegate: Item {
+                    width: streams.cellWidth
+                    height: streams.cellHeight
+                    StreamCard {
+                        anchors.fill: parent
+                        anchors.rightMargin: 12
+                        anchors.bottomMargin: 12
+                    }
+                }
+            }
+        }
+
+        // Граф и лента.
+        ColumnLayout {
+            Layout.preferredWidth: Math.min(460, page.contentWidth * 0.38)
+            Layout.fillHeight: true
+            spacing: 12
+
+            SectionTitle { Layout.fillWidth: true; text: i18n.t["run.graph"]; icon: "workflow" }
+            Card {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 260
+                padding: 0
+                Graph { anchors.fill: parent; anchors.margins: 12 }
+            }
+
+            SectionTitle {
+                Layout.fillWidth: true
+                text: i18n.t["run.feed"]
+                icon: "activity"
+                Segmented {
+                    id: feedFilter
+                    property string mode: "all"
+                    options: [{ value: "all", title: i18n.t["run.f_all"] }, { value: "key", title: i18n.t["run.f_key"] },
+                              { value: "error", title: i18n.t["run.f_errors"] }]
+                    value: mode
+                    onPicked: function(v) { mode = v }
+                }
+                IconButton { iconName: "eraser"; tip: i18n.t["run.clear_feed"]; onClicked: page.ctl.clearFeed() }
+            }
+            Card {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                padding: 6
+                ListView {
+                    id: feed
+                    anchors.fill: parent
+                    clip: true
+                    model: page.ctl.feed
+                    spacing: 0
+                    boundsBehavior: Flickable.StopAtBounds
+                    T.ScrollBar.vertical: ScrollBar {}
+                    property bool follow: true
+                    onCountChanged: if (follow) Qt.callLater(positionViewAtEnd)
+                    onMovementEnded: follow = atYEnd
+                    add: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.normal } }
+                    delegate: Item {
+                        readonly property bool shown: feedFilter.mode === "all"
+                                                   || (feedFilter.mode === "error" && model.tone === "error")
+                                                   || (feedFilter.mode === "key" && model.tone !== "muted")
+                        width: feed.width
+                        height: shown ? row.implicitHeight + 10 : 0
+                        visible: shown
+                        RowLayout {
+                            id: row
+                            anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter; leftMargin: 8; rightMargin: 8 }
+                            spacing: 8
+                            AText { text: model.time; mono: true; size: Theme.fsMicro; mute: true; Layout.alignment: Qt.AlignTop; topPadding: 2 }
+                            Rectangle { width: 6; height: 6; radius: 3; color: Theme.tone(model.tone); Layout.alignment: Qt.AlignTop; Layout.topMargin: 6 }
+                            AText {
+                                Layout.fillWidth: true
+                                text: "<b>" + model.agent + "</b>  " + model.message.replace(/&/g, "&amp;").replace(/</g, "&lt;")
+                                textFormat: Text.StyledText
+                                size: Theme.fsSmall
+                                color: model.tone === "muted" ? Theme.textMute : Theme.textDim
+                                wrapMode: Text.Wrap
+                                elide: Text.ElideNone
+                            }
+                        }
+                    }
+                    AText {
+                        anchors.centerIn: parent
+                        visible: feed.count === 0
+                        text: i18n.t["run.feed_empty"]
+                        mute: true
+                    }
+                }
+            }
+        }
+    }
+
+    Confirm {
+        id: confirm
+        confirmText: i18n.t["run.stop"]
+        cancelText: i18n.t["common.cancel"]
+    }
+
+    // --- компоненты страницы -------------------------------------------------------
+    component Kpi: ColumnLayout {
+        property string caption: ""
+        property var value: ""
+        property color tint: Theme.text
+        spacing: 2
+        AText { text: value; size: Theme.fsH2; weight: Font.Bold; color: tint; mono: true }
+        AText { text: caption; size: Theme.fsMicro; mute: true }
+    }
+
+    // Карточка агента с живым потоком рассуждения.
+    component StreamCard: Card {
+        id: sc
+        padding: 0
+        glow: model.live
+        glowColor: model.isSupervisor ? Theme.magenta : Theme.cyan
+        readonly property string phaseTitle: model.phase === "tool" ? i18n.t["run.ph_tool"]
+                                            : model.phase === "thinking" ? i18n.t["run.ph_thinking"]
+                                            : model.phase === "review" ? i18n.t["run.ph_review"]
+                                            : model.phase === "done" ? i18n.t["run.ph_done"]
+                                            : model.phase === "error" ? i18n.t["run.ph_error"] : i18n.t["run.ph_idle"]
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 14
+            spacing: 10
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                Item {
+                    width: 36; height: 36
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: 18
+                        gradient: Gradient {
+                            GradientStop { position: 0; color: model.isSupervisor ? Theme.magenta : Theme.violet }
+                            GradientStop { position: 1; color: model.isSupervisor ? Theme.violetSoft : Theme.cyan }
+                        }
+                        Icon { anchors.centerIn: parent; name: model.icon; size: 16; color: "white" }
+                    }
+                    // Вращающееся кольцо вокруг аватара, пока агент работает.
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: 44; height: 44; radius: 22
+                        color: "transparent"
+                        border.width: 2
+                        border.color: Theme.alpha(sc.glowColor, 0.5)
+                        visible: model.live
+                        opacity: 0.8
+                        SequentialAnimation on scale {
+                            running: model.live && Theme.rich
+                            loops: Animation.Infinite
+                            NumberAnimation { from: 0.92; to: 1.08; duration: 900; easing.type: Easing.InOutSine }
+                            NumberAnimation { from: 1.08; to: 0.92; duration: 900; easing.type: Easing.InOutSine }
+                        }
+                    }
+                }
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 1
+                    RowLayout {
+                        spacing: 6
+                        AText { text: model.name; weight: Font.DemiBold; Layout.maximumWidth: 170 }
+                        AText { text: model.modelName; mono: true; size: Theme.fsMicro; mute: true; Layout.maximumWidth: 150 }
+                    }
+                    AText {
+                        text: model.subtask !== "" ? model.subtask : i18n.t["run.waiting"]
+                        dim: model.subtask !== ""
+                        mute: model.subtask === ""
+                        size: Theme.fsSmall
+                        Layout.fillWidth: true
+                    }
+                }
+                Badge {
+                    text: sc.phaseTitle
+                    tone: model.phase === "tool" ? "accent" : model.phase === "done" ? "success"
+                        : model.phase === "error" ? "error" : model.phase === "idle" ? "muted" : "violet"
+                    icon: model.phase === "tool" ? "zap" : model.phase === "done" ? "check" : ""
+                }
+                IconButton {
+                    iconName: "copy"
+                    size: 28
+                    tip: i18n.t["run.copy_stream"]
+                    onClicked: backend.copyText(page.ctl.fullText(model.id))
+                }
+            }
+
+            // Шаги: точки заполняются по мере продвижения по ReAct-циклу.
+            RowLayout {
+                visible: model.maxSteps > 0
+                spacing: 4
+                Repeater {
+                    model: sc.stepsCount
+                    delegate: Rectangle {
+                        required property int index
+                        width: 16; height: 4; radius: 2
+                        color: index < sc.currentStep ? (index === sc.currentStep - 1 && sc.isLive ? Theme.cyan : Theme.violet) : Theme.surface3
+                        Behavior on color { ColorAnimation { duration: Theme.normal } }
+                    }
+                }
+                AText {
+                    visible: sc.currentStep > 0
+                    text: i18n.fmt(i18n.t["run.step_of"], { n: sc.currentStep, m: sc.stepsCount })
+                    size: Theme.fsMicro
+                    mute: true
+                    leftPadding: 6
+                }
+                Item { Layout.fillWidth: true }
+                TypingDots { visible: sc.isLive && model.phase === "thinking" }
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                radius: Theme.radius
+                color: Theme.alpha(Theme.bg, 0.55)
+                border.color: Theme.border
+                clip: true
+
+                Flickable {
+                    id: flow
+                    anchors.fill: parent
+                    anchors.margins: 12
+                    contentHeight: streamText.implicitHeight
+                    boundsBehavior: Flickable.StopAtBounds
+                    T.ScrollBar.vertical: ScrollBar {}
+                    property bool follow: true
+                    onContentHeightChanged: if (follow && contentHeight > height) contentY = contentHeight - height
+                    onMovementEnded: follow = contentY >= contentHeight - height - 8
+                    Text {
+                        id: streamText
+                        width: flow.width - 8
+                        text: model.html
+                        textFormat: Text.StyledText
+                        wrapMode: Text.Wrap
+                        color: Theme.text
+                        font.family: Theme.monoFamily
+                        font.pixelSize: 13
+                        lineHeight: 1.15
+                        renderType: Text.QtRendering
+                    }
+                }
+                AText {
+                    anchors.centerIn: parent
+                    visible: model.html === ""
+                    text: model.isSupervisor ? i18n.t["run.sup_empty"] : i18n.t["run.stream_empty"]
+                    mute: true
+                    size: Theme.fsSmall
+                }
+                Button {
+                    visible: !flow.follow
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    anchors.margins: 10
+                    compact: true
+                    iconName: "arrow-down"
+                    text: i18n.t["run.to_latest"]
+                    onClicked: { flow.follow = true; flow.contentY = Math.max(0, flow.contentHeight - flow.height) }
+                }
+            }
+        }
+        readonly property int stepsCount: Math.min(model.maxSteps, 20)
+        readonly property int currentStep: Math.min(model.step, stepsCount)
+        readonly property bool isLive: model.live
+    }
+
+    // «Печатает…» — три прыгающие точки.
+    component TypingDots: Row {
+        spacing: 4
+        Repeater {
+            model: 3
+            delegate: Rectangle {
+                required property int index
+                width: 5; height: 5; radius: 2.5
+                color: Theme.cyan
+                SequentialAnimation on opacity {
+                    running: Theme.motion > 0
+                    loops: Animation.Infinite
+                    PauseAnimation { duration: index * 160 }
+                    NumberAnimation { from: 0.25; to: 1; duration: 320 }
+                    NumberAnimation { from: 1; to: 0.25; duration: 320 }
+                    PauseAnimation { duration: (2 - index) * 160 }
+                }
+            }
+        }
+    }
+
+    // Граф подзадач: слои по зависимостям, рёбра «текут», пока идёт работа.
+    component Graph: Flickable {
+        id: graph
+        // Узлы сужаются, чтобы все слои графа помещались в колонку без прокрутки.
+        readonly property int nodeW: page.ctl.levels > 0
+            ? Math.max(118, Math.min(170, Math.floor((width - gapX * (page.ctl.levels - 1)) / page.ctl.levels)))
+            : 170
+        readonly property int nodeH: 54
+        readonly property int gapX: 34
+        readonly property int gapY: 12
+        clip: true
+        contentWidth: Math.max(width, page.ctl.levels * (nodeW + gapX) - gapX)
+        contentHeight: Math.max(height, page.ctl.maxRows * (nodeH + gapY) - gapY)
+        boundsBehavior: Flickable.StopAtBounds
+        T.ScrollBar.vertical: ScrollBar {}
+        T.ScrollBar.horizontal: ScrollBar {}
+
+        Repeater {
+            model: page.ctl.edges
+            delegate: Shape {
+                id: edge
+                readonly property real x1: model.fromLevel * (graph.nodeW + graph.gapX) + graph.nodeW
+                readonly property real y1: model.fromRow * (graph.nodeH + graph.gapY) + graph.nodeH / 2
+                readonly property real x2: model.toLevel * (graph.nodeW + graph.gapX)
+                readonly property real y2: model.toRow * (graph.nodeH + graph.gapY) + graph.nodeH / 2
+                anchors.fill: parent
+                preferredRendererType: Shape.CurveRenderer
+                ShapePath {
+                    id: path
+                    strokeWidth: model.state === "active" ? 2 : 1.5
+                    strokeColor: model.state === "active" ? Theme.cyan
+                               : model.state === "done" ? Theme.alpha(Theme.success, 0.6) : Theme.borderStrong
+                    fillColor: "transparent"
+                    strokeStyle: model.state === "active" ? ShapePath.DashLine : ShapePath.SolidLine
+                    dashPattern: [4, 3]
+                    startX: edge.x1; startY: edge.y1
+                    PathCubic {
+                        x: edge.x2; y: edge.y2
+                        control1X: edge.x1 + graph.gapX * 0.6; control1Y: edge.y1
+                        control2X: edge.x2 - graph.gapX * 0.6; control2Y: edge.y2
+                    }
+                    NumberAnimation on dashOffset {
+                        running: model.state === "active" && Theme.motion > 0
+                        from: 7; to: 0; duration: 500; loops: Animation.Infinite
+                    }
+                }
+            }
+        }
+
+        Repeater {
+            model: page.ctl.nodes
+            delegate: Rectangle {
+                id: node
+                x: model.level * (graph.nodeW + graph.gapX)
+                y: model.row * (graph.nodeH + graph.gapY)
+                width: graph.nodeW
+                height: graph.nodeH
+                radius: Theme.radius
+                color: Theme.alpha(Theme.statusColor(model.status), 0.10)
+                border.width: model.status === "running" ? 2 : 1
+                border.color: Theme.alpha(Theme.statusColor(model.status), model.status === "idle" ? 0.35 : 0.8)
+                Behavior on color { ColorAnimation { duration: Theme.normal } }
+                Behavior on x { NumberAnimation { duration: Theme.slow; easing.type: Easing.OutCubic } }
+                Behavior on y { NumberAnimation { duration: Theme.slow; easing.type: Easing.OutCubic } }
+                scale: model.status === "done" ? 1 : 1
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: 8
+                    spacing: 2
+                    RowLayout {
+                        spacing: 6
+                        StatusDot { status: model.status; size: 7 }
+                        AText { text: model.title; size: Theme.fsSmall; weight: Font.DemiBold; Layout.fillWidth: true }
+                        Icon { visible: model.status === "done"; name: "check"; size: 13; color: Theme.success }
+                    }
+                    AText { text: model.agentName; size: Theme.fsMicro; mute: true; Layout.fillWidth: true }
+                }
+                Tip { text: model.title + " · " + model.statusTitle; shown: nodeHover.hovered }
+                HoverHandler { id: nodeHover }
+                // «Щелчок» при завершении подзадачи.
+                SequentialAnimation {
+                    id: pop
+                    NumberAnimation { target: node; property: "scale"; to: 1.08; duration: 120; easing.type: Easing.OutQuad }
+                    NumberAnimation { target: node; property: "scale"; to: 1.0; duration: 220; easing.type: Easing.OutBack }
+                }
+                property string lastStatus: model.status
+                onLastStatusChanged: if (lastStatus === "done" && Theme.rich) pop.restart()
+            }
+        }
+
+        AText {
+            anchors.centerIn: parent
+            visible: page.ctl.nodes.count === 0
+            text: i18n.t["run.graph_empty"]
+            mute: true
+            size: Theme.fsSmall
+        }
+    }
+}
+````
+
+### `ui/qml/pages/Supervisor.qml`
+
+*246 строк*
+
+````qml
+import QtQuick
+import QtQuick.Layouts
+import Ao
+
+// Супервайзер: кто проверяет, анонимные сводки, инциденты и решения человека.
+Page {
+    id: page
+    title: i18n.t["sup.title"]
+    subtitle: i18n.t["sup.subtitle"]
+    icon: "shield-check"
+    readonly property var ctl: backend.supervisor
+    property string tab: "summaries"
+
+    headerActions: [
+        Button {
+            variant: "primary"
+            iconName: "scroll-text"
+            text: i18n.t["sup.make_summary"]
+            loading: page.ctl.summarizing
+            enabled: backend.workspaceId >= 0 && !backend.running && !page.ctl.summarizing
+            onClicked: page.ctl.makeSummary()
+        }
+    ]
+
+    // Кто сейчас супервайзер.
+    Card {
+        Layout.fillWidth: true
+        padding: 16
+        glow: page.ctl.configured
+        glowColor: Theme.magenta
+        RowLayout {
+            width: parent.width
+            spacing: 14
+            Rectangle {
+                width: 42; height: 42; radius: 21
+                gradient: Gradient {
+                    GradientStop { position: 0; color: page.ctl.configured ? Theme.magenta : Theme.surface3 }
+                    GradientStop { position: 1; color: page.ctl.configured ? Theme.violetSoft : Theme.surface2 }
+                }
+                Icon { anchors.centerIn: parent; name: page.ctl.mode === "local" ? "hard-drive" : "shield-check"; size: 18; color: "white" }
+            }
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 2
+                AText { text: page.ctl.modelTitle; weight: Font.DemiBold; Layout.fillWidth: true }
+                AText {
+                    text: page.ctl.configured ? i18n.t["sup.checklist"] : i18n.t["sup.configure_hint"]
+                    dim: true
+                    size: Theme.fsSmall
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                    elide: Text.ElideNone
+                }
+            }
+            Badge {
+                text: page.ctl.mode === "local" ? i18n.t["sup.mode_local"] : i18n.t["sup.mode_api"]
+                tone: page.ctl.mode === "local" ? "accent" : "violet"
+            }
+            Button {
+                compact: true
+                iconName: "settings"
+                text: i18n.t["nav.settings"]
+                onClicked: backend.navigate("settings")
+            }
+        }
+    }
+
+    Segmented {
+        options: [
+            { value: "summaries", title: i18n.t["sup.summaries"] + " · " + page.ctl.summaries.count, icon: "scroll-text" },
+            { value: "incidents", title: i18n.t["sup.incidents"] + " · " + page.ctl.incidents.count, icon: "triangle-alert" },
+            { value: "decisions", title: i18n.t["sup.approvals"] + " · " + page.ctl.decisions.count, icon: "hand" }
+        ]
+        value: page.tab
+        onPicked: function(v) { page.tab = v }
+    }
+
+    // --- сводки ---
+    EmptyState {
+        visible: page.tab === "summaries" && page.ctl.summaries.count === 0
+        Layout.fillWidth: true
+        Layout.topMargin: 30
+        icon: "scroll-text"
+        title: i18n.t["sup.no_summaries_title"]
+        text: i18n.t["sup.no_summaries"]
+    }
+    Repeater {
+        model: page.tab === "summaries" ? page.ctl.summaries : null
+        delegate: Card {
+            Layout.fillWidth: true
+            stagger: index
+            ColumnLayout {
+                width: parent.width
+                spacing: 10
+                RowLayout {
+                    spacing: 10
+                    Icon { name: "scroll-text"; size: 15; color: Theme.violetSoft }
+                    AText { text: model.when; weight: Font.DemiBold }
+                    Badge { text: model.triggerTitle; tone: model.trigger === "final" ? "success" : "violet" }
+                    Item { Layout.fillWidth: true }
+                    AText { text: i18n.fmt(i18n.t["sup.delivered"], { n: model.recipients }); mute: true; size: Theme.fsSmall }
+                    IconButton { iconName: "copy"; size: 28; tip: i18n.t["common.copy"]; onClicked: backend.copyText(model.content) }
+                }
+                AText {
+                    Layout.fillWidth: true
+                    text: model.content
+                    wrapMode: Text.Wrap
+                    elide: Text.ElideNone
+                    dim: true
+                    lineHeight: 1.2
+                }
+            }
+        }
+    }
+
+    // --- инциденты ---
+    EmptyState {
+        visible: page.tab === "incidents" && page.ctl.incidents.count === 0
+        Layout.fillWidth: true
+        Layout.topMargin: 30
+        icon: "badge-check"
+        title: i18n.t["sup.no_incidents_title"]
+        text: i18n.t["sup.no_incidents"]
+    }
+    Repeater {
+        model: page.tab === "incidents" ? page.ctl.incidents : null
+        delegate: Card {
+            Layout.fillWidth: true
+            stagger: index
+            padding: 16
+            glow: model.status === "escalated"
+            glowColor: Theme.warning
+            RowLayout {
+                width: parent.width
+                spacing: 14
+                Rectangle {
+                    Layout.alignment: Qt.AlignTop
+                    width: 34; height: 34; radius: 10
+                    color: Theme.alpha(Theme.tone(model.tone), 0.15)
+                    Icon { anchors.centerIn: parent; name: model.open ? "triangle-alert" : "circle-check"; size: 16; color: model.open ? Theme.tone(model.tone) : Theme.success }
+                }
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 5
+                    RowLayout {
+                        spacing: 8
+                        AText { text: model.kindTitle; weight: Font.DemiBold }
+                        Badge { text: model.severityTitle; tone: model.tone }
+                        Badge { text: model.statusTitle; tone: model.open ? "warning" : "success" }
+                        Item { Layout.fillWidth: true }
+                        AText { text: model.when; mute: true; size: Theme.fsSmall }
+                    }
+                    AText { text: model.description; Layout.fillWidth: true; wrapMode: Text.Wrap; elide: Text.ElideNone; dim: true }
+                    AText {
+                        visible: model.resolution !== ""
+                        text: "→ " + model.resolution
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        elide: Text.ElideNone
+                        mute: true
+                        size: Theme.fsSmall
+                    }
+                }
+                Button {
+                    Layout.alignment: Qt.AlignTop
+                    visible: model.open
+                    compact: true
+                    iconName: "check"
+                    text: i18n.t["sup.resolve"]
+                    onClicked: resolver.openFor(model.id, model.description)
+                }
+            }
+        }
+    }
+
+    // --- решения ---
+    EmptyState {
+        visible: page.tab === "decisions" && page.ctl.decisions.count === 0
+        Layout.fillWidth: true
+        Layout.topMargin: 30
+        icon: "hand"
+        title: i18n.t["sup.no_approvals_title"]
+        text: i18n.t["sup.no_approvals"]
+    }
+    Repeater {
+        model: page.tab === "decisions" ? page.ctl.decisions : null
+        delegate: Card {
+            Layout.fillWidth: true
+            stagger: index
+            padding: 16
+            RowLayout {
+                width: parent.width
+                spacing: 14
+                Rectangle {
+                    Layout.alignment: Qt.AlignTop
+                    width: 10; height: 10; radius: 5
+                    Layout.topMargin: 5
+                    color: Theme.tone(model.tone)
+                }
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 4
+                    RowLayout {
+                        spacing: 8
+                        AText { text: model.reasonTitle; weight: Font.DemiBold }
+                        Badge { text: model.decisionTitle; tone: model.tone }
+                        Item { Layout.fillWidth: true }
+                        AText { text: model.when; mute: true; size: Theme.fsSmall }
+                    }
+                    AText { text: model.question; Layout.fillWidth: true; wrapMode: Text.Wrap; elide: Text.ElideNone; dim: true }
+                    AText {
+                        visible: model.comment !== "" || model.agent !== ""
+                        text: [model.agent, model.comment].filter(function(x) { return x !== "" }).join(" · ")
+                        mute: true
+                        size: Theme.fsSmall
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        elide: Text.ElideNone
+                    }
+                }
+            }
+        }
+    }
+
+    Sheet {
+        id: resolver
+        property int incidentId: -1
+        property string problem: ""
+        title: i18n.t["sup.resolve"]
+        subtitle: problem
+        icon: "badge-check"
+        sheetWidth: 520
+        function openFor(id, text) { incidentId = id; problem = text; resolution.text = ""; open() }
+        TextBox { id: resolution; Layout.fillWidth: true; label: i18n.t["sup.resolution"]; minHeight: 110 }
+        footer: [
+            Item { Layout.fillWidth: true },
+            Button { text: i18n.t["common.cancel"]; variant: "ghost"; onClicked: resolver.close() },
+            Button {
+                text: i18n.t["sup.resolve"]
+                variant: "primary"
+                iconName: "check"
+                onClicked: { page.ctl.resolveIncident(resolver.incidentId, resolution.text); resolver.close() }
+            }
+        ]
+    }
+}
+````
+
+### `ui/qml/pages/Dashboard.qml`
+
+*315 строк*
+
+````qml
+import QtQuick
+import QtQuick.Layouts
+import Ao
+
+// Дашборд: метрики, прогресс, кривые расхода, агенты, лента и инциденты.
+Page {
+    id: page
+    title: i18n.t["dash.title"]
+    subtitle: i18n.t["dash.subtitle"]
+    icon: "layout-dashboard"
+    readonly property var ctl: backend.dashboard
+    property string series: "cost"
+
+    Component.onCompleted: ctl.refresh()
+
+    headerActions: [
+        IconButton { iconName: "refresh-cw"; tip: i18n.t["common.refresh"]; onClicked: page.ctl.refresh() }
+    ]
+
+    EmptyState {
+        visible: backend.workspaceId < 0
+        Layout.fillWidth: true
+        Layout.topMargin: 60
+        icon: "layers"
+        title: i18n.t["ws.empty_title"]
+        text: i18n.t["ws.empty"]
+        actionText: i18n.t["nav.workspaces"]
+        actionIcon: "arrow-right"
+        onAction: backend.navigate("workspaces")
+    }
+
+    // --- метрики ---------------------------------------------------------------
+    GridLayout {
+        visible: backend.workspaceId >= 0
+        Layout.fillWidth: true
+        columns: page.contentWidth > 1100 ? 6 : 3
+        columnSpacing: 14
+        rowSpacing: 14
+        Metric { idx: 0; glyph: "bot"; caption: i18n.t["dash.m_agents"]; value: page.ctl.agentsCount }
+        Metric {
+            idx: 1; glyph: "list-checks"; caption: i18n.t["dash.m_subtasks"]
+            value: page.ctl.done; total: page.ctl.total > 0 ? String(page.ctl.total) : ""
+            tint: Theme.success
+        }
+        Metric {
+            idx: 2; glyph: "coins"; unit: "tokens"; value: page.ctl.tokens
+            caption: page.ctl.limitPct >= 0 ? i18n.fmt(i18n.t["dash.m_tokens_pct"], { pct: Math.round(page.ctl.limitPct * 100) })
+                                            : i18n.t["dash.m_tokens"]
+            tint: page.ctl.limitPct >= 1 ? Theme.danger : page.ctl.limitPct >= 0.8 ? Theme.warning : Theme.text
+        }
+        Metric { idx: 3; glyph: "dollar-sign"; unit: "usd"; caption: i18n.t["dash.m_cost"]; value: page.ctl.cost; tint: Theme.teal }
+        Metric { idx: 4; glyph: "rotate-ccw"; caption: i18n.t["dash.m_reworks"]; value: page.ctl.reworks; tint: page.ctl.reworks ? Theme.warning : Theme.text }
+        Metric {
+            idx: 5; glyph: "triangle-alert"; caption: i18n.t["dash.m_open_incidents"]; value: page.ctl.openIncidents
+            tint: page.ctl.openIncidents ? Theme.danger : Theme.text
+            clickable: true
+            onActivated: backend.navigate("supervisor")
+        }
+    }
+
+    // --- прогресс --------------------------------------------------------------
+    Card {
+        visible: backend.workspaceId >= 0
+        Layout.fillWidth: true
+        stagger: 2
+        ColumnLayout {
+            width: parent.width
+            spacing: 12
+            RowLayout {
+                Layout.fillWidth: true
+                Icon { name: "list-checks"; color: Theme.violetSoft }
+                AText {
+                    text: page.ctl.taskTitle !== "" ? page.ctl.taskTitle : i18n.t["task.no_task"]
+                    weight: Font.DemiBold
+                    size: Theme.fsH3
+                    Layout.fillWidth: true
+                }
+                AText {
+                    visible: page.ctl.total > 0
+                    text: page.ctl.done + " / " + page.ctl.total + "  ·  " + Math.round(page.ctl.total ? page.ctl.done / page.ctl.total * 100 : 0) + "%"
+                    mono: true
+                    dim: true
+                }
+            }
+            SegmentBar { Layout.fillWidth: true; segments: page.ctl.segments }
+        }
+    }
+
+    // --- графики ------------------------------------------------------------------
+    RowLayout {
+        visible: backend.workspaceId >= 0
+        Layout.fillWidth: true
+        spacing: 16
+        Card {
+            Layout.fillWidth: true
+            Layout.preferredWidth: 3
+            Layout.preferredHeight: 300
+            stagger: 3
+            ColumnLayout {
+                anchors.fill: parent
+                spacing: 12
+                RowLayout {
+                    Layout.fillWidth: true
+                    SectionTitle { Layout.fillWidth: true; text: i18n.t["dash.spend"]; icon: "chart-line" }
+                    Segmented {
+                        options: [{ value: "cost", title: i18n.t["dash.money"] }, { value: "tokens", title: i18n.t["dash.tokens"] }]
+                        value: page.series
+                        onPicked: function(v) { page.series = v }
+                    }
+                }
+                LineChart {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    points: page.series === "cost" ? page.ctl.costSeries : page.ctl.tokenSeries
+                    unit: page.series === "cost" ? "usd" : "tokens"
+                    lineColor: page.series === "cost" ? Theme.teal : Theme.violetSoft
+                    fillColor: page.series === "cost" ? Theme.teal : Theme.violet
+                    emptyText: i18n.t["dash.no_usage"]
+                }
+            }
+        }
+        Card {
+            Layout.fillWidth: true
+            Layout.preferredWidth: 2
+            Layout.preferredHeight: 300
+            stagger: 4
+            ColumnLayout {
+                anchors.fill: parent
+                spacing: 12
+                SectionTitle {
+                    Layout.fillWidth: true
+                    text: i18n.t["dash.by_agent"]
+                    icon: "chart-bar"
+                    Badge {
+                        visible: page.ctl.supervisorShare > 0
+                        text: i18n.fmt(i18n.t["dash.sup_share"], { pct: Math.round(page.ctl.supervisorShare * 100) })
+                        tone: page.ctl.supervisorShare > 0.5 ? "warning" : "violet"
+                        icon: "shield-check"
+                    }
+                }
+                Flickable {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    contentHeight: bars.implicitHeight
+                    BarList { id: bars; width: parent.width; bars: page.ctl.bars; emptyText: i18n.t["dash.no_usage"] }
+                }
+            }
+        }
+    }
+
+    // --- агенты ------------------------------------------------------------------
+    Card {
+        visible: backend.workspaceId >= 0
+        Layout.fillWidth: true
+        stagger: 5
+        ColumnLayout {
+            width: parent.width
+            spacing: 8
+            SectionTitle { Layout.fillWidth: true; text: i18n.t["dash.agents"]; icon: "users" }
+            AText { visible: page.ctl.agentsModel.count === 0; text: i18n.t["agents.empty"]; mute: true }
+            Repeater {
+                model: page.ctl.agentsModel
+                delegate: Rectangle {
+                    Layout.fillWidth: true
+                    height: 46
+                    radius: Theme.radius
+                    color: rowHover.hovered ? Theme.alpha(Theme.surface3, 0.6) : "transparent"
+                    HoverHandler { id: rowHover }
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 10
+                        anchors.rightMargin: 10
+                        spacing: 12
+                        StatusDot { status: model.status }
+                        Icon { name: model.icon; size: 15; color: model.isSupervisor ? Theme.magenta : Theme.violetSoft }
+                        AText { text: model.name; weight: Font.Medium; Layout.preferredWidth: 180 }
+                        AText {
+                            text: model.doing !== "" ? "→ " + model.doing : model.statusTitle
+                            dim: model.doing !== ""
+                            mute: model.doing === ""
+                            size: Theme.fsSmall
+                            Layout.fillWidth: true
+                        }
+                        Rectangle {
+                            Layout.preferredWidth: 120
+                            height: 5
+                            radius: 3
+                            color: Theme.surface3
+                            Rectangle {
+                                height: parent.height
+                                radius: 3
+                                width: parent.width * Math.min(1, model.share)
+                                color: Theme.violet
+                                Behavior on width { NumberAnimation { duration: Theme.slow } }
+                            }
+                        }
+                        AText { text: model.tokens; mono: true; size: Theme.fsSmall; dim: true; Layout.preferredWidth: 70; horizontalAlignment: Text.AlignRight }
+                        AText { text: model.cost; mono: true; size: Theme.fsSmall; color: Theme.teal; Layout.preferredWidth: 70; horizontalAlignment: Text.AlignRight }
+                    }
+                }
+            }
+        }
+    }
+
+    // --- лента и инциденты -------------------------------------------------------------
+    RowLayout {
+        visible: backend.workspaceId >= 0
+        Layout.fillWidth: true
+        spacing: 16
+        Card {
+            Layout.fillWidth: true
+            Layout.preferredWidth: 3
+            Layout.alignment: Qt.AlignTop
+            stagger: 6
+            ColumnLayout {
+                width: parent.width
+                spacing: 10
+                SectionTitle { Layout.fillWidth: true; text: i18n.t["dash.feed"]; icon: "message-square-text" }
+                AText { visible: page.ctl.feed.count === 0; text: i18n.t["dash.no_feed"]; mute: true; wrapMode: Text.Wrap; Layout.fillWidth: true }
+                Repeater {
+                    model: page.ctl.feed
+                    delegate: ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 3
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            Rectangle { width: 6; height: 6; radius: 3; color: Theme.tone(model.tone) }
+                            AText { text: model.who; weight: Font.DemiBold; size: Theme.fsSmall; color: Theme.tone(model.tone) }
+                            Badge { visible: model.badge !== ""; text: model.badge; tone: model.tone }
+                            AText { visible: model.confidence !== ""; text: i18n.t["dash.confidence"] + " " + model.confidence; mute: true; size: Theme.fsMicro }
+                            Item { Layout.fillWidth: true }
+                            AText { text: model.when; mute: true; mono: true; size: Theme.fsMicro }
+                        }
+                        AText { text: model.text; dim: true; size: Theme.fsSmall; Layout.fillWidth: true; wrapMode: Text.Wrap; maximumLineCount: 2; leftPadding: 14 }
+                    }
+                }
+            }
+        }
+        Card {
+            Layout.fillWidth: true
+            Layout.preferredWidth: 2
+            Layout.alignment: Qt.AlignTop
+            stagger: 7
+            ColumnLayout {
+                width: parent.width
+                spacing: 10
+                SectionTitle { Layout.fillWidth: true; text: i18n.t["dash.incidents"]; icon: "triangle-alert" }
+                AText { visible: page.ctl.incidents.count === 0; text: i18n.t["sup.no_incidents"]; mute: true; wrapMode: Text.Wrap; Layout.fillWidth: true }
+                Repeater {
+                    model: page.ctl.incidents
+                    delegate: ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 3
+                        RowLayout {
+                            Layout.fillWidth: true
+                            AText { text: model.kindTitle; weight: Font.DemiBold; size: Theme.fsSmall; color: Theme.tone(model.tone) }
+                            Item { Layout.fillWidth: true }
+                            AText { text: model.statusTitle; mute: true; size: Theme.fsMicro }
+                        }
+                        AText { text: model.description; dim: true; size: Theme.fsSmall; Layout.fillWidth: true; wrapMode: Text.Wrap; maximumLineCount: 2 }
+                    }
+                }
+            }
+        }
+    }
+
+    // Крупная метрика с «досчитывающим» числом.
+    component Metric: Card {
+        id: metric
+        property int idx: 0
+        property string glyph: ""
+        property string caption: ""
+        property real value: 0
+        property string total: ""
+        property string unit: "int"
+        property color tint: Theme.text
+        property bool clickable: false
+        signal activated()
+        Layout.fillWidth: true
+        stagger: idx
+        hoverable: true
+        padding: 16
+        ColumnLayout {
+            width: parent.width
+            spacing: 6
+            RowLayout {
+                Layout.fillWidth: true
+                Rectangle {
+                    width: 30; height: 30; radius: 9
+                    color: Theme.alpha(metric.tint === Theme.text ? Theme.violet : metric.tint, 0.14)
+                    Icon { anchors.centerIn: parent; name: metric.glyph; size: 15; color: metric.tint === Theme.text ? Theme.violetSoft : metric.tint }
+                }
+                Item { Layout.fillWidth: true }
+                Icon { visible: metric.clickable; name: "arrow-up-right"; size: 14; color: Theme.textMute }
+            }
+            Ticker {
+                value: metric.value
+                unit: metric.unit
+                total: metric.total
+                size: 26
+                weight: Font.Bold
+                color: metric.tint
+            }
+            AText { text: metric.caption; mute: true; size: Theme.fsSmall; Layout.fillWidth: true }
+        }
+        MouseArea {
+            anchors.fill: parent
+            enabled: metric.clickable
+            cursorShape: Qt.PointingHandCursor
+            onClicked: metric.activated()
+        }
+    }
+}
+````
+
+### `ui/qml/pages/Budget.qml`
+
+*189 строк*
+
+````qml
+import QtQuick
+import QtQuick.Layouts
+import Ao
+
+// Бюджеты: по одной карточке на уровень (проект, задача, агент) с живой
+// шкалой расхода и полями лимитов, которые сохраняются по Enter.
+Page {
+    id: page
+    title: i18n.t["bud.title"]
+    subtitle: i18n.t["bud.subtitle"]
+    icon: "wallet"
+    readonly property var ctl: backend.budget
+
+    Component.onCompleted: ctl.refresh()
+
+    headerActions: [
+        IconButton { iconName: "refresh-cw"; tip: i18n.t["common.refresh"]; onClicked: page.ctl.refresh() }
+    ]
+
+    // Последний алерт бюджета.
+    Rectangle {
+        visible: page.ctl.alert !== ""
+        Layout.fillWidth: true
+        radius: Theme.radius
+        color: Theme.alpha(Theme.tone(page.ctl.alertTone), 0.1)
+        border.color: Theme.alpha(Theme.tone(page.ctl.alertTone), 0.4)
+        implicitHeight: alertRow.implicitHeight + 22
+        RowLayout {
+            id: alertRow
+            anchors.fill: parent
+            anchors.margins: 11
+            spacing: 10
+            Icon { name: page.ctl.alertTone === "error" ? "octagon-x" : "triangle-alert"; color: Theme.tone(page.ctl.alertTone) }
+            AText { text: page.ctl.alert; Layout.fillWidth: true; wrapMode: Text.Wrap; elide: Text.ElideNone; color: Theme.tone(page.ctl.alertTone) }
+            IconButton { iconName: "x"; size: 26; onClicked: page.ctl.dismissAlert() }
+        }
+    }
+
+    // Как работает бюджет — коротко, один раз.
+    Card {
+        Layout.fillWidth: true
+        padding: 16
+        RowLayout {
+            width: parent.width
+            spacing: 18
+            Hint { glyph: "shield-check"; text: i18n.t["bud.h_before"] }
+            Hint { glyph: "hand"; text: i18n.t["bud.h_ask"] }
+            Hint { glyph: "database"; text: i18n.t["bud.h_log"] }
+        }
+    }
+
+    EmptyState {
+        visible: page.ctl.model.count === 0
+        Layout.fillWidth: true
+        Layout.topMargin: 40
+        icon: "wallet"
+        title: i18n.t["bud.nothing_title"]
+        text: i18n.t["bud.nothing"]
+    }
+
+    Repeater {
+        model: page.ctl.model
+        delegate: Card {
+            id: row
+            Layout.fillWidth: true
+            stagger: index
+            hoverable: true
+            glow: model.exceeded
+            glowColor: Theme.danger
+            property string error: ""
+            readonly property color barColor: model.ratio >= 1 ? Theme.danger : model.ratio >= model.threshold ? Theme.warning : Theme.violet
+
+            function save(tokens, cost, threshold) {
+                row.error = page.ctl.save(model.scope, model.scopeId, tokens, cost, threshold)
+            }
+
+            ColumnLayout {
+                width: parent.width
+                spacing: 14
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 12
+                    Rectangle {
+                        width: 38; height: 38; radius: 12
+                        color: Theme.alpha(Theme.violet, 0.14)
+                        Icon { anchors.centerIn: parent; name: model.icon; size: 17; color: Theme.violetSoft }
+                    }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 1
+                        AText { text: model.name; weight: Font.DemiBold; size: Theme.fsH3; Layout.fillWidth: true }
+                        AText { text: model.scopeTitle; mute: true; size: Theme.fsSmall }
+                    }
+                    ColumnLayout {
+                        spacing: 1
+                        AText { text: model.tokensText + " " + i18n.t["bud.tokens_short"]; mono: true; Layout.alignment: Qt.AlignRight }
+                        AText { text: model.costText; mono: true; color: Theme.teal; Layout.alignment: Qt.AlignRight }
+                    }
+                }
+
+                // Шкала расхода.
+                ColumnLayout {
+                    visible: model.isSet
+                    Layout.fillWidth: true
+                    spacing: 6
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 10
+                        radius: 5
+                        color: Theme.surface3
+                        Rectangle {
+                            height: parent.height
+                            radius: 5
+                            width: parent.width * Math.min(1, model.ratio)
+                            gradient: Gradient {
+                                orientation: Gradient.Horizontal
+                                GradientStop { position: 0; color: Theme.alpha(row.barColor, 0.7) }
+                                GradientStop { position: 1; color: row.barColor }
+                            }
+                            Behavior on width { NumberAnimation { duration: Theme.slow * 2; easing.type: Easing.OutCubic } }
+                        }
+                        // Отметка порога алерта.
+                        Rectangle {
+                            x: parent.width * model.threshold - 1
+                            width: 2
+                            height: parent.height + 6
+                            y: -3
+                            radius: 1
+                            color: Theme.warning
+                            opacity: 0.8
+                        }
+                    }
+                    AText {
+                        text: model.exceeded ? i18n.t["bud.exceeded"] : i18n.fmt(i18n.t["bud.used_pct"], { pct: Math.round(model.ratio * 100) })
+                        color: row.barColor
+                        size: Theme.fsSmall
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 14
+                    Field {
+                        id: tokField
+                        Layout.fillWidth: true
+                        label: i18n.t["bud.token_limit"]
+                        placeholder: i18n.t["bud.no_limit"]
+                        text: model.tokenLimit
+                        icon: "coins"
+                        mono: true
+                        onAccepted: row.save(tokField.text, costField.text, thr.value)
+                        onEditingFinished: if (tokField.text !== model.tokenLimit) row.save(tokField.text, costField.text, thr.value)
+                    }
+                    Field {
+                        id: costField
+                        Layout.fillWidth: true
+                        label: i18n.t["bud.cost_limit"]
+                        placeholder: i18n.t["bud.no_limit"]
+                        text: model.costLimit
+                        icon: "dollar-sign"
+                        mono: true
+                        onAccepted: row.save(tokField.text, costField.text, thr.value)
+                        onEditingFinished: if (costField.text !== model.costLimit) row.save(tokField.text, costField.text, thr.value)
+                    }
+                    RangeSlider {
+                        id: thr
+                        Layout.preferredWidth: 220
+                        label: i18n.t["bud.alert_at"]
+                        from: 0.1; to: 1; stepSize: 0.05
+                        value: model.threshold
+                        format: function(v) { return Math.round(v * 100) + "%" }
+                        onCommitted: function(v) { if (model.isSet) row.save(tokField.text, costField.text, v) }
+                    }
+                }
+                AText { visible: row.error !== ""; text: row.error; color: Theme.danger; size: Theme.fsSmall }
+            }
+        }
+    }
+
+    component Hint: RowLayout {
+        property string glyph: ""
+        property string text: ""
+        Layout.fillWidth: true
+        spacing: 10
+        Icon { name: glyph; size: 16; color: Theme.violetSoft; Layout.alignment: Qt.AlignTop }
+        AText { text: parent.text; dim: true; size: Theme.fsSmall; wrapMode: Text.Wrap; elide: Text.ElideNone; Layout.fillWidth: true }
+    }
+}
+````
+
+### `ui/qml/pages/Export.qml`
+
+*173 строк*
+
+````qml
+import QtQuick
+import QtQuick.Layouts
+import Ao
+
+// Экспорт: формат выбирается плиткой (рекомендованный отмечен и объяснён),
+// состав документа — переключателями, путь — полем с кнопкой «Обзор».
+Page {
+    id: page
+    title: i18n.t["exp.title"]
+    subtitle: i18n.t["exp.subtitle"]
+    icon: "package"
+    readonly property var ctl: backend.exporter
+
+    Component.onCompleted: ctl.refresh()
+
+    headerActions: [
+        IconButton { iconName: "refresh-cw"; tip: i18n.t["common.refresh"]; onClicked: page.ctl.refresh() }
+    ]
+
+    EmptyState {
+        visible: backend.workspaceId < 0
+        Layout.fillWidth: true
+        Layout.topMargin: 60
+        icon: "layers"
+        title: i18n.t["ws.empty_title"]
+        text: i18n.t["ws.empty"]
+    }
+
+    ColumnLayout {
+        visible: backend.workspaceId >= 0
+        Layout.fillWidth: true
+        spacing: 18
+
+        // Статистика и рекомендация.
+        Card {
+            Layout.fillWidth: true
+            padding: 16
+            RowLayout {
+                width: parent.width
+                spacing: 12
+                Icon { name: page.ctl.nothing ? "inbox" : "wand-sparkles"; size: 18; color: page.ctl.nothing ? Theme.textMute : Theme.violetSoft }
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 2
+                    AText {
+                        text: page.ctl.nothing ? i18n.t["exp.nothing"] : i18n.fmt(i18n.t["exp.auto_hint"], { reason: page.ctl.reason })
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        elide: Text.ElideNone
+                    }
+                    AText { text: page.ctl.stats; mute: true; size: Theme.fsSmall }
+                }
+            }
+        }
+
+        SectionTitle { Layout.fillWidth: true; text: i18n.t["exp.format"]; icon: "file-type" }
+        GridLayout {
+            Layout.fillWidth: true
+            columns: 4
+            columnSpacing: 14
+            Repeater {
+                model: page.ctl.formats
+                delegate: Card {
+                    id: fmtCard
+                    required property var modelData
+                    required property int index
+                    readonly property bool chosen: page.ctl.format === modelData.key
+                    readonly property bool recommended: page.ctl.recommended === modelData.key
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 150
+                    hoverable: true
+                    glow: chosen
+                    stagger: index
+                    ColumnLayout {
+                        anchors.fill: parent
+                        spacing: 8
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Rectangle {
+                                width: 40; height: 40; radius: 12
+                                color: fmtCard.chosen ? Theme.alpha(Theme.violet, 0.3) : Theme.surface3
+                                Icon { anchors.centerIn: parent; name: fmtCard.modelData.icon; size: 18; color: fmtCard.chosen ? "white" : Theme.textDim }
+                            }
+                            Item { Layout.fillWidth: true }
+                            Badge { visible: fmtCard.recommended; text: i18n.t["exp.recommended"]; tone: "success"; icon: "sparkles" }
+                        }
+                        AText { text: fmtCard.modelData.title; weight: Font.DemiBold; size: Theme.fsH3 }
+                        AText { text: fmtCard.modelData.hint; dim: true; size: Theme.fsSmall; wrapMode: Text.Wrap; elide: Text.ElideNone; Layout.fillWidth: true }
+                    }
+                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: page.ctl.setFormat(fmtCard.modelData.key) }
+                }
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 18
+
+            Card {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignTop
+                ColumnLayout {
+                    width: parent.width
+                    spacing: 12
+                    SectionTitle { Layout.fillWidth: true; text: i18n.t["exp.content"]; icon: "list-checks" }
+                    Repeater {
+                        model: page.ctl.optionList
+                        delegate: Toggle {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            label: modelData.title
+                            hint: modelData.key === "files" && page.ctl.format !== "zip" ? i18n.t["exp.files_zip_only"]
+                                : modelData.key === "anon" ? i18n.t["exp.opt_anon_hint"] : ""
+                            enabled: modelData.key !== "files" || page.ctl.format === "zip"
+                            checked: !!page.ctl.options[modelData.key]
+                            onToggled: page.ctl.setOption(modelData.key, checked)
+                        }
+                    }
+                }
+            }
+
+            Card {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignTop
+                ColumnLayout {
+                    width: parent.width
+                    spacing: 14
+                    SectionTitle { Layout.fillWidth: true; text: i18n.t["exp.output"]; icon: "folder-open" }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 10
+                        Field {
+                            id: pathField
+                            Layout.fillWidth: true
+                            text: page.ctl.path
+                            mono: true
+                            icon: "folder"
+                            onEditingFinished: page.ctl.setPath(text)
+                        }
+                        Button { iconName: "folder-open"; text: i18n.t["exp.browse"]; onClicked: page.ctl.browse() }
+                    }
+                    Button {
+                        Layout.fillWidth: true
+                        variant: "primary"
+                        iconName: "download"
+                        text: i18n.t["exp.export"]
+                        enabled: page.ctl.canExport && !page.ctl.exporting
+                        loading: page.ctl.exporting
+                        onClicked: { page.ctl.setPath(pathField.text); page.ctl.exportNow() }
+                    }
+                    // Результат последнего экспорта.
+                    Rectangle {
+                        visible: page.ctl.lastPath !== ""
+                        Layout.fillWidth: true
+                        radius: Theme.radius
+                        color: Theme.alpha(Theme.success, 0.08)
+                        border.color: Theme.alpha(Theme.success, 0.35)
+                        implicitHeight: doneRow.implicitHeight + 20
+                        RowLayout {
+                            id: doneRow
+                            anchors.fill: parent
+                            anchors.margins: 10
+                            spacing: 10
+                            Icon { name: "circle-check"; color: Theme.success }
+                            AText { text: page.ctl.lastInfo; Layout.fillWidth: true; wrapMode: Text.Wrap; elide: Text.ElideNone; size: Theme.fsSmall }
+                            Button { compact: true; iconName: "external-link"; text: i18n.t["exp.open_folder"]; onClicked: page.ctl.openFolder() }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+````
+
+### `ui/qml/pages/Settings.qml`
+
+*389 строк*
+
+````qml
+import QtQuick
+import QtQuick.Layouts
+import Ao
+
+// Настройки: интерфейс, human-in-the-loop, супервайзер, выполнение,
+// инструменты, песочница, доступные каталоги и безопасность профиля.
+Page {
+    id: page
+    title: i18n.t["settings.title"]
+    subtitle: i18n.t["settings.subtitle"]
+    icon: "settings"
+    readonly property var ctl: backend.prefs
+    readonly property var ws: ctl.ws
+    readonly property bool hasWs: backend.workspaceId >= 0
+
+    function set(key, value) { ctl.setValue(key, value) }
+
+    Component.onCompleted: ctl.refresh()
+
+    GridLayout {
+        Layout.fillWidth: true
+        columns: page.contentWidth > 1050 ? 2 : 1
+        columnSpacing: 18
+        rowSpacing: 18
+
+        // --- интерфейс -----------------------------------------------------------
+        Section {
+            glyph: "monitor"
+            heading: i18n.t["settings.interface"]
+            idx: 0
+            RowLayout {
+                Layout.fillWidth: true
+                AText { text: i18n.t["settings.language"]; Layout.fillWidth: true }
+                Segmented {
+                    options: i18n.languages.map(function(l) { return { value: l.code, title: l.title } })
+                    value: i18n.lang
+                    onPicked: function(v) { backend.setLanguage(v) }
+                }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 14
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 2
+                    AText { text: i18n.t["settings.motion"] }
+                    AText { text: i18n.t["settings.motion_hint"]; mute: true; size: Theme.fsSmall; wrapMode: Text.Wrap; elide: Text.ElideNone; Layout.fillWidth: true }
+                }
+                OrbitLogo { size: 34 }
+            }
+            Segmented {
+                Layout.fillWidth: true
+                stretch: true
+                options: [
+                    { value: "full", title: i18n.t["settings.motion_full"], icon: "sparkles" },
+                    { value: "reduced", title: i18n.t["settings.motion_reduced"], icon: "gauge" },
+                    { value: "off", title: i18n.t["settings.motion_off"], icon: "pause" }
+                ]
+                value: backend.motion
+                onPicked: function(v) { backend.setMotion(v) }
+            }
+        }
+
+        // --- human-in-the-loop -----------------------------------------------------
+        Section {
+            glyph: "hand"
+            heading: i18n.t["settings.hitl_title"]
+            idx: 1
+            enabled: page.hasWs
+            Toggle {
+                Layout.fillWidth: true
+                label: i18n.t["settings.hitl"]
+                hint: i18n.t["settings.hitl_hint"]
+                checked: !!page.ws.human_in_the_loop
+                onToggled: page.set("human_in_the_loop", checked)
+            }
+            RangeSlider {
+                Layout.fillWidth: true
+                enabled: !!page.ws.human_in_the_loop
+                opacity: enabled ? 1 : 0.45
+                label: i18n.t["settings.hitl_threshold"]
+                from: 0; to: 1; stepSize: 0.05
+                value: page.ws.hitl_confidence_threshold || 0
+                format: function(v) { return v <= 0 ? i18n.t["settings.never"] : v.toFixed(2) }
+                onCommitted: function(v) { page.set("hitl_confidence_threshold", v) }
+            }
+            AText { text: i18n.t["settings.hitl_threshold_hint"]; mute: true; size: Theme.fsSmall; wrapMode: Text.Wrap; elide: Text.ElideNone; Layout.fillWidth: true }
+            Toggle {
+                Layout.fillWidth: true
+                enabled: !!page.ws.human_in_the_loop
+                label: i18n.t["settings.hitl_milestone"]
+                hint: i18n.t["settings.hitl_milestone_hint"]
+                checked: !!page.ws.hitl_pause_on_milestone
+                onToggled: page.set("hitl_pause_on_milestone", checked)
+            }
+        }
+
+        // --- супервайзер -------------------------------------------------------------
+        Section {
+            glyph: "shield-check"
+            heading: i18n.t["settings.supervisor"]
+            idx: 2
+            enabled: page.hasWs
+            Segmented {
+                Layout.fillWidth: true
+                stretch: true
+                options: [
+                    { value: "api", title: i18n.t["settings.sup_api_short"], icon: "key-round" },
+                    { value: "local", title: i18n.t["settings.sup_local_short"], icon: "hard-drive" }
+                ]
+                value: page.ws.supervisor_mode || "api"
+                onPicked: function(v) { page.set("supervisor_mode", v) }
+            }
+            Select {
+                visible: (page.ws.supervisor_mode || "api") === "api"
+                Layout.fillWidth: true
+                label: i18n.t["settings.supervisor_agent"]
+                icon: "bot"
+                options: page.ctl.supervisorOptions.map(function(o) { return { value: o.id, title: o.title } })
+                value: page.ws.supervisor_agent_id === undefined ? -1 : page.ws.supervisor_agent_id
+                onPicked: function(v) { page.set("supervisor_agent_id", v) }
+            }
+            RowLayout {
+                visible: page.ws.supervisor_mode === "local"
+                Layout.fillWidth: true
+                spacing: 12
+                Field {
+                    Layout.fillWidth: true
+                    label: i18n.t["settings.local_model"]
+                    text: page.ws.supervisor_local_model || ""
+                    mono: true
+                    icon: "cpu"
+                    onEditingFinished: page.set("supervisor_local_model", text)
+                }
+                Field {
+                    Layout.fillWidth: true
+                    label: i18n.t["keys.base_url"]
+                    text: page.ws.supervisor_local_base_url || ""
+                    mono: true
+                    icon: "globe"
+                    onEditingFinished: page.set("supervisor_local_base_url", text)
+                }
+            }
+            RangeSlider {
+                Layout.fillWidth: true
+                label: i18n.t["settings.summary_interval"]
+                from: 0; to: 120; stepSize: 5
+                value: page.ws.summary_interval_minutes || 0
+                format: function(v) { return v <= 0 ? i18n.t["settings.off"] : Math.round(v) + " " + i18n.t["settings.min"] }
+                onCommitted: function(v) { page.set("summary_interval_minutes", v) }
+            }
+            Toggle {
+                Layout.fillWidth: true
+                label: i18n.t["settings.summary_on_event"]
+                hint: i18n.t["settings.summary_cost_hint"]
+                checked: !!page.ws.summary_on_event
+                onToggled: page.set("summary_on_event", checked)
+            }
+            Toggle {
+                Layout.fillWidth: true
+                label: i18n.t["settings.anonymize"]
+                hint: i18n.t["settings.anonymize_hint"]
+                checked: page.ws.anonymize_summaries !== false
+                onToggled: page.set("anonymize_summaries", checked)
+            }
+        }
+
+        // --- выполнение ---------------------------------------------------------------
+        Section {
+            glyph: "workflow"
+            heading: i18n.t["settings.execution"]
+            idx: 3
+            enabled: page.hasWs
+            RangeSlider {
+                Layout.fillWidth: true
+                label: i18n.t["settings.max_steps"]
+                from: 1; to: 50; stepSize: 1; decimals: 0
+                value: page.ws.agent_max_steps || 10
+                onCommitted: function(v) { page.set("agent_max_steps", v) }
+            }
+            RangeSlider {
+                Layout.fillWidth: true
+                label: i18n.t["settings.rework_rounds"]
+                from: 0; to: 10; stepSize: 1; decimals: 0
+                value: page.ws.max_rework_rounds === undefined ? 2 : page.ws.max_rework_rounds
+                onCommitted: function(v) { page.set("max_rework_rounds", v) }
+            }
+            RangeSlider {
+                Layout.fillWidth: true
+                label: i18n.t["settings.parallel"]
+                from: 1; to: 16; stepSize: 1; decimals: 0
+                value: page.ws.max_parallel_agents || 6
+                onCommitted: function(v) { page.set("max_parallel_agents", v) }
+            }
+        }
+
+        // --- инструменты -----------------------------------------------------------------
+        Section {
+            glyph: "zap"
+            heading: i18n.t["settings.tools"]
+            idx: 4
+            enabled: page.hasWs
+            AText { text: i18n.t["settings.tools_hint"]; mute: true; size: Theme.fsSmall; wrapMode: Text.Wrap; elide: Text.ElideNone; Layout.fillWidth: true }
+            Flow {
+                Layout.fillWidth: true
+                spacing: 8
+                Repeater {
+                    model: page.ctl.toolSwitches
+                    delegate: Chip {
+                        required property var modelData
+                        text: modelData.title
+                        checked: (page.ws.tools_enabled || []).indexOf(modelData.key) >= 0
+                        onClicked: page.ctl.setTool(modelData.key, checked)
+                    }
+                }
+            }
+            AText { text: i18n.t["settings.search_backend"]; size: Theme.fsSmall; weight: Font.Medium; dim: true }
+            Segmented {
+                options: [{ value: "duckduckgo", title: "DuckDuckGo" }, { value: "tavily", title: "Tavily" }, { value: "brave", title: "Brave" }]
+                value: page.ws.search_backend || "duckduckgo"
+                onPicked: function(v) { page.set("search_backend", v) }
+            }
+            RowLayout {
+                visible: (page.ws.search_backend || "duckduckgo") !== "duckduckgo"
+                Layout.fillWidth: true
+                spacing: 10
+                Field {
+                    id: searchKey
+                    Layout.fillWidth: true
+                    label: i18n.t["settings.search_key"]
+                    placeholder: page.ctl.hasSearchKey ? i18n.t["settings.search_key_set"] : "tvly-…"
+                    password: true
+                    mono: true
+                    icon: "lock"
+                    onAccepted: { page.ctl.setSearchKey(text); text = "" }
+                }
+                Button {
+                    Layout.alignment: Qt.AlignBottom
+                    iconName: "check"
+                    text: i18n.t["common.save"]
+                    onClicked: { page.ctl.setSearchKey(searchKey.text); searchKey.text = "" }
+                }
+            }
+            Toggle {
+                Layout.fillWidth: true
+                label: i18n.t["settings.fetch_pages"]
+                checked: page.ws.fetch_pages !== false
+                onToggled: page.set("fetch_pages", checked)
+            }
+        }
+
+        // --- песочница ---------------------------------------------------------------------
+        Section {
+            glyph: "box"
+            heading: i18n.t["settings.sandbox"]
+            idx: 5
+            enabled: page.hasWs
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                Segmented {
+                    options: [{ value: "auto", title: i18n.t["settings.sb_auto"] },
+                              { value: "subprocess", title: i18n.t["settings.sb_process"] },
+                              { value: "docker", title: "Docker" }]
+                    value: page.ws.sandbox_backend || "auto"
+                    onPicked: function(v) { page.set("sandbox_backend", v) }
+                }
+                Item { Layout.fillWidth: true }
+                Spinner { visible: page.ctl.docker === "checking"; size: 14 }
+                Badge {
+                    visible: page.ctl.docker !== "checking"
+                    text: page.ctl.docker === "yes" ? i18n.t["settings.docker_yes"] : i18n.t["settings.docker_no"]
+                    tone: page.ctl.docker === "yes" ? "success" : "warning"
+                    icon: page.ctl.docker === "yes" ? "circle-check" : "triangle-alert"
+                }
+                IconButton { iconName: "refresh-cw"; tip: i18n.t["settings.docker_recheck"]; onClicked: page.ctl.checkDocker() }
+            }
+            AText {
+                text: page.ctl.docker === "yes" ? i18n.t["settings.docker_note_yes"] : i18n.t["settings.docker_note_no"]
+                mute: true
+                size: Theme.fsSmall
+                wrapMode: Text.Wrap
+                elide: Text.ElideNone
+                Layout.fillWidth: true
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 20
+                RangeSlider {
+                    Layout.fillWidth: true
+                    label: i18n.t["settings.sb_timeout"]
+                    from: 5; to: 300; stepSize: 5; decimals: 0; suffix: " s"
+                    value: page.ws.sandbox_timeout_sec || 30
+                    onCommitted: function(v) { page.set("sandbox_timeout_sec", v) }
+                }
+                RangeSlider {
+                    Layout.fillWidth: true
+                    label: i18n.t["settings.sb_memory"]
+                    from: 64; to: 4096; stepSize: 64; decimals: 0; suffix: " MB"
+                    value: page.ws.sandbox_memory_mb || 512
+                    onCommitted: function(v) { page.set("sandbox_memory_mb", v) }
+                }
+            }
+        }
+
+        // --- каталоги --------------------------------------------------------------------------
+        Section {
+            glyph: "folder-open"
+            heading: i18n.t["settings.allowed_paths"]
+            idx: 6
+            enabled: page.hasWs
+            AText { text: i18n.t["settings.paths_warning"]; color: Theme.warning; size: Theme.fsSmall; wrapMode: Text.Wrap; elide: Text.ElideNone; Layout.fillWidth: true }
+            Repeater {
+                model: page.ws.extra_allowed_paths || []
+                delegate: Rectangle {
+                    required property string modelData
+                    Layout.fillWidth: true
+                    height: 38
+                    radius: Theme.radiusS
+                    color: Theme.surface2
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 4
+                        Icon { name: "folder"; size: 14; color: Theme.textMute }
+                        AText { text: modelData; mono: true; size: Theme.fsSmall; Layout.fillWidth: true; elide: Text.ElideMiddle }
+                        IconButton { iconName: "x"; size: 28; danger: true; onClicked: page.ctl.removePath(modelData) }
+                    }
+                }
+            }
+            AText { visible: (page.ws.extra_allowed_paths || []).length === 0; text: i18n.t["settings.paths_empty"]; mute: true; size: Theme.fsSmall }
+            Button { iconName: "plus"; text: i18n.t["settings.add_path"]; onClicked: page.ctl.addPath() }
+        }
+
+        // --- безопасность и данные ----------------------------------------------------------
+        Section {
+            glyph: "lock"
+            heading: i18n.t["settings.security"]
+            idx: 7
+            AText { text: i18n.t["settings.security_text"]; dim: true; size: Theme.fsSmall; wrapMode: Text.Wrap; elide: Text.ElideNone; Layout.fillWidth: true }
+            RowLayout {
+                spacing: 10
+                Button { iconName: "key-round"; text: i18n.t["settings.change_password"]; onClicked: pwd.openFresh() }
+                Button { iconName: "folder-open"; text: i18n.t["settings.open_data"]; onClicked: backend.openPath(backend.dataRoot) }
+            }
+            AText { text: backend.dataRoot; mono: true; mute: true; size: Theme.fsMicro; Layout.fillWidth: true; elide: Text.ElideMiddle }
+        }
+    }
+
+    component Section: Card {
+        id: sec
+        property string glyph: ""
+        property string heading: ""
+        property int idx: 0
+        default property alias items: sectionBody.data
+        Layout.fillWidth: true
+        Layout.alignment: Qt.AlignTop
+        stagger: idx
+        opacity: enabled ? enter : enter * 0.5
+        ColumnLayout {
+            id: sectionBody
+            width: parent.width
+            spacing: 14
+            SectionTitle { Layout.fillWidth: true; text: sec.heading; icon: sec.glyph }
+        }
+    }
+
+    Sheet {
+        id: pwd
+        title: i18n.t["settings.change_password"]
+        subtitle: i18n.t["settings.password_note"]
+        icon: "key-round"
+        sheetWidth: 460
+        property string error: ""
+        function openFresh() { error = ""; oldPwd.text = ""; newPwd.text = ""; newPwd2.text = ""; open(); oldPwd.focusInput() }
+        function submit() {
+            error = page.ctl.changePassword(oldPwd.text, newPwd.text, newPwd2.text)
+            if (error === "") close()
+        }
+        Field { id: oldPwd; Layout.fillWidth: true; label: i18n.t["settings.old_password"]; password: true; icon: "lock" }
+        Field { id: newPwd; Layout.fillWidth: true; label: i18n.t["login.password"]; password: true; icon: "lock" }
+        Field { id: newPwd2; Layout.fillWidth: true; label: i18n.t["login.password2"]; password: true; icon: "lock"; error: pwd.error; onAccepted: pwd.submit() }
+        footer: [
+            Item { Layout.fillWidth: true },
+            Button { text: i18n.t["common.cancel"]; variant: "ghost"; onClicked: pwd.close() },
+            Button { text: i18n.t["common.save"]; variant: "primary"; iconName: "check"; onClicked: pwd.submit() }
+        ]
+    }
+}
+````
+
+
+## Интерфейс: дизайн-система Ao
+
+### `ui/qml/Ao/qmldir`
+
+*35 строк*
+
+````text
+module Ao
+singleton Theme 1.0 Theme.qml
+singleton Icons 1.0 Icons.qml
+AText 1.0 AText.qml
+Aurora 1.0 Aurora.qml
+Badge 1.0 Badge.qml
+BarList 1.0 BarList.qml
+Button 1.0 Button.qml
+Card 1.0 Card.qml
+Chip 1.0 Chip.qml
+Confirm 1.0 Confirm.qml
+EmptyState 1.0 EmptyState.qml
+Field 1.0 Field.qml
+Icon 1.0 Icon.qml
+IconButton 1.0 IconButton.qml
+LineChart 1.0 LineChart.qml
+OrbitLogo 1.0 OrbitLogo.qml
+PageHeader 1.0 PageHeader.qml
+ProgressRing 1.0 ProgressRing.qml
+RangeSlider 1.0 RangeSlider.qml
+ScrollBar 1.0 ScrollBar.qml
+SectionTitle 1.0 SectionTitle.qml
+SegmentBar 1.0 SegmentBar.qml
+Segmented 1.0 Segmented.qml
+Select 1.0 Select.qml
+Sheet 1.0 Sheet.qml
+Skeleton 1.0 Skeleton.qml
+Spinner 1.0 Spinner.qml
+StatusDot 1.0 StatusDot.qml
+TextBox 1.0 TextBox.qml
+Ticker 1.0 Ticker.qml
+Tip 1.0 Tip.qml
+Toasts 1.0 Toasts.qml
+Toggle 1.0 Toggle.qml
+Page 1.0 Page.qml
+````
+
+### `ui/qml/Ao/Theme.qml`
+
+*110 строк*
+
+````qml
+pragma Singleton
+import QtQuick
+
+// Дизайн-система: палитра, типографика, отступы, радиусы и анимации.
+// Основа — глубокий чернильно-фиолетовый фон; акцент — фиолетовый,
+// второй акцент — сине-зелёный (teal → cyan). Все длительности анимаций
+// проходят через dur(), поэтому уровень «движения» из настроек
+// одним переключателем делает интерфейс спокойнее или выключает анимации.
+QtObject {
+    id: theme
+
+    // --- движение: 2 — полное, 1 — сдержанное, 0 — без анимаций ---------
+    property int motion: 2
+    readonly property bool rich: motion >= 2
+    function dur(ms) { return motion === 0 ? 0 : (motion === 1 ? Math.round(ms * 0.6) : ms) }
+    readonly property int fast: dur(140)
+    readonly property int normal: dur(220)
+    readonly property int slow: dur(420)
+
+    // --- шрифты (семейства задаёт Python после загрузки файлов) --------------
+    property string fontFamily: "Inter"
+    property string monoFamily: "JetBrains Mono"
+    property string iconFamily: "lucide"
+
+    // --- фоны и поверхности ----------------------------------------------------
+    readonly property color bg: "#09080F"
+    readonly property color bgRaised: "#0E0C18"
+    readonly property color sidebar: "#0C0A16"
+    readonly property color surface: Qt.rgba(0.10, 0.09, 0.17, 0.78)
+    readonly property color surfaceSolid: "#15132A"
+    readonly property color surfaceHover: Qt.rgba(0.14, 0.12, 0.24, 0.85)
+    readonly property color surface2: "#1A1733"
+    readonly property color surface3: "#221E40"
+    readonly property color input: "#120F22"
+    readonly property color overlay: Qt.rgba(0.02, 0.01, 0.05, 0.62)
+
+    readonly property color border: "#262244"
+    readonly property color borderSoft: Qt.rgba(1, 1, 1, 0.06)
+    readonly property color borderStrong: "#3B3566"
+
+    // --- текст ---------------------------------------------------------------------
+    readonly property color text: "#EEEBFA"
+    readonly property color textDim: "#A9A3C8"
+    readonly property color textMute: "#6E6891"
+    readonly property color textFaint: "#4B4668"
+
+    // --- акценты ---------------------------------------------------------------------
+    readonly property color violet: "#8B5CF6"
+    readonly property color violetSoft: "#A78BFA"
+    readonly property color violetDeep: "#6D28D9"
+    readonly property color indigo: "#6366F1"
+    readonly property color teal: "#2DD4BF"
+    readonly property color cyan: "#22D3EE"
+    readonly property color magenta: "#D946EF"
+
+    readonly property color success: "#34D399"
+    readonly property color warning: "#FBBF24"
+    readonly property color danger: "#FB7185"
+    readonly property color info: "#60A5FA"
+
+    function tone(name) {
+        switch (name) {
+        case "success": return success
+        case "warning": return warning
+        case "error": return danger
+        case "danger": return danger
+        case "info": return info
+        case "accent": return cyan
+        case "tool": return cyan
+        case "violet": return violetSoft
+        case "muted": return textMute
+        default: return textDim
+        }
+    }
+
+    function statusColor(status) {
+        switch (status) {
+        case "running": return cyan
+        case "done": return success
+        case "review": return violetSoft
+        case "rework": return warning
+        case "paused": return "#F59E0B"
+        case "error": return danger
+        case "failed": return danger
+        case "stopped": return "#F59E0B"
+        default: return textMute
+        }
+    }
+
+    function alpha(c, a) { return Qt.rgba(c.r, c.g, c.b, a) }
+
+    // --- типографика ---------------------------------------------------------------------
+    readonly property int fsDisplay: 30
+    readonly property int fsH1: 23
+    readonly property int fsH2: 17
+    readonly property int fsH3: 15
+    readonly property int fsBody: 14
+    readonly property int fsSmall: 13
+    readonly property int fsMicro: 11
+
+    // --- геометрия -------------------------------------------------------------------------
+    readonly property int radiusS: 8
+    readonly property int radius: 12
+    readonly property int radiusL: 16
+    readonly property int radiusXL: 22
+    readonly property int gap: 12
+    readonly property int pad: 20
+    readonly property int pagePad: 28
+    readonly property int controlH: 38
+}
+````
+
+### `ui/qml/Ao/Icons.qml`
+
+*117 строк*
+
+````qml
+pragma Singleton
+import QtQuick
+
+// Иконки Lucide (ISC): имя -> символ иконочного шрифта.
+QtObject {
+    readonly property var map: ({
+        "layers": "\ue529",
+        "key-round": "\ue4a3",
+        "bot": "\ue1bb",
+        "list-checks": "\ue1d0",
+        "play": "\ue13c",
+        "activity": "\ue038",
+        "shield-check": "\ue1ff",
+        "layout-dashboard": "\ue1c1",
+        "wallet": "\ue204",
+        "package": "\ue129",
+        "settings": "\ue154",
+        "log-out": "\ue10e",
+        "plus": "\ue13d",
+        "trash-2": "\ue18e",
+        "pencil": "\ue1f9",
+        "check": "\ue06c",
+        "x": "\ue1b2",
+        "chevron-down": "\ue06d",
+        "chevron-right": "\ue06f",
+        "chevron-up": "\ue070",
+        "chevron-left": "\ue06e",
+        "search": "\ue151",
+        "refresh-cw": "\ue145",
+        "pause": "\ue12e",
+        "square": "\ue167",
+        "circle-alert": "\ue077",
+        "triangle-alert": "\ue193",
+        "info": "\ue0f9",
+        "sparkles": "\ue412",
+        "zap": "\ue1b4",
+        "brain": "\ue3c6",
+        "cpu": "\ue0a9",
+        "terminal": "\ue181",
+        "globe": "\ue0e8",
+        "file-text": "\ue0cc",
+        "folder": "\ue0d7",
+        "folder-open": "\ue247",
+        "link": "\ue102",
+        "star": "\ue176",
+        "user": "\ue19f",
+        "users": "\ue1a4",
+        "lock": "\ue10b",
+        "eye": "\ue0ba",
+        "eye-off": "\ue0bb",
+        "arrow-right": "\ue049",
+        "arrow-up": "\ue04a",
+        "arrow-down": "\ue042",
+        "git-branch": "\ue0e2",
+        "workflow": "\ue425",
+        "network": "\ue125",
+        "download": "\ue0b2",
+        "upload": "\ue19e",
+        "clock": "\ue087",
+        "timer": "\ue1e0",
+        "gauge": "\ue1bf",
+        "flame": "\ue0d2",
+        "circle-check": "\ue226",
+        "circle-x": "\ue084",
+        "circle-dot": "\ue345",
+        "loader-circle": "\ue10a",
+        "wand-sparkles": "\ue357",
+        "message-square-text": "\ue575",
+        "send": "\ue152",
+        "split": "\ue440",
+        "rotate-ccw": "\ue148",
+        "skip-forward": "\ue160",
+        "octagon-x": "\ue128",
+        "hand": "\ue1d7",
+        "bell": "\ue059",
+        "sliders-horizontal": "\ue29a",
+        "languages": "\ue0fe",
+        "monitor": "\ue11d",
+        "database": "\ue0ad",
+        "hard-drive": "\ue0ed",
+        "coins": "\ue097",
+        "dollar-sign": "\ue0b1",
+        "trending-up": "\ue191",
+        "chart-line": "\ue2a5",
+        "chart-bar": "\ue2a2",
+        "list-tree": "\ue408",
+        "scroll-text": "\ue45f",
+        "badge-check": "\ue241",
+        "scan-eye": "\ue536",
+        "file-archive": "\ue30d",
+        "file-code": "\ue0c3",
+        "file-type": "\ue329",
+        "book-open": "\ue05f",
+        "copy": "\ue09e",
+        "external-link": "\ue0b9",
+        "grip-vertical": "\ue0eb",
+        "ellipsis": "\ue0b6",
+        "filter": "\ue0dc",
+        "box": "\ue061",
+        "boxes": "\ue2d0",
+        "hourglass": "\ue296",
+        "circle-pause": "\ue07f",
+        "circle-play": "\ue080",
+        "scale": "\ue212",
+        "shield": "\ue158",
+        "flag": "\ue0d1",
+        "orbit": "\ue3e7",
+        "command": "\ue09a",
+        "keyboard": "\ue284",
+        "square-pen": "\ue172",
+        "house": "\ue0f5",
+        "power": "\ue140",
+        "arrow-up-right": "\ue04d",
+        "inbox": "\ue0f7"
+    })
+    function glyph(name) { return map[name] || map["circle-dot"] }
+}
+````
+
+### `ui/qml/Ao/AText.qml`
+
+*20 строк*
+
+````qml
+import QtQuick
+
+// Базовый текст интерфейса с шрифтом и цветом темы.
+Text {
+    property bool dim: false
+    property bool mute: false
+    property bool mono: false
+    property int size: Theme.fsBody
+    property int weight: Font.Normal
+
+    color: mute ? Theme.textMute : (dim ? Theme.textDim : Theme.text)
+    font.family: mono ? Theme.monoFamily : Theme.fontFamily
+    font.pixelSize: size
+    font.weight: weight
+    wrapMode: Text.NoWrap
+    elide: Text.ElideRight
+    textFormat: Text.PlainText
+    renderType: Text.QtRendering
+    linkColor: Theme.cyan
+}
+````
+
+### `ui/qml/Ao/Icon.qml`
+
+*15 строк*
+
+````qml
+import QtQuick
+
+// Иконка из шрифта Lucide: Icon { name: "bot"; size: 18; color: Theme.textDim }
+Text {
+    property string name: "circle-dot"
+    property int size: 16
+    text: Icons.glyph(name)
+    font.family: Theme.iconFamily
+    font.pixelSize: size
+    color: Theme.textDim
+    horizontalAlignment: Text.AlignHCenter
+    verticalAlignment: Text.AlignVCenter
+    renderType: Text.QtRendering
+    Behavior on color { ColorAnimation { duration: Theme.fast } }
+}
+````
+
+### `ui/qml/Ao/Button.qml`
+
+*127 строк*
+
+````qml
+import QtQuick
+import QtQuick.Controls.Basic as T
+
+// Кнопка с вариантами: primary | secondary | ghost | danger | success.
+// Микровзаимодействия: подсветка при наведении, «вдавливание» при нажатии,
+// бегущий блик на основной кнопке и индикатор загрузки вместо иконки.
+T.AbstractButton {
+    id: control
+    property string variant: "secondary"
+    property string iconName: ""
+    property bool loading: false
+    property bool compact: false
+    property color accent: variant === "danger" ? Theme.danger
+                         : variant === "success" ? Theme.success : Theme.violet
+
+    readonly property bool primary: variant === "primary"
+    readonly property bool hot: hovered && enabled && !loading
+
+    implicitHeight: compact ? 32 : Theme.controlH
+    implicitWidth: Math.max(implicitHeight, row.implicitWidth + (compact ? 22 : 30))
+    hoverEnabled: true
+    focusPolicy: Qt.StrongFocus
+    opacity: enabled ? 1 : 0.45
+    scale: pressed ? 0.965 : 1
+    Behavior on scale { NumberAnimation { duration: Theme.fast; easing.type: Easing.OutBack } }
+    Behavior on opacity { NumberAnimation { duration: Theme.fast } }
+
+    background: Rectangle {
+        id: bg
+        radius: Theme.radius
+        clip: true
+        color: control.primary ? "transparent"
+             : control.variant === "ghost" ? (control.hot ? Theme.alpha(Theme.text, 0.06) : "transparent")
+             : control.variant === "danger" ? (control.hot ? Theme.alpha(Theme.danger, 0.22) : Theme.alpha(Theme.danger, 0.12))
+             : control.variant === "success" ? (control.hot ? Theme.alpha(Theme.success, 0.22) : Theme.alpha(Theme.success, 0.12))
+             : (control.hot ? Theme.surface3 : Theme.surface2)
+        border.width: control.primary || control.variant === "ghost" ? 0 : 1
+        border.color: control.variant === "danger" ? Theme.alpha(Theme.danger, 0.35)
+                    : control.variant === "success" ? Theme.alpha(Theme.success, 0.35)
+                    : (control.hot ? Theme.borderStrong : Theme.border)
+        Behavior on color { ColorAnimation { duration: Theme.fast } }
+
+        // Градиент основной кнопки: фиолетовый → индиго, при наведении ярче.
+        Rectangle {
+            anchors.fill: parent
+            radius: parent.radius
+            visible: control.primary
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0; color: control.hot ? "#9D72FF" : Theme.violet }
+                GradientStop { position: 1; color: control.hot ? "#7C7FFB" : Theme.indigo }
+            }
+        }
+        // Бегущий блик — только на основной кнопке и только при полном движении.
+        Rectangle {
+            id: shine
+            visible: control.primary && Theme.rich
+            width: parent.height * 1.6
+            height: parent.height * 3
+            y: -parent.height
+            x: -width * 1.5
+            rotation: 20
+            opacity: 0.0
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0; color: "transparent" }
+                GradientStop { position: 0.5; color: Qt.rgba(1, 1, 1, 0.28) }
+                GradientStop { position: 1; color: "transparent" }
+            }
+        }
+        // Светящийся контур фокуса клавиатуры.
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: -3
+            radius: parent.radius + 3
+            color: "transparent"
+            border.width: 2
+            border.color: Theme.alpha(Theme.violetSoft, 0.7)
+            visible: control.visualFocus
+        }
+    }
+
+    SequentialAnimation {
+        running: control.hot && control.primary && Theme.rich
+        loops: 1
+        PropertyAction { target: shine; property: "opacity"; value: 1 }
+        NumberAnimation { target: shine; property: "x"; from: -shine.width * 1.5
+                          to: control.width + shine.width; duration: 650; easing.type: Easing.OutCubic }
+        PropertyAction { target: shine; property: "opacity"; value: 0 }
+    }
+
+    contentItem: Item {
+        implicitWidth: row.implicitWidth
+        implicitHeight: row.implicitHeight
+        Row {
+            id: row
+            anchors.centerIn: parent
+            spacing: 8
+            Spinner {
+                visible: control.loading
+                size: 14
+                color: control.primary ? "white" : Theme.violetSoft
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            Icon {
+                visible: control.iconName !== "" && !control.loading
+                name: control.iconName
+                size: control.compact ? 14 : 16
+                color: control.primary ? "white"
+                     : control.variant === "danger" ? Theme.danger
+                     : control.variant === "success" ? Theme.success
+                     : (control.hot ? Theme.text : Theme.textDim)
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            AText {
+                visible: control.text !== ""
+                text: control.text
+                size: control.compact ? Theme.fsSmall : Theme.fsBody
+                weight: Font.DemiBold
+                color: control.primary ? "white"
+                     : control.variant === "danger" ? Theme.danger
+                     : control.variant === "success" ? Theme.success : Theme.text
+                anchors.verticalCenter: parent.verticalCenter
+            }
+        }
+    }
+}
+````
+
+### `ui/qml/Ao/IconButton.qml`
+
+*36 строк*
+
+````qml
+import QtQuick
+import QtQuick.Controls.Basic as T
+
+// Кнопка-иконка с подсказкой: IconButton { icon: "pencil"; tip: "Изменить" }
+T.AbstractButton {
+    id: control
+    property string iconName: "circle-dot"
+    property string tip: ""
+    property color tint: Theme.textDim
+    property color hoverTint: Theme.text
+    property bool danger: false
+    property int size: 32
+    implicitWidth: size
+    implicitHeight: size
+    hoverEnabled: true
+    opacity: enabled ? 1 : 0.4
+    scale: pressed ? 0.9 : 1
+    Behavior on scale { NumberAnimation { duration: Theme.fast; easing.type: Easing.OutBack } }
+
+    background: Rectangle {
+        radius: Theme.radiusS
+        color: control.hovered ? (control.danger ? Theme.alpha(Theme.danger, 0.16)
+                                                 : Theme.alpha(Theme.text, 0.07)) : "transparent"
+        Behavior on color { ColorAnimation { duration: Theme.fast } }
+    }
+    contentItem: Icon {
+        name: control.iconName
+        size: Math.round(control.size * 0.5)
+        color: control.hovered ? (control.danger ? Theme.danger : control.hoverTint) : control.tint
+    }
+
+    Tip {
+        text: control.tip
+        shown: control.hovered && control.tip !== ""
+    }
+}
+````
+
+### `ui/qml/Ao/Card.qml`
+
+*65 строк*
+
+````qml
+import QtQuick
+
+// «Стеклянная» карточка. hoverable: при наведении приподнимается и
+// подсвечивает контур; glow: постоянное свечение (активный элемент).
+Rectangle {
+    id: card
+    default property alias content: body.data
+    property int padding: Theme.pad
+    property bool hoverable: false
+    property bool glow: false
+    property color glowColor: Theme.violet
+    property alias hovered: hover.hovered
+    readonly property bool lifted: hoverable && hover.hovered
+    // порядковый номер для каскадного появления списка; -1 — без анимации
+    property int stagger: -1
+    property real enter: stagger >= 0 && Theme.motion > 0 ? 0 : 1
+
+    radius: Theme.radiusL
+    color: lifted ? Theme.surfaceHover : Theme.surface
+    border.width: 1
+    border.color: glow ? Theme.alpha(glowColor, 0.55) : (lifted ? Theme.borderStrong : Theme.border)
+    implicitHeight: body.childrenRect.height + padding * 2
+    opacity: enter
+    transform: Translate {
+        y: (card.lifted && Theme.rich ? -2 : 0) + (1 - card.enter) * 16
+        Behavior on y { enabled: card.enter >= 1; NumberAnimation { duration: Theme.normal; easing.type: Easing.OutCubic } }
+    }
+    SequentialAnimation {
+        running: card.stagger >= 0 && card.enter < 1
+        PauseAnimation { duration: Theme.rich ? Math.max(0, Math.min(card.stagger, 12)) * 45 : 0 }
+        NumberAnimation { target: card; property: "enter"; to: 1; duration: Theme.slow; easing.type: Easing.OutCubic }
+    }
+    Behavior on color { ColorAnimation { duration: Theme.normal } }
+    Behavior on border.color { ColorAnimation { duration: Theme.normal } }
+
+    // Мягкий блик по верхней кромке — ощущение объёма стекла.
+    Rectangle {
+        anchors { left: parent.left; right: parent.right; top: parent.top; margins: 1 }
+        height: parent.radius * 2
+        radius: parent.radius
+        opacity: 0.55
+        gradient: Gradient {
+            GradientStop { position: 0; color: Qt.rgba(1, 1, 1, 0.045) }
+            GradientStop { position: 1; color: "transparent" }
+        }
+    }
+    // Свечение вокруг активной карточки.
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: -4
+        radius: parent.radius + 4
+        color: "transparent"
+        border.width: 4
+        border.color: Theme.alpha(card.glowColor, 0.12)
+        visible: card.glow
+    }
+
+    HoverHandler { id: hover; enabled: card.hoverable }
+
+    Item {
+        id: body
+        anchors.fill: parent
+        anchors.margins: card.padding
+    }
+}
+````
+
+### `ui/qml/Ao/Page.qml`
+
+*47 строк*
+
+````qml
+import QtQuick
+import QtQuick.Controls.Basic as T
+import QtQuick.Layouts
+
+// Шаблон страницы: заголовок с действиями и прокручиваемое содержимое.
+// fill: true — содержимое растягивается на всю высоту без прокрутки
+// (страницы с собственными прокручиваемыми панелями, как «Выполнение»).
+Item {
+    id: page
+    property string title: ""
+    property string subtitle: ""
+    property string icon: ""
+    property bool fill: false
+    property alias headerActions: header.actions
+    default property alias content: col.data
+    readonly property int contentWidth: col.width
+
+    PageHeader {
+        id: header
+        anchors { left: parent.left; right: parent.right; top: parent.top }
+        anchors.margins: Theme.pagePad
+        anchors.bottomMargin: 0
+        title: page.title
+        subtitle: page.subtitle
+        icon: page.icon
+    }
+
+    Flickable {
+        id: flick
+        anchors { left: parent.left; right: parent.right; top: header.bottom; bottom: parent.bottom }
+        anchors.topMargin: 22
+        clip: true
+        interactive: !page.fill
+        contentWidth: width
+        contentHeight: page.fill ? height : col.implicitHeight + Theme.pagePad
+        boundsBehavior: Flickable.StopAtBounds
+        T.ScrollBar.vertical: ScrollBar { visible: !page.fill }
+
+        ColumnLayout {
+            id: col
+            x: Theme.pagePad
+            width: flick.width - Theme.pagePad * 2
+            height: page.fill ? flick.height - Theme.pagePad : implicitHeight
+            spacing: 18
+        }
+    }
+}
+````
+
+### `ui/qml/Ao/PageHeader.qml`
+
+*50 строк*
+
+````qml
+import QtQuick
+import QtQuick.Layouts
+
+// Заголовок страницы: иконка, название, подзаголовок и действия справа.
+RowLayout {
+    id: root
+    property string title: ""
+    property string subtitle: ""
+    property string icon: ""
+    default property alias actions: actionRow.data
+    spacing: 16
+
+    Rectangle {
+        visible: root.icon !== ""
+        Layout.alignment: Qt.AlignTop
+        width: 44; height: 44; radius: 14
+        gradient: Gradient {
+            GradientStop { position: 0; color: Theme.alpha(Theme.violet, 0.30) }
+            GradientStop { position: 1; color: Theme.alpha(Theme.cyan, 0.14) }
+        }
+        border.color: Theme.alpha(Theme.violetSoft, 0.3)
+        Icon { anchors.centerIn: parent; name: root.icon; size: 20; color: Theme.violetSoft }
+    }
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 3
+        AText {
+            text: root.title
+            size: Theme.fsH1
+            weight: Font.Bold
+            Layout.fillWidth: true
+        }
+        AText {
+            visible: root.subtitle !== ""
+            text: root.subtitle
+            dim: true
+            Layout.fillWidth: true
+            wrapMode: Text.Wrap
+            elide: Text.ElideNone
+            maximumLineCount: 2
+        }
+    }
+
+    RowLayout {
+        id: actionRow
+        Layout.alignment: Qt.AlignTop
+        spacing: 10
+    }
+}
+````
+
+### `ui/qml/Ao/SectionTitle.qml`
+
+*28 строк*
+
+````qml
+import QtQuick
+import QtQuick.Layouts
+
+// Подзаголовок секции внутри страницы или карточки.
+RowLayout {
+    id: root
+    property string text: ""
+    property string icon: ""
+    property string hint: ""
+    default property alias trailing: trail.data
+    spacing: 10
+    Icon { visible: root.icon !== ""; name: root.icon; size: 16; color: Theme.violetSoft }
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 1
+        AText { text: root.text; size: Theme.fsH3; weight: Font.DemiBold; Layout.fillWidth: true }
+        AText {
+            visible: root.hint !== ""
+            text: root.hint
+            mute: true
+            size: Theme.fsSmall
+            Layout.fillWidth: true
+            wrapMode: Text.Wrap
+            elide: Text.ElideNone
+        }
+    }
+    RowLayout { id: trail; spacing: 8 }
+}
+````
+
+### `ui/qml/Ao/Field.qml`
+
+*113 строк*
+
+````qml
+import QtQuick
+import QtQuick.Controls.Basic as T
+import QtQuick.Layouts
+
+// Поле ввода с подписью, иконкой, ошибкой и светящимся фокусом.
+// password: true — скрытый ввод с кнопкой «показать».
+ColumnLayout {
+    id: root
+    property alias text: input.text
+    property alias placeholder: input.placeholderText
+    property alias input: input
+    property string label: ""
+    property string hint: ""
+    property string error: ""
+    property string icon: ""
+    property bool password: false
+    property bool mono: false
+    property bool readOnly: false
+    property int inputMethodHints: Qt.ImhNone
+    property bool reveal: false
+    signal accepted()
+    signal editingFinished()
+    signal upPressed()
+    signal downPressed()
+    spacing: 6
+
+    function focusInput() { input.forceActiveFocus() }
+
+    AText {
+        visible: root.label !== ""
+        text: root.label
+        size: Theme.fsSmall
+        weight: Font.Medium
+        dim: true
+    }
+
+    T.TextField {
+        id: input
+        Layout.fillWidth: true
+        implicitHeight: Theme.controlH + 2
+        leftPadding: root.icon !== "" ? 38 : 12
+        rightPadding: root.password ? 40 : 12
+        font.family: root.mono ? Theme.monoFamily : Theme.fontFamily
+        font.pixelSize: Theme.fsBody
+        color: Theme.text
+        placeholderTextColor: Theme.textFaint
+        selectionColor: Theme.alpha(Theme.violet, 0.45)
+        selectedTextColor: Theme.text
+        echoMode: root.password && !root.reveal ? TextInput.Password : TextInput.Normal
+        readOnly: root.readOnly
+        inputMethodHints: root.inputMethodHints
+        verticalAlignment: TextInput.AlignVCenter
+        onAccepted: root.accepted()
+        onEditingFinished: root.editingFinished()
+        Keys.onUpPressed: root.upPressed()
+        Keys.onDownPressed: root.downPressed()
+
+        background: Rectangle {
+            radius: Theme.radius
+            color: input.activeFocus ? Theme.surface2 : Theme.input
+            border.width: 1
+            border.color: root.error !== "" ? Theme.danger
+                        : input.activeFocus ? Theme.violet
+                        : (hover.hovered ? Theme.borderStrong : Theme.border)
+            Behavior on border.color { ColorAnimation { duration: Theme.fast } }
+            Behavior on color { ColorAnimation { duration: Theme.fast } }
+
+            // Внешнее свечение фокуса.
+            Rectangle {
+                anchors.fill: parent
+                anchors.margins: -3
+                radius: parent.radius + 3
+                color: "transparent"
+                border.width: 3
+                border.color: Theme.alpha(root.error !== "" ? Theme.danger : Theme.violet, 0.18)
+                opacity: input.activeFocus ? 1 : 0
+                Behavior on opacity { NumberAnimation { duration: Theme.normal } }
+            }
+            HoverHandler { id: hover }
+        }
+
+        Icon {
+            visible: root.icon !== ""
+            name: root.icon
+            size: 16
+            color: input.activeFocus ? Theme.violetSoft : Theme.textMute
+            anchors.left: parent.left
+            anchors.leftMargin: 12
+            anchors.verticalCenter: parent.verticalCenter
+        }
+
+        IconButton {
+            visible: root.password
+            iconName: root.reveal ? "eye-off" : "eye"
+            size: 28
+            anchors.right: parent.right
+            anchors.rightMargin: 6
+            anchors.verticalCenter: parent.verticalCenter
+            onClicked: root.reveal = !root.reveal
+            focusPolicy: Qt.NoFocus
+        }
+    }
+
+    AText {
+        visible: root.error !== "" || root.hint !== ""
+        text: root.error !== "" ? root.error : root.hint
+        color: root.error !== "" ? Theme.danger : Theme.textMute
+        size: Theme.fsSmall
+        wrapMode: Text.Wrap
+        elide: Text.ElideNone
+        Layout.fillWidth: true
+    }
+}
+````
+
+### `ui/qml/Ao/TextBox.qml`
+
+*80 строк*
+
+````qml
+import QtQuick
+import QtQuick.Controls.Basic as T
+import QtQuick.Layouts
+
+// Многострочное поле с прокруткой и тем же фокусом, что у Field.
+ColumnLayout {
+    id: root
+    property alias text: area.text
+    property alias placeholder: area.placeholderText
+    property alias area: area
+    property string label: ""
+    property string hint: ""
+    property bool mono: false
+    property bool readOnly: false
+    property int minHeight: 120
+    spacing: 6
+
+    AText {
+        visible: root.label !== ""
+        text: root.label
+        size: Theme.fsSmall
+        weight: Font.Medium
+        dim: true
+    }
+
+    Rectangle {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.minimumHeight: root.minHeight
+        radius: Theme.radius
+        color: area.activeFocus ? Theme.surface2 : Theme.input
+        border.width: 1
+        border.color: area.activeFocus ? Theme.violet : Theme.border
+        Behavior on border.color { ColorAnimation { duration: Theme.fast } }
+
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: -3
+            radius: parent.radius + 3
+            color: "transparent"
+            border.width: 3
+            border.color: Theme.alpha(Theme.violet, 0.18)
+            opacity: area.activeFocus ? 1 : 0
+            Behavior on opacity { NumberAnimation { duration: Theme.normal } }
+        }
+
+        T.ScrollView {
+            id: scroll
+            anchors.fill: parent
+            anchors.margins: 2
+            clip: true
+            T.ScrollBar.vertical: ScrollBar {}
+
+            T.TextArea {
+                id: area
+                padding: 10
+                wrapMode: TextEdit.Wrap
+                readOnly: root.readOnly
+                font.family: root.mono ? Theme.monoFamily : Theme.fontFamily
+                font.pixelSize: root.mono ? Theme.fsSmall : Theme.fsBody
+                color: Theme.text
+                placeholderTextColor: Theme.textFaint
+                selectionColor: Theme.alpha(Theme.violet, 0.45)
+                selectedTextColor: Theme.text
+                background: null
+                selectByMouse: true
+            }
+        }
+    }
+
+    AText {
+        visible: root.hint !== ""
+        text: root.hint
+        mute: true
+        size: Theme.fsSmall
+        wrapMode: Text.Wrap
+        elide: Text.ElideNone
+        Layout.fillWidth: true
+    }
+}
+````
+
+### `ui/qml/Ao/Select.qml`
+
+*169 строк*
+
+````qml
+import QtQuick
+import QtQuick.Controls.Basic as T
+import QtQuick.Layouts
+
+// Выпадающий список. options: [{value, title}] или массив строк.
+// editable: можно вписать своё значение (например, имя модели).
+ColumnLayout {
+    id: root
+    property var options: []
+    property var value: undefined
+    property string label: ""
+    property string placeholder: ""
+    property bool editable: false
+    property string icon: ""
+    property alias combo: combo
+    readonly property string editText: combo.editText
+    signal picked(var value)
+    signal edited(string text)
+    spacing: 6
+
+    readonly property bool plain: options.length > 0 && typeof options[0] !== "object"
+
+    function titleOf(v) {
+        for (var i = 0; i < options.length; ++i) {
+            var o = options[i]
+            if (plain ? o === v : o.value === v) return plain ? o : o.title
+        }
+        return v === undefined || v === null ? "" : String(v)
+    }
+    function indexOf(v) {
+        for (var i = 0; i < options.length; ++i) {
+            var o = options[i]
+            if (plain ? o === v : o.value === v) return i
+        }
+        return -1
+    }
+
+    AText {
+        visible: root.label !== ""
+        text: root.label
+        size: Theme.fsSmall
+        weight: Font.Medium
+        dim: true
+    }
+
+    T.ComboBox {
+        id: combo
+        Layout.fillWidth: true
+        implicitHeight: Theme.controlH + 2
+        model: root.options
+        textRole: root.plain ? "" : "title"
+        valueRole: root.plain ? "" : "value"
+        editable: root.editable
+        currentIndex: root.indexOf(root.value)
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.fsBody
+        hoverEnabled: true
+        onActivated: function(index) {
+            var o = root.options[index]
+            root.picked(root.plain ? o : o.value)
+        }
+        onAccepted: root.edited(editText)
+        Component.onCompleted: if (root.editable && root.indexOf(root.value) < 0) editText = root.titleOf(root.value)
+
+        leftPadding: root.icon !== "" ? 38 : 12
+        rightPadding: 36
+
+        contentItem: T.TextField {
+            text: combo.editable ? combo.editText : combo.displayText
+            readOnly: !combo.editable
+            enabled: combo.editable
+            color: text === "" ? Theme.textFaint : Theme.text
+            placeholderText: root.placeholder
+            placeholderTextColor: Theme.textFaint
+            font: combo.font
+            verticalAlignment: Text.AlignVCenter
+            selectionColor: Theme.alpha(Theme.violet, 0.45)
+            background: null
+            leftPadding: 0
+            onTextEdited: root.edited(text)
+        }
+
+        indicator: Icon {
+            name: "chevron-down"
+            size: 16
+            color: combo.hovered ? Theme.text : Theme.textMute
+            x: combo.width - width - 12
+            y: (combo.height - height) / 2
+            rotation: combo.popup.visible ? 180 : 0
+            Behavior on rotation { NumberAnimation { duration: Theme.normal; easing.type: Easing.OutCubic } }
+        }
+
+        background: Rectangle {
+            radius: Theme.radius
+            color: combo.activeFocus || combo.popup.visible ? Theme.surface2 : Theme.input
+            border.width: 1
+            border.color: combo.popup.visible || combo.activeFocus ? Theme.violet
+                        : (combo.hovered ? Theme.borderStrong : Theme.border)
+            Behavior on border.color { ColorAnimation { duration: Theme.fast } }
+            Icon {
+                visible: root.icon !== ""
+                name: root.icon
+                size: 16
+                color: Theme.textMute
+                anchors.left: parent.left
+                anchors.leftMargin: 12
+                anchors.verticalCenter: parent.verticalCenter
+            }
+        }
+
+        delegate: T.ItemDelegate {
+            id: item
+            required property var modelData
+            required property int index
+            width: ListView.view ? ListView.view.width : combo.width
+            height: 36
+            hoverEnabled: true
+            highlighted: combo.highlightedIndex === index
+            contentItem: RowLayout {
+                spacing: 8
+                AText {
+                    Layout.fillWidth: true
+                    text: root.plain ? item.modelData : item.modelData.title
+                    color: item.index === combo.currentIndex ? Theme.violetSoft : Theme.text
+                    weight: item.index === combo.currentIndex ? Font.DemiBold : Font.Normal
+                }
+                Icon {
+                    visible: item.index === combo.currentIndex
+                    name: "check"
+                    size: 14
+                    color: Theme.violetSoft
+                }
+            }
+            background: Rectangle {
+                radius: Theme.radiusS
+                color: item.highlighted ? Theme.alpha(Theme.violet, 0.16) : "transparent"
+                Behavior on color { ColorAnimation { duration: Theme.fast } }
+            }
+        }
+
+        popup: T.Popup {
+            y: combo.height + 6
+            width: combo.width
+            implicitHeight: Math.min(contentItem.implicitHeight + 12, 320)
+            padding: 6
+            contentItem: ListView {
+                clip: true
+                implicitHeight: contentHeight
+                model: combo.popup.visible ? combo.delegateModel : null
+                currentIndex: combo.highlightedIndex
+                boundsBehavior: Flickable.StopAtBounds
+                T.ScrollBar.vertical: ScrollBar {}
+            }
+            background: Rectangle {
+                radius: Theme.radius
+                color: Theme.surfaceSolid
+                border.color: Theme.borderStrong
+            }
+            enter: Transition {
+                ParallelAnimation {
+                    NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.fast }
+                    NumberAnimation { property: "y"; from: combo.height; to: combo.height + 6
+                                      duration: Theme.normal; easing.type: Easing.OutCubic }
+                }
+            }
+            exit: Transition { NumberAnimation { property: "opacity"; to: 0; duration: Theme.fast } }
+        }
+    }
+}
+````
+
+### `ui/qml/Ao/Toggle.qml`
+
+*60 строк*
+
+````qml
+import QtQuick
+import QtQuick.Controls.Basic as T
+import QtQuick.Layouts
+
+// Переключатель с «пружинящим» бегунком и подписью слева.
+T.AbstractButton {
+    id: control
+    property string label: ""
+    property string hint: ""
+    checkable: true
+    hoverEnabled: true
+    implicitWidth: row.implicitWidth
+    implicitHeight: Math.max(28, row.implicitHeight)
+    opacity: enabled ? 1 : 0.45
+
+    contentItem: RowLayout {
+        id: row
+        spacing: 14
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: 2
+            visible: control.label !== ""
+            AText { text: control.label; Layout.fillWidth: true; wrapMode: Text.Wrap; elide: Text.ElideNone }
+            AText {
+                visible: control.hint !== ""
+                text: control.hint
+                mute: true
+                size: Theme.fsSmall
+                wrapMode: Text.Wrap
+                elide: Text.ElideNone
+                Layout.fillWidth: true
+            }
+        }
+        Rectangle {
+            id: track
+            Layout.alignment: Qt.AlignVCenter
+            width: 42; height: 24; radius: 12
+            color: control.checked ? "transparent" : Theme.surface3
+            border.width: control.checked ? 0 : 1
+            border.color: control.hovered ? Theme.borderStrong : Theme.border
+            gradient: control.checked ? onGradient : null
+            Gradient {
+                id: onGradient
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0; color: Theme.violet }
+                GradientStop { position: 1; color: Theme.teal }
+            }
+            Rectangle {
+                id: knob
+                width: 18; height: 18; radius: 9
+                y: 3
+                x: control.checked ? track.width - width - 3 : 3
+                color: "white"
+                scale: control.pressed ? 0.85 : 1
+                Behavior on x { NumberAnimation { duration: Theme.normal; easing.type: Easing.OutBack; easing.overshoot: 1.6 } }
+                Behavior on scale { NumberAnimation { duration: Theme.fast } }
+            }
+        }
+    }
+}
+````
+
+### `ui/qml/Ao/Chip.qml`
+
+*46 строк*
+
+````qml
+import QtQuick
+import QtQuick.Controls.Basic as T
+
+// Переключаемая «таблетка»: для инструментов, опций, фильтров.
+T.AbstractButton {
+    id: control
+    property string iconName: ""
+    property color accent: Theme.violet
+    checkable: true
+    hoverEnabled: true
+    implicitHeight: 32
+    implicitWidth: row.implicitWidth + 26
+    scale: pressed ? 0.95 : 1
+    Behavior on scale { NumberAnimation { duration: Theme.fast; easing.type: Easing.OutBack } }
+
+    background: Rectangle {
+        radius: height / 2
+        color: control.checked ? Theme.alpha(control.accent, 0.18)
+             : (control.hovered ? Theme.surface3 : Theme.surface2)
+        border.width: 1
+        border.color: control.checked ? Theme.alpha(control.accent, 0.65) : Theme.border
+        Behavior on color { ColorAnimation { duration: Theme.fast } }
+        Behavior on border.color { ColorAnimation { duration: Theme.fast } }
+    }
+    contentItem: Item {
+        Row {
+            id: row
+            anchors.centerIn: parent
+            spacing: 6
+            Icon {
+                name: control.checked ? "check" : control.iconName
+                visible: control.checked || control.iconName !== ""
+                size: 14
+                color: control.checked ? Theme.violetSoft : Theme.textMute
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            AText {
+                text: control.text
+                size: Theme.fsSmall
+                weight: Font.Medium
+                color: control.checked ? Theme.text : Theme.textDim
+                anchors.verticalCenter: parent.verticalCenter
+            }
+        }
+    }
+}
+````
+
+### `ui/qml/Ao/Segmented.qml`
+
+*91 строк*
+
+````qml
+import QtQuick
+import QtQuick.Layouts
+
+// Сегментированный переключатель: подсветка «переезжает» к выбранному пункту.
+// options: [{value, title, icon?}]
+Rectangle {
+    id: root
+    property var options: []
+    property var value
+    property bool stretch: false
+    signal picked(var value)
+
+    readonly property int current: {
+        for (var i = 0; i < options.length; ++i)
+            if (options[i].value === value) return i
+        return -1
+    }
+
+    implicitHeight: 36
+    implicitWidth: stretch ? 200 : row.implicitWidth + 8
+    radius: Theme.radius
+    color: Theme.input
+    border.color: Theme.border
+
+    Rectangle {
+        id: pill
+        visible: root.current >= 0 && repeater.count > root.current
+        property Item target: repeater.count > root.current && root.current >= 0 ? repeater.itemAt(root.current) : null
+        x: target ? row.x + target.x : 4
+        y: 4
+        width: target ? target.width : 0
+        height: root.height - 8
+        radius: Theme.radiusS
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0; color: Theme.alpha(Theme.violet, 0.9) }
+            GradientStop { position: 1; color: Theme.alpha(Theme.indigo, 0.9) }
+        }
+        Behavior on x { NumberAnimation { duration: Theme.normal; easing.type: Easing.OutCubic } }
+        Behavior on width { NumberAnimation { duration: Theme.normal; easing.type: Easing.OutCubic } }
+    }
+
+    RowLayout {
+        id: row
+        x: 4
+        y: 4
+        height: root.height - 8
+        width: root.stretch ? root.width - 8 : implicitWidth
+        spacing: 2
+        Repeater {
+            id: repeater
+            model: root.options
+            delegate: Item {
+                id: seg
+                required property var modelData
+                required property int index
+                readonly property bool active: index === root.current
+                Layout.fillWidth: root.stretch
+                Layout.fillHeight: true
+                implicitWidth: segRow.implicitWidth + 24
+                Row {
+                    id: segRow
+                    anchors.centerIn: parent
+                    spacing: 6
+                    Icon {
+                        visible: !!seg.modelData.icon
+                        name: seg.modelData.icon || "circle-dot"
+                        size: 14
+                        color: seg.active ? "white" : Theme.textMute
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                    AText {
+                        text: seg.modelData.title
+                        size: Theme.fsSmall
+                        weight: seg.active ? Font.DemiBold : Font.Medium
+                        color: seg.active ? "white" : (mouse.containsMouse ? Theme.text : Theme.textDim)
+                        anchors.verticalCenter: parent.verticalCenter
+                        Behavior on color { ColorAnimation { duration: Theme.fast } }
+                    }
+                }
+                MouseArea {
+                    id: mouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.picked(seg.modelData.value)
+                }
+            }
+        }
+    }
+}
+````
+
+### `ui/qml/Ao/RangeSlider.qml`
+
+*75 строк*
+
+````qml
+import QtQuick
+import QtQuick.Controls.Basic as T
+import QtQuick.Layouts
+
+// Слайдер с подписью и значением справа; значение применяется по отпусканию.
+ColumnLayout {
+    id: root
+    property string label: ""
+    property real from: 0
+    property real to: 1
+    property real stepSize: 0.05
+    property real value: 0
+    property int decimals: 2
+    property string suffix: ""
+    property var format: null
+    signal committed(real value)
+    spacing: 6
+
+    RowLayout {
+        Layout.fillWidth: true
+        AText { text: root.label; size: Theme.fsSmall; weight: Font.Medium; dim: true; Layout.fillWidth: true }
+        AText {
+            text: root.format ? root.format(slider.value) : slider.value.toFixed(root.decimals) + root.suffix
+            size: Theme.fsSmall
+            weight: Font.DemiBold
+            color: Theme.violetSoft
+            mono: true
+        }
+    }
+
+    T.Slider {
+        id: slider
+        Layout.fillWidth: true
+        from: root.from
+        to: root.to
+        stepSize: root.stepSize
+        value: root.value
+        snapMode: T.Slider.SnapAlways
+        hoverEnabled: true
+        onPressedChanged: if (!pressed) root.committed(value)
+
+        background: Rectangle {
+            x: slider.leftPadding
+            y: slider.topPadding + slider.availableHeight / 2 - height / 2
+            width: slider.availableWidth
+            height: 6
+            radius: 3
+            color: Theme.surface3
+            Rectangle {
+                width: slider.visualPosition * parent.width
+                height: parent.height
+                radius: 3
+                gradient: Gradient {
+                    orientation: Gradient.Horizontal
+                    GradientStop { position: 0; color: Theme.violet }
+                    GradientStop { position: 1; color: Theme.teal }
+                }
+            }
+        }
+        handle: Rectangle {
+            x: slider.leftPadding + slider.visualPosition * (slider.availableWidth - width)
+            y: slider.topPadding + slider.availableHeight / 2 - height / 2
+            width: 18; height: 18; radius: 9
+            color: "white"
+            scale: slider.pressed ? 1.25 : (slider.hovered ? 1.1 : 1)
+            Behavior on scale { NumberAnimation { duration: Theme.fast; easing.type: Easing.OutBack } }
+            Rectangle {
+                anchors.centerIn: parent
+                width: 30; height: 30; radius: 15
+                color: Theme.alpha(Theme.violet, 0.25)
+                visible: slider.pressed
+            }
+        }
+    }
+}
+````
+
+### `ui/qml/Ao/Badge.qml`
+
+*38 строк*
+
+````qml
+import QtQuick
+
+// Цветная метка-таблетка: Badge { text: "готово"; tone: "success" }
+Rectangle {
+    id: badge
+    property string text: ""
+    property string tone: "muted"
+    property string icon: ""
+    property color tint: Theme.tone(tone)
+    property bool solid: false
+    implicitHeight: 22
+    implicitWidth: row.implicitWidth + 16
+    radius: height / 2
+    color: solid ? tint : Theme.alpha(tint, 0.14)
+    border.width: solid ? 0 : 1
+    border.color: Theme.alpha(tint, 0.35)
+    Behavior on color { ColorAnimation { duration: Theme.normal } }
+
+    Row {
+        id: row
+        anchors.centerIn: parent
+        spacing: 5
+        Icon {
+            visible: badge.icon !== ""
+            name: badge.icon
+            size: 12
+            color: badge.solid ? Theme.bg : badge.tint
+            anchors.verticalCenter: parent.verticalCenter
+        }
+        AText {
+            text: badge.text
+            size: Theme.fsMicro
+            weight: Font.DemiBold
+            color: badge.solid ? Theme.bg : badge.tint
+            anchors.verticalCenter: parent.verticalCenter
+        }
+    }
+}
+````
+
+### `ui/qml/Ao/StatusDot.qml`
+
+*39 строк*
+
+````qml
+import QtQuick
+
+// Точка статуса; для «работает» — расходящиеся круги пульса.
+Item {
+    id: root
+    property string status: "idle"
+    property int size: 8
+    readonly property color tint: Theme.statusColor(status)
+    readonly property bool live: status === "running"
+    implicitWidth: size
+    implicitHeight: size
+
+    Rectangle {
+        id: pulse
+        anchors.centerIn: parent
+        width: root.size; height: root.size; radius: width / 2
+        color: "transparent"
+        border.width: 2
+        border.color: root.tint
+        opacity: 0
+        visible: root.live && Theme.motion > 0
+        SequentialAnimation on scale {
+            running: pulse.visible
+            loops: Animation.Infinite
+            NumberAnimation { from: 1; to: 2.8; duration: 1300; easing.type: Easing.OutCubic }
+        }
+        SequentialAnimation on opacity {
+            running: pulse.visible
+            loops: Animation.Infinite
+            NumberAnimation { from: 0.8; to: 0; duration: 1300; easing.type: Easing.OutCubic }
+        }
+    }
+    Rectangle {
+        anchors.centerIn: parent
+        width: root.size; height: root.size; radius: width / 2
+        color: root.tint
+        Behavior on color { ColorAnimation { duration: Theme.normal } }
+    }
+}
+````
+
+### `ui/qml/Ao/Spinner.qml`
+
+*35 строк*
+
+````qml
+import QtQuick
+import QtQuick.Shapes
+
+// Индикатор ожидания: вращающаяся дуга с градиентным хвостом.
+Item {
+    id: root
+    property int size: 18
+    property color color: Theme.violetSoft
+    property real stroke: Math.max(2, size / 8)
+    implicitWidth: size
+    implicitHeight: size
+
+    Shape {
+        id: arc
+        anchors.fill: parent
+        preferredRendererType: Shape.CurveRenderer
+        ShapePath {
+            strokeWidth: root.stroke
+            strokeColor: root.color
+            fillColor: "transparent"
+            capStyle: ShapePath.RoundCap
+            PathAngleArc {
+                centerX: root.size / 2; centerY: root.size / 2
+                radiusX: root.size / 2 - root.stroke; radiusY: root.size / 2 - root.stroke
+                startAngle: 0; sweepAngle: 270
+            }
+        }
+        RotationAnimator on rotation {
+            from: 0; to: 360
+            duration: 900
+            loops: Animation.Infinite
+            running: root.visible
+        }
+    }
+}
+````
+
+### `ui/qml/Ao/Skeleton.qml`
+
+*27 строк*
+
+````qml
+import QtQuick
+
+// Заглушка загрузки с бегущим отблеском.
+Rectangle {
+    id: root
+    radius: Theme.radiusS
+    color: Theme.surface2
+    clip: true
+    Rectangle {
+        id: sweep
+        width: root.width * 0.5
+        height: root.height
+        x: -width
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0; color: "transparent" }
+            GradientStop { position: 0.5; color: Qt.rgba(1, 1, 1, 0.06) }
+            GradientStop { position: 1; color: "transparent" }
+        }
+        NumberAnimation on x {
+            from: -sweep.width; to: root.width
+            duration: 1300
+            loops: Animation.Infinite
+            running: root.visible && Theme.motion > 0
+        }
+    }
+}
+````
+
+### `ui/qml/Ao/Tip.qml`
+
+*37 строк*
+
+````qml
+import QtQuick
+import QtQuick.Controls.Basic as T
+
+// Подсказка в стиле темы; появляется с небольшой задержкой и «всплывает».
+T.ToolTip {
+    id: tip
+    property bool shown: false
+    visible: shown && text !== ""
+    delay: 450
+    timeout: 6000
+    y: -implicitHeight - 8
+    x: (parent ? parent.width - implicitWidth : 0) / 2
+    padding: 8
+    leftPadding: 10
+    rightPadding: 10
+
+    contentItem: AText {
+        text: tip.text
+        size: Theme.fsSmall
+        color: Theme.text
+        wrapMode: Text.Wrap
+        elide: Text.ElideNone
+        width: Math.min(implicitWidth, 320)
+    }
+    background: Rectangle {
+        radius: Theme.radiusS
+        color: Theme.surface3
+        border.color: Theme.borderStrong
+    }
+    enter: Transition {
+        ParallelAnimation {
+            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.fast }
+            NumberAnimation { property: "scale"; from: 0.92; to: 1; duration: Theme.fast; easing.type: Easing.OutBack }
+        }
+    }
+    exit: Transition { NumberAnimation { property: "opacity"; to: 0; duration: Theme.fast } }
+}
+````
+
+### `ui/qml/Ao/ScrollBar.qml`
+
+*22 строк*
+
+````qml
+import QtQuick
+import QtQuick.Controls.Basic as T
+
+// Тонкая полоса прокрутки, которая проявляется при наведении и движении.
+T.ScrollBar {
+    id: bar
+    implicitWidth: 10
+    implicitHeight: 10
+    padding: 2
+    minimumSize: 0.08
+    policy: T.ScrollBar.AsNeeded
+    contentItem: Rectangle {
+        implicitWidth: 6
+        implicitHeight: 6
+        radius: 3
+        color: bar.pressed ? Theme.violetSoft : (bar.hovered ? Theme.borderStrong : Theme.surface3)
+        opacity: bar.active || bar.hovered ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: Theme.normal } }
+        Behavior on color { ColorAnimation { duration: Theme.fast } }
+    }
+    background: Item {}
+}
+````
+
+### `ui/qml/Ao/EmptyState.qml`
+
+*63 строк*
+
+````qml
+import QtQuick
+import QtQuick.Layouts
+
+// Пустое состояние: парящая иконка в градиентном круге, текст и действие.
+ColumnLayout {
+    id: root
+    property string icon: "sparkles"
+    property string title: ""
+    property string text: ""
+    property string actionText: ""
+    property string actionIcon: "plus"
+    signal action()
+    spacing: 10
+
+    Item {
+        Layout.alignment: Qt.AlignHCenter
+        implicitWidth: 76
+        implicitHeight: 76
+        Rectangle {
+            id: orb
+            anchors.centerIn: parent
+            width: 64; height: 64; radius: 32
+            gradient: Gradient {
+                GradientStop { position: 0; color: Theme.alpha(Theme.violet, 0.35) }
+                GradientStop { position: 1; color: Theme.alpha(Theme.teal, 0.18) }
+            }
+            border.color: Theme.alpha(Theme.violetSoft, 0.35)
+            Icon { anchors.centerIn: parent; name: root.icon; size: 26; color: Theme.violetSoft }
+            SequentialAnimation on anchors.verticalCenterOffset {
+                running: Theme.rich && root.visible
+                loops: Animation.Infinite
+                NumberAnimation { from: 0; to: -6; duration: 1800; easing.type: Easing.InOutSine }
+                NumberAnimation { from: -6; to: 0; duration: 1800; easing.type: Easing.InOutSine }
+            }
+        }
+    }
+    AText {
+        visible: root.title !== ""
+        Layout.alignment: Qt.AlignHCenter
+        text: root.title
+        size: Theme.fsH3
+        weight: Font.DemiBold
+    }
+    AText {
+        visible: root.text !== ""
+        Layout.alignment: Qt.AlignHCenter
+        Layout.maximumWidth: 420
+        horizontalAlignment: Text.AlignHCenter
+        text: root.text
+        dim: true
+        wrapMode: Text.Wrap
+        elide: Text.ElideNone
+    }
+    Button {
+        visible: root.actionText !== ""
+        Layout.alignment: Qt.AlignHCenter
+        Layout.topMargin: 6
+        variant: "primary"
+        text: root.actionText
+        iconName: root.actionIcon
+        onClicked: root.action()
+    }
+}
+````
+
+### `ui/qml/Ao/Sheet.qml`
+
+*126 строк*
+
+````qml
+import QtQuick
+import QtQuick.Controls.Basic as T
+import QtQuick.Layouts
+
+// Модальное окно внутри приложения: затемнение, «всплытие» с пружиной,
+// закрытие по Esc и клику мимо. Содержимое — в default-свойство.
+T.Popup {
+    id: sheet
+    property string title: ""
+    property string subtitle: ""
+    property string icon: ""
+    property int sheetWidth: 560
+    default property alias content: body.data
+    property alias footer: footerRow.data
+    property bool busy: false
+
+    parent: T.Overlay.overlay
+    anchors.centerIn: parent
+    width: Math.min(sheetWidth, (parent ? parent.width : sheetWidth) - 48)
+    height: Math.min(implicitHeight, (parent ? parent.height : 800) - 48)
+    modal: true
+    focus: true
+    padding: 0
+    closePolicy: busy ? T.Popup.NoAutoClose : (T.Popup.CloseOnEscape | T.Popup.CloseOnPressOutside)
+
+    T.Overlay.modal: Rectangle {
+        color: Theme.overlay
+        Behavior on opacity { NumberAnimation { duration: Theme.normal } }
+    }
+
+    enter: Transition {
+        ParallelAnimation {
+            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.normal }
+            NumberAnimation { property: "scale"; from: 0.94; to: 1; duration: Theme.slow
+                              easing.type: Easing.OutBack; easing.overshoot: 1.2 }
+        }
+    }
+    exit: Transition {
+        ParallelAnimation {
+            NumberAnimation { property: "opacity"; to: 0; duration: Theme.fast }
+            NumberAnimation { property: "scale"; to: 0.97; duration: Theme.fast }
+        }
+    }
+
+    background: Rectangle {
+        radius: Theme.radiusXL
+        color: Theme.surfaceSolid
+        border.color: Theme.borderStrong
+        Rectangle {
+            anchors { left: parent.left; right: parent.right; top: parent.top; margins: 1 }
+            height: 90
+            radius: parent.radius
+            gradient: Gradient {
+                GradientStop { position: 0; color: Theme.alpha(Theme.violet, 0.10) }
+                GradientStop { position: 1; color: "transparent" }
+            }
+        }
+    }
+
+    contentItem: ColumnLayout {
+        spacing: 0
+
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.margins: 24
+            Layout.bottomMargin: 8
+            spacing: 14
+            Rectangle {
+                visible: sheet.icon !== ""
+                width: 40; height: 40; radius: 12
+                color: Theme.alpha(Theme.violet, 0.18)
+                border.color: Theme.alpha(Theme.violetSoft, 0.3)
+                Icon { anchors.centerIn: parent; name: sheet.icon; size: 18; color: Theme.violetSoft }
+            }
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 2
+                AText { text: sheet.title; size: Theme.fsH2; weight: Font.Bold; Layout.fillWidth: true }
+                AText {
+                    visible: sheet.subtitle !== ""
+                    text: sheet.subtitle
+                    dim: true
+                    size: Theme.fsSmall
+                    wrapMode: Text.Wrap
+                    elide: Text.ElideNone
+                    Layout.fillWidth: true
+                }
+            }
+            IconButton {
+                Layout.alignment: Qt.AlignTop
+                iconName: "x"
+                enabled: !sheet.busy
+                onClicked: sheet.close()
+            }
+        }
+
+        T.ScrollView {
+            id: scroll
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.preferredHeight: body.implicitHeight + 16
+            clip: true
+            contentWidth: availableWidth
+            T.ScrollBar.vertical: ScrollBar {}
+            ColumnLayout {
+                id: body
+                width: scroll.availableWidth - 48
+                x: 24
+                y: 8
+                spacing: 14
+            }
+        }
+
+        Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border; visible: footerRow.children.length > 0 }
+
+        RowLayout {
+            id: footerRow
+            Layout.fillWidth: true
+            Layout.margins: 18
+            Layout.leftMargin: 24
+            Layout.rightMargin: 24
+            spacing: 10
+            visible: children.length > 0
+        }
+    }
+}
+````
+
+### `ui/qml/Ao/Confirm.qml`
+
+*42 строк*
+
+````qml
+import QtQuick
+import QtQuick.Layouts
+
+// Подтверждение действия. open(title, text, callback[, danger])
+Sheet {
+    id: dlg
+    property var onYes: null
+    property bool danger: true
+    property string confirmText: ""
+    property string cancelText: ""
+    property string actionText: ""
+    sheetWidth: 440
+    icon: danger ? "triangle-alert" : "circle-alert"
+
+    function ask(title, text, callback, isDanger, yesText) {
+        dlg.title = title
+        dlg.subtitle = text
+        dlg.onYes = callback
+        dlg.danger = isDanger === undefined ? true : isDanger
+        dlg.actionText = yesText ? yesText : dlg.confirmText
+        open()
+    }
+
+    footer: [
+        Item { Layout.fillWidth: true },
+        Button {
+            text: dlg.cancelText
+            variant: "ghost"
+            onClicked: dlg.close()
+        },
+        Button {
+            text: dlg.actionText !== "" ? dlg.actionText : dlg.confirmText
+            variant: dlg.danger ? "danger" : "primary"
+            iconName: dlg.danger ? "trash-2" : "check"
+            onClicked: {
+                var cb = dlg.onYes
+                dlg.close()
+                if (cb) cb()
+            }
+        }
+    ]
+}
+````
+
+### `ui/qml/Ao/Toasts.qml`
+
+*131 строк*
+
+````qml
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Effects
+
+// Стопка уведомлений в правом верхнем углу. Каждое въезжает справа,
+// показывает полосу оставшегося времени и уходит само (наведение — пауза).
+Item {
+    id: host
+    width: 380
+    property int maxVisible: 4
+
+    function show(kind, title, message) {
+        if (toastModel.count >= maxVisible) toastModel.remove(0)
+        toastModel.append({ kind: kind || "info", title: title || "", message: message || "",
+                            life: kind === "error" || kind === "warning" ? 7000 : 4500 })
+    }
+
+    ListModel { id: toastModel }
+
+    ListView {
+        id: list
+        anchors.fill: parent
+        spacing: 10
+        interactive: false
+        model: toastModel
+        verticalLayoutDirection: ListView.TopToBottom
+
+        add: Transition {
+            ParallelAnimation {
+                NumberAnimation { property: "x"; from: 420; to: 0; duration: Theme.slow; easing.type: Easing.OutBack; easing.overshoot: 0.9 }
+                NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.normal }
+            }
+        }
+        remove: Transition {
+            ParallelAnimation {
+                NumberAnimation { property: "x"; to: 420; duration: Theme.normal; easing.type: Easing.InCubic }
+                NumberAnimation { property: "opacity"; to: 0; duration: Theme.normal }
+            }
+        }
+        displaced: Transition {
+            NumberAnimation { properties: "y"; duration: Theme.normal; easing.type: Easing.OutCubic }
+        }
+
+        delegate: Item {
+            id: toast
+            required property int index
+            required property string kind
+            required property string title
+            required property string message
+            required property int life
+            width: list.width
+            height: card.height
+            readonly property color tint: Theme.tone(kind === "info" ? "accent" : kind)
+            readonly property string glyph: kind === "success" ? "circle-check"
+                                          : kind === "error" ? "octagon-x"
+                                          : kind === "warning" ? "triangle-alert" : "info"
+
+            Rectangle {
+                id: card
+                width: parent.width
+                height: col.implicitHeight + 28
+                radius: Theme.radiusL
+                color: Theme.surfaceSolid
+                border.color: Theme.alpha(toast.tint, 0.45)
+                layer.enabled: Theme.rich
+                layer.effect: MultiEffect {
+                    shadowEnabled: true
+                    shadowColor: Qt.rgba(0, 0, 0, 0.55)
+                    shadowBlur: 0.8
+                    shadowVerticalOffset: 8
+                }
+
+                RowLayout {
+                    id: col
+                    anchors { left: parent.left; right: parent.right; top: parent.top; margins: 14 }
+                    spacing: 12
+                    Rectangle {
+                        Layout.alignment: Qt.AlignTop
+                        width: 30; height: 30; radius: 10
+                        color: Theme.alpha(toast.tint, 0.16)
+                        Icon { anchors.centerIn: parent; name: toast.glyph; size: 16; color: toast.tint }
+                    }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 3
+                        AText { text: toast.title; weight: Font.DemiBold; Layout.fillWidth: true; wrapMode: Text.Wrap; elide: Text.ElideNone }
+                        AText {
+                            visible: toast.message !== ""
+                            text: toast.message
+                            dim: true
+                            size: Theme.fsSmall
+                            Layout.fillWidth: true
+                            wrapMode: Text.Wrap
+                            elide: Text.ElideRight
+                            maximumLineCount: 4
+                        }
+                    }
+                    IconButton {
+                        Layout.alignment: Qt.AlignTop
+                        iconName: "x"
+                        size: 26
+                        onClicked: toastModel.remove(toast.index)
+                    }
+                }
+
+                // Полоса оставшегося времени.
+                Rectangle {
+                    id: bar
+                    anchors { left: parent.left; bottom: parent.bottom; leftMargin: 14; bottomMargin: 7 }
+                    height: 2
+                    radius: 1
+                    color: toast.tint
+                    opacity: 0.7
+                    width: card.width - 28
+                }
+                NumberAnimation {
+                    id: countdown
+                    target: bar
+                    property: "width"
+                    from: card.width - 28
+                    to: 0
+                    duration: toast.life
+                    running: true
+                    paused: hover.hovered
+                    onFinished: toastModel.remove(toast.index)
+                }
+                HoverHandler { id: hover }
+            }
+        }
+    }
+}
+````
+
+### `ui/qml/Ao/ProgressRing.qml`
+
+*68 строк*
+
+````qml
+import QtQuick
+import QtQuick.Shapes
+
+// Кольцевой индикатор прогресса: дуга плавно дорастает до значения,
+// а её цвет по пути переходит от фиолетового к сине-зелёному.
+Item {
+    id: root
+    property real value: 0          // 0..1
+    property int size: 72
+    property real thickness: 7
+    property string label: ""
+    property string caption: ""
+    property color from: Theme.violet
+    property color to: Theme.teal
+    property real shown: value
+    implicitWidth: size
+    implicitHeight: size
+    Behavior on shown { NumberAnimation { duration: Theme.slow * 2; easing.type: Easing.OutCubic } }
+
+    function mix(a, b, t) {
+        t = Math.max(0, Math.min(1, t))
+        return Qt.rgba(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, 1)
+    }
+
+    Shape {
+        anchors.fill: parent
+        preferredRendererType: Shape.CurveRenderer
+        ShapePath {
+            strokeWidth: root.thickness
+            strokeColor: Theme.surface3
+            fillColor: "transparent"
+            PathAngleArc {
+                centerX: root.size / 2; centerY: root.size / 2
+                radiusX: (root.size - root.thickness) / 2; radiusY: (root.size - root.thickness) / 2
+                startAngle: 0; sweepAngle: 360
+            }
+        }
+        ShapePath {
+            strokeWidth: root.thickness
+            fillColor: "transparent"
+            capStyle: ShapePath.RoundCap
+            strokeColor: root.shown > 0.002 ? root.mix(root.from, root.to, root.shown) : "transparent"
+            PathAngleArc {
+                centerX: root.size / 2; centerY: root.size / 2
+                radiusX: (root.size - root.thickness) / 2; radiusY: (root.size - root.thickness) / 2
+                startAngle: -90; sweepAngle: Math.max(0.01, Math.min(root.shown, 1)) * 360
+            }
+        }
+    }
+
+    Column {
+        anchors.centerIn: parent
+        spacing: 0
+        AText {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: root.label
+            size: root.size > 80 ? Theme.fsH2 : Theme.fsBody
+            weight: Font.Bold
+        }
+        AText {
+            visible: root.caption !== ""
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: root.caption
+            size: Theme.fsMicro
+            mute: true
+        }
+    }
+}
+````
+
+### `ui/qml/Ao/SegmentBar.qml`
+
+*54 строк*
+
+````qml
+import QtQuick
+import QtQuick.Layouts
+
+// Полоса прогресса по статусам: сегменты растут плавно, а под полосой — легенда.
+ColumnLayout {
+    id: root
+    property var segments: []      // [{status, title, count}]
+    property bool legend: true
+    readonly property int total: {
+        var t = 0
+        for (var i = 0; i < segments.length; ++i) t += segments[i].count
+        return t
+    }
+    spacing: 10
+
+    Rectangle {
+        id: track
+        Layout.fillWidth: true
+        height: 10
+        radius: 5
+        color: Theme.surface3
+        clip: true
+        Row {
+            anchors.fill: parent
+            spacing: 2
+            Repeater {
+                model: root.segments
+                delegate: Rectangle {
+                    required property var modelData
+                    height: track.height
+                    width: root.total > 0 ? Math.max(0, (track.width - 2 * (root.segments.length - 1)) * modelData.count / root.total) : 0
+                    radius: 5
+                    color: Theme.statusColor(modelData.status)
+                    Behavior on width { NumberAnimation { duration: Theme.slow * 2; easing.type: Easing.OutCubic } }
+                }
+            }
+        }
+    }
+
+    Flow {
+        visible: root.legend && root.segments.length > 0
+        Layout.fillWidth: true
+        spacing: 14
+        Repeater {
+            model: root.segments
+            delegate: Row {
+                required property var modelData
+                spacing: 6
+                Rectangle { width: 8; height: 8; radius: 4; color: Theme.statusColor(modelData.status); anchors.verticalCenter: parent.verticalCenter }
+                AText { text: modelData.title + " · " + modelData.count; size: Theme.fsSmall; dim: true }
+            }
+        }
+    }
+}
+````
+
+### `ui/qml/Ao/LineChart.qml`
+
+*156 строк*
+
+````qml
+import QtQuick
+
+// Кривая нарастающего итога: градиентная заливка, «прорисовка» слева
+// направо при обновлении и перекрестие с подсказкой при наведении.
+Item {
+    id: root
+    property var points: []          // [{label, value}]
+    property string unit: "tokens"   // tokens | usd
+    property color lineColor: Theme.violetSoft
+    property color fillColor: Theme.violet
+    property string emptyText: ""
+    property real reveal: 1
+    property int hoverIndex: -1
+
+    readonly property real maxValue: {
+        var m = 0
+        for (var i = 0; i < points.length; ++i) m = Math.max(m, points[i].value)
+        return m > 0 ? m * 1.12 : 1
+    }
+    readonly property int padL: 8
+    readonly property int padB: 18
+
+    function fmt(v) {
+        if (unit === "usd") return v >= 1 ? "$" + v.toFixed(2) : "$" + v.toFixed(v >= 0.01 ? 3 : 4)
+        if (v >= 1e6) return (v / 1e6).toFixed(2) + "M"
+        if (v >= 1e4) return (v / 1e3).toFixed(1) + "k"
+        return Math.round(v).toString()
+    }
+    function px(i) { return padL + (points.length > 1 ? i / (points.length - 1) : 0.5) * (width - padL * 2) }
+    function py(v) { return (height - padB) - (v / maxValue) * (height - padB - 10) }
+
+    onPointsChanged: {
+        canvas.requestPaint()
+        if (Theme.rich && points.length > 1) { reveal = 0; revealAnim.restart() }
+    }
+    onRevealChanged: canvas.requestPaint()
+    onWidthChanged: canvas.requestPaint()
+    onHeightChanged: canvas.requestPaint()
+    NumberAnimation { id: revealAnim; target: root; property: "reveal"; from: 0; to: 1; duration: 900; easing.type: Easing.OutCubic }
+
+    Canvas {
+        id: canvas
+        anchors.fill: parent
+        renderTarget: Canvas.FramebufferObject
+        onPaint: {
+            var ctx = getContext("2d")
+            ctx.reset()
+            var n = root.points.length
+            // Сетка
+            ctx.strokeStyle = Qt.rgba(1, 1, 1, 0.05)
+            ctx.lineWidth = 1
+            for (var g = 0; g <= 3; ++g) {
+                var gy = root.py(root.maxValue / 1.12 * g / 3)
+                ctx.beginPath(); ctx.moveTo(root.padL, gy); ctx.lineTo(width - root.padL, gy); ctx.stroke()
+            }
+            if (n < 2) return
+            var limitX = root.padL + (width - root.padL * 2) * root.reveal
+            ctx.save()
+            ctx.beginPath()
+            ctx.rect(0, 0, limitX + 1, height)
+            ctx.clip()
+            // Заливка
+            var grad = ctx.createLinearGradient(0, 0, 0, height - root.padB)
+            grad.addColorStop(0, Qt.rgba(root.fillColor.r, root.fillColor.g, root.fillColor.b, 0.35))
+            grad.addColorStop(1, Qt.rgba(root.fillColor.r, root.fillColor.g, root.fillColor.b, 0.0))
+            ctx.beginPath()
+            ctx.moveTo(root.px(0), height - root.padB)
+            for (var i = 0; i < n; ++i) ctx.lineTo(root.px(i), root.py(root.points[i].value))
+            ctx.lineTo(root.px(n - 1), height - root.padB)
+            ctx.closePath()
+            ctx.fillStyle = grad
+            ctx.fill()
+            // Линия
+            ctx.beginPath()
+            for (var j = 0; j < n; ++j) {
+                var x = root.px(j), y = root.py(root.points[j].value)
+                if (j === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y)
+            }
+            ctx.strokeStyle = root.lineColor
+            ctx.lineWidth = 2.2
+            ctx.lineJoin = "round"
+            ctx.stroke()
+            ctx.restore()
+        }
+    }
+
+    // Подписи оси: первая и последняя метка времени, максимум слева сверху.
+    AText {
+        visible: root.points.length > 1
+        text: root.fmt(root.maxValue / 1.12)
+        mute: true; size: Theme.fsMicro; mono: true
+        x: root.padL + 2; y: 0
+    }
+    AText {
+        visible: root.points.length > 1
+        text: root.points.length ? root.points[0].label : ""
+        mute: true; size: Theme.fsMicro
+        x: root.padL; anchors.bottom: parent.bottom
+    }
+    AText {
+        visible: root.points.length > 1
+        text: root.points.length ? root.points[root.points.length - 1].label : ""
+        mute: true; size: Theme.fsMicro
+        anchors.right: parent.right; anchors.rightMargin: root.padL; anchors.bottom: parent.bottom
+    }
+
+    // Перекрестие и подсказка.
+    Rectangle {
+        visible: root.hoverIndex >= 0
+        x: root.hoverIndex >= 0 ? root.px(root.hoverIndex) : 0
+        y: 0; width: 1; height: root.height - root.padB
+        color: Theme.alpha(Theme.text, 0.18)
+    }
+    Rectangle {
+        visible: root.hoverIndex >= 0
+        width: 10; height: 10; radius: 5
+        color: root.lineColor
+        border.color: Theme.bg; border.width: 2
+        x: root.hoverIndex >= 0 ? root.px(root.hoverIndex) - 5 : 0
+        y: root.hoverIndex >= 0 ? root.py(root.points[root.hoverIndex].value) - 5 : 0
+    }
+    Rectangle {
+        visible: root.hoverIndex >= 0
+        radius: Theme.radiusS
+        color: Theme.surface3
+        border.color: Theme.borderStrong
+        width: tipText.implicitWidth + 16
+        height: tipText.implicitHeight + 10
+        x: root.hoverIndex >= 0 ? Math.min(Math.max(0, root.px(root.hoverIndex) - width / 2), root.width - width) : 0
+        y: 4
+        AText {
+            id: tipText
+            anchors.centerIn: parent
+            size: Theme.fsSmall
+            text: root.hoverIndex >= 0 ? root.points[root.hoverIndex].label + "  ·  " + root.fmt(root.points[root.hoverIndex].value) : ""
+        }
+    }
+    MouseArea {
+        anchors.fill: parent
+        hoverEnabled: true
+        onPositionChanged: function(mouse) {
+            var n = root.points.length
+            if (n < 2) { root.hoverIndex = -1; return }
+            var t = (mouse.x - root.padL) / (root.width - root.padL * 2)
+            root.hoverIndex = Math.max(0, Math.min(n - 1, Math.round(t * (n - 1))))
+        }
+        onExited: root.hoverIndex = -1
+    }
+
+    AText {
+        anchors.centerIn: parent
+        visible: root.points.length < 2
+        text: root.emptyText
+        mute: true
+    }
+}
+````
+
+### `ui/qml/Ao/BarList.qml`
+
+*62 строк*
+
+````qml
+import QtQuick
+import QtQuick.Layouts
+
+// Горизонтальные полосы «кто сколько потратил»; полосы дорастают плавно.
+ColumnLayout {
+    id: root
+    property var bars: []        // [{label, value, text, cost, supervisor}]
+    property string emptyText: ""
+    readonly property real maxValue: {
+        var m = 0
+        for (var i = 0; i < bars.length; ++i) m = Math.max(m, bars[i].value)
+        return m || 1
+    }
+    spacing: 12
+
+    Repeater {
+        model: root.bars
+        delegate: ColumnLayout {
+            required property var modelData
+            required property int index
+            Layout.fillWidth: true
+            spacing: 5
+            RowLayout {
+                Layout.fillWidth: true
+                Icon {
+                    name: modelData.supervisor ? "shield-check" : "bot"
+                    size: 13
+                    color: modelData.supervisor ? Theme.violetSoft : Theme.textMute
+                }
+                AText { text: modelData.label; size: Theme.fsSmall; Layout.fillWidth: true }
+                AText { text: modelData.text; size: Theme.fsSmall; mono: true; dim: true }
+                AText { text: modelData.cost; size: Theme.fsSmall; mono: true; mute: true }
+            }
+            Rectangle {
+                Layout.fillWidth: true
+                height: 8
+                radius: 4
+                color: Theme.surface3
+                Rectangle {
+                    id: fill
+                    height: parent.height
+                    radius: 4
+                    width: 0
+                    gradient: Gradient {
+                        orientation: Gradient.Horizontal
+                        GradientStop { position: 0; color: modelData.supervisor ? Theme.magenta : Theme.violet }
+                        GradientStop { position: 1; color: modelData.supervisor ? Theme.violetSoft : Theme.cyan }
+                    }
+                    Behavior on width { NumberAnimation { duration: Theme.slow * 2; easing.type: Easing.OutCubic } }
+                    Component.onCompleted: width = Qt.binding(function() { return parent.width * modelData.value / root.maxValue })
+                }
+            }
+        }
+    }
+
+    AText {
+        visible: root.bars.length === 0
+        text: root.emptyText
+        mute: true
+        Layout.alignment: Qt.AlignHCenter
+    }
+}
+````
+
+### `ui/qml/Ao/Ticker.qml`
+
+*25 строк*
+
+````qml
+import QtQuick
+
+// Число, которое «досчитывает» до нового значения.
+AText {
+    id: root
+    property real value: 0
+    property string unit: "int"     // int | tokens | usd | percent | fraction
+    property real shown: 0
+    property string total: ""
+    Behavior on shown { NumberAnimation { duration: Theme.slow * 2; easing.type: Easing.OutCubic } }
+    onValueChanged: shown = value
+    Component.onCompleted: shown = value
+
+    function fmt(v) {
+        if (unit === "usd") return v >= 100 ? "$" + Math.round(v) : v >= 1 ? "$" + v.toFixed(2) : v === 0 ? "$0" : "$" + v.toFixed(v >= 0.01 ? 3 : 4)
+        if (unit === "tokens") {
+            if (v >= 1e6) return (v / 1e6).toFixed(2) + "M"
+            if (v >= 1e4) return (v / 1e3).toFixed(1) + "k"
+            return Math.round(v).toLocaleString(Qt.locale("ru_RU"), "f", 0)
+        }
+        if (unit === "percent") return Math.round(v * 100) + "%"
+        return Math.round(v).toString()
+    }
+    text: fmt(shown) + (total !== "" ? " / " + total : "")
+}
+````
+
+### `ui/qml/Ao/Aurora.qml`
+
+*78 строк*
+
+````qml
+import QtQuick
+import QtQuick.Shapes
+
+// Живой фон: крупные размытые «сияния» фиолетового, бирюзового и голубого
+// медленно дрейфуют под интерфейсом. На сдержанном уровне движения замирают,
+// оставаясь мягким градиентом; при выключенных анимациях — неподвижны.
+Item {
+    id: root
+    property real intensity: 1.0
+    clip: true
+
+    Rectangle { anchors.fill: parent; color: Theme.bg }
+
+    component Glow: Shape {
+        id: glow
+        property color tint: Theme.violet
+        property real strength: 0.5
+        property int radius: 420
+        property real driftX: 120
+        property real driftY: 80
+        property int period: 22000
+        property real baseX: 0
+        property real baseY: 0
+        width: radius * 2
+        height: radius * 2
+        x: baseX - radius
+        y: baseY - radius
+        preferredRendererType: Shape.GeometryRenderer
+        opacity: root.intensity
+        ShapePath {
+            strokeColor: "transparent"
+            fillGradient: RadialGradient {
+                centerX: glow.radius; centerY: glow.radius; centerRadius: glow.radius
+                focalX: glow.radius; focalY: glow.radius
+                GradientStop { position: 0.0; color: Qt.rgba(glow.tint.r, glow.tint.g, glow.tint.b, glow.strength) }
+                GradientStop { position: 0.45; color: Qt.rgba(glow.tint.r, glow.tint.g, glow.tint.b, glow.strength * 0.35) }
+                GradientStop { position: 1.0; color: "transparent" }
+            }
+            PathAngleArc {
+                centerX: glow.radius; centerY: glow.radius
+                radiusX: glow.radius; radiusY: glow.radius
+                startAngle: 0; sweepAngle: 360
+            }
+        }
+        transform: Translate { id: shift }
+        SequentialAnimation {
+            running: Theme.rich && root.visible
+            loops: Animation.Infinite
+            ParallelAnimation {
+                NumberAnimation { target: shift; property: "x"; to: glow.driftX; duration: glow.period; easing.type: Easing.InOutSine }
+                NumberAnimation { target: shift; property: "y"; to: glow.driftY; duration: glow.period; easing.type: Easing.InOutSine }
+            }
+            ParallelAnimation {
+                NumberAnimation { target: shift; property: "x"; to: -glow.driftX * 0.6; duration: glow.period * 1.1; easing.type: Easing.InOutSine }
+                NumberAnimation { target: shift; property: "y"; to: glow.driftY * 0.4; duration: glow.period * 1.1; easing.type: Easing.InOutSine }
+            }
+            ParallelAnimation {
+                NumberAnimation { target: shift; property: "x"; to: 0; duration: glow.period; easing.type: Easing.InOutSine }
+                NumberAnimation { target: shift; property: "y"; to: 0; duration: glow.period; easing.type: Easing.InOutSine }
+            }
+        }
+    }
+
+    Glow { tint: Theme.violet; strength: 0.34; radius: 520; baseX: root.width * 0.18; baseY: root.height * 0.10; driftX: 160; driftY: 120; period: 26000 }
+    Glow { tint: Theme.teal; strength: 0.20; radius: 460; baseX: root.width * 0.92; baseY: root.height * 0.22; driftX: -140; driftY: 150; period: 30000 }
+    Glow { tint: Theme.cyan; strength: 0.14; radius: 420; baseX: root.width * 0.70; baseY: root.height * 0.98; driftX: -170; driftY: -90; period: 34000 }
+    Glow { tint: Theme.magenta; strength: 0.12; radius: 380; baseX: root.width * 0.05; baseY: root.height * 0.95; driftX: 120; driftY: -110; period: 38000 }
+
+    // Лёгкая виньетка, чтобы края не спорили с контентом.
+    Rectangle {
+        anchors.fill: parent
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: Theme.alpha(Theme.bg, 0.0) }
+            GradientStop { position: 0.75; color: Theme.alpha(Theme.bg, 0.25) }
+            GradientStop { position: 1.0; color: Theme.alpha(Theme.bg, 0.7) }
+        }
+    }
+}
+````
+
+### `ui/qml/Ao/OrbitLogo.qml`
+
+*79 строк*
+
+````qml
+import QtQuick
+import QtQuick.Shapes
+
+// Знак приложения: центральный узел-«оркестратор» и спутники-агенты на
+// орбитах, связанные с центром. Вращение — только при полном движении.
+Item {
+    id: root
+    property int size: 40
+    property bool animated: true
+    property real speed: 1.0
+    implicitWidth: size
+    implicitHeight: size
+
+    readonly property real r1: size * 0.30
+    readonly property real r2: size * 0.44
+
+    Shape {
+        anchors.fill: parent
+        preferredRendererType: Shape.CurveRenderer
+        ShapePath {
+            strokeColor: Theme.alpha(Theme.violetSoft, 0.28)
+            strokeWidth: Math.max(1, root.size / 48)
+            fillColor: "transparent"
+            strokeStyle: ShapePath.DashLine
+            dashPattern: [2, 3]
+            PathAngleArc { centerX: root.size / 2; centerY: root.size / 2; radiusX: root.r1; radiusY: root.r1; startAngle: 0; sweepAngle: 360 }
+        }
+        ShapePath {
+            strokeColor: Theme.alpha(Theme.cyan, 0.22)
+            strokeWidth: Math.max(1, root.size / 48)
+            fillColor: "transparent"
+            PathAngleArc { centerX: root.size / 2; centerY: root.size / 2; radiusX: root.r2; radiusY: root.r2; startAngle: 0; sweepAngle: 360 }
+        }
+    }
+
+    // Центральный узел с градиентом.
+    Rectangle {
+        anchors.centerIn: parent
+        width: root.size * 0.30; height: width; radius: width / 2
+        gradient: Gradient {
+            GradientStop { position: 0; color: Theme.violetSoft }
+            GradientStop { position: 1; color: Theme.indigo }
+        }
+        Rectangle {
+            anchors.centerIn: parent
+            width: parent.width * 1.9; height: width; radius: width / 2
+            color: "transparent"
+            border.width: Math.max(1, root.size / 40)
+            border.color: Theme.alpha(Theme.violet, 0.25)
+        }
+    }
+
+    component Satellite: Item {
+        id: sat
+        property real orbit: root.r1
+        property real phase: 0
+        property color tint: Theme.teal
+        property real dot: root.size * 0.12
+        property int period: 9000
+        anchors.fill: parent
+        rotation: phase
+        Rectangle {
+            width: sat.dot; height: sat.dot; radius: sat.dot / 2
+            color: sat.tint
+            x: root.size / 2 + sat.orbit - sat.dot / 2
+            y: root.size / 2 - sat.dot / 2
+        }
+        NumberAnimation on rotation {
+            from: sat.phase; to: sat.phase + 360
+            duration: sat.period / root.speed
+            loops: Animation.Infinite
+            running: root.animated && Theme.rich && root.visible
+        }
+    }
+
+    Satellite { orbit: root.r1; phase: 20; tint: Theme.teal; period: 7000 }
+    Satellite { orbit: root.r2; phase: 150; tint: Theme.cyan; period: 11000; dot: root.size * 0.10 }
+    Satellite { orbit: root.r2; phase: 270; tint: Theme.magenta; period: 13000; dot: root.size * 0.09 }
+}
+````
+
+
+## Служебное и тесты
 
 ### `utils/asyncutils.py`
 
@@ -13078,27 +19220,19 @@ def setup_logging(level: int = logging.INFO) -> None:
         logging.getLogger(noisy).setLevel(logging.WARNING)
 ````
 
-### `tests/smoke.py`
+### `tests/conftest.py`
 
-*489 строк*
+*24 строк*
 
 ````python
-"""Смоук-тесты ядра: все девять этапов MVP без сети и без GUI.
+"""Общая настройка pytest: изолированный каталог данных и путь к проекту.
 
-Запуск::
-
-    python tests/smoke.py
-
-Модели подменяются фейковыми провайдерами, поэтому тесты не ходят в интернет,
-не тратят токены и выполняются за секунды. Проверяется именно логика ядра:
-шифрование, изоляция агентов, конвейер выполнения, супервайзер, паузы,
-экспорт и бюджеты. Интерфейс сюда не входит — его надо смотреть глазами.
+Каталог данных задаётся ДО импорта модулей приложения: ``app.config``
+вычисляет пути при импорте, и тесты не должны трогать реальный профиль.
 """
 
 from __future__ import annotations
 
-import asyncio
-import itertools
 import os
 import shutil
 import sys
@@ -13106,53 +19240,60 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
-# Изолированный каталог данных, чтобы не трогать реальный профиль.
-_TEMP_HOME = Path(tempfile.mkdtemp(prefix="aiorc_smoke_"))
-os.environ["AIORC_HOME"] = str(_TEMP_HOME)
+_HOME = Path(tempfile.mkdtemp(prefix="aiorc_pytest_"))
+os.environ["AGENTFORGE_HOME"] = str(_HOME)
 
-from app.config import DEFAULT_WORKSPACE_SETTINGS, PATHS  # noqa: E402
-from core.budget import load_states  # noqa: E402
-from core.events import EventBus, EventType  # noqa: E402
-from core.export.bundle import ExportOptions, collect, detect_format  # noqa: E402
-from core.export.exporters import export, suggest_filename  # noqa: E402
-from core.hitl import Decision  # noqa: E402
-import core.orchestrator as orchestrator_module  # noqa: E402
-from core.orchestrator import Orchestrator  # noqa: E402
-from core.supervisor.supervisor import Supervisor, SupervisorModel  # noqa: E402
-from providers.base import CompletionResult, LLMProvider, ToolCall, Usage  # noqa: E402
-from storage.db import Database  # noqa: E402
-from storage.repositories import Repos, UserRepo  # noqa: E402
+
+def pytest_sessionfinish(session, exitstatus):  # noqa: ARG001
+    shutil.rmtree(_HOME, ignore_errors=True)
+````
+
+### `tests/fakes.py`
+
+*178 строк*
+
+````python
+"""Подменные провайдеры и каркас сценариев для тестов ядра.
+
+Общие для ``tests/smoke.py`` и pytest-тестов. Модуль не трогает переменные
+окружения: каталог данных задаёт тот, кто запускает тесты.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import itertools
+
+import core.orchestrator as orchestrator_module
+from app.config import DEFAULT_WORKSPACE_SETTINGS
+from core.hitl import Decision
+from core.orchestrator import Orchestrator
+from core.supervisor.supervisor import Supervisor, SupervisorModel
+from providers.base import CompletionResult, LLMProvider, ToolCall, Usage
+from storage.db import Database
+from storage.repositories import Repos, UserRepo
 
 _counter = itertools.count()
-_passed: list[str] = []
-_failed: list[str] = []
-
-
-def check(name: str, condition: bool, detail: str = "") -> None:
-    """Печатает результат одной проверки и копит статистику."""
-    mark = "OK  " if condition else "FAIL"
-    print(f"  [{mark}] {name}" + (f" — {detail}" if detail else ""))
-    (_passed if condition else _failed).append(name)
-
-
-# ---------------------------------------------------------------------------
-# Подменные провайдеры
-# ---------------------------------------------------------------------------
 
 
 class Worker(LLMProvider):
     """Исполнитель: при наличии инструментов сначала вызывает один из них."""
 
     def __init__(self, name: str = "agent", confidence: str = "0.9",
-                 use_tool: bool = False, tokens: tuple[int, int] = (200, 80)) -> None:
+                 use_tool: bool = False, tokens: tuple[int, int] = (200, 80),
+                 delay: float = 0.0, always_tool: bool = False) -> None:
         super().__init__()
         self.name = name
         self.confidence = confidence
         self.use_tool = use_tool
+        self.always_tool = always_tool
         self.tokens = tokens
+        self.delay = delay
         self.calls = 0
+        self.tool_rounds = 0
 
     async def list_models(self) -> list[str]:
         return ["fake-model"]
@@ -13163,10 +19304,13 @@ class Worker(LLMProvider):
     async def complete(self, model, messages, *, temperature=0.7,
                        max_tokens=2048, tools=None):
         self.calls += 1
-        if self.use_tool and self.calls == 1 and tools:
+        if self.delay:
+            await asyncio.sleep(self.delay)
+        if tools and (self.always_tool or (self.use_tool and self.calls == 1)):
+            self.tool_rounds += 1
             return CompletionResult(
                 text="Посчитаю в песочнице.",
-                tool_calls=[ToolCall("call-1", "code_exec",
+                tool_calls=[ToolCall(f"call-{self.calls}", "code_exec",
                                      {"code": "print(6 * 7)", "language": "python"})],
                 usage=Usage(*self.tokens),
             )
@@ -13181,11 +19325,15 @@ class SupervisorProvider(LLMProvider):
     """Проверяющий: вердикты задаются списком, остальное — заглушки."""
 
     def __init__(self, verdicts: list[str] | None = None,
-                 conflicts: str = '{"conflicts": []}') -> None:
+                 conflicts: str = '{"conflicts": []}',
+                 tokens: tuple[int, int] = (150, 20), fail_reviews: bool = False) -> None:
         super().__init__()
         self.verdicts = verdicts or []
         self.conflicts = conflicts
+        self.tokens = tokens
+        self.fail_reviews = fail_reviews
         self.reviews = 0
+        self.calls = 0
 
     async def list_models(self) -> list[str]:
         return ["fake-model"]
@@ -13194,19 +19342,24 @@ class SupervisorProvider(LLMProvider):
         return None
 
     async def complete(self, model, messages, **kwargs):
+        from providers.base import ProviderError
+
+        self.calls += 1
         system, user = messages[0].content, messages[1].content
         if "ПРОВЕРЯЕМАЯ ПОДЗАДАЧА" in user:
             self.reviews += 1
+            if self.fail_reviews:
+                raise ProviderError("503: сервис проверки недоступен", 503)
             if self.reviews <= len(self.verdicts):
                 return CompletionResult(text=self.verdicts[self.reviews - 1],
-                                        usage=Usage(150, 40))
+                                        usage=Usage(*self.tokens))
             return CompletionResult(text='{"verdict":"ok","notes":"","issues":[]}',
-                                    usage=Usage(150, 20))
+                                    usage=Usage(*self.tokens))
         if "Сравни результаты" in system:
-            return CompletionResult(text=self.conflicts, usage=Usage(120, 40))
+            return CompletionResult(text=self.conflicts, usage=Usage(*self.tokens))
         return CompletionResult(
             text=("ФАКТЫ:\nработа идёт\nРАСХОЖДЕНИЯ:\nнет\nОТКРЫТЫЕ ВОПРОСЫ:\nнет"),
-            usage=Usage(120, 50),
+            usage=Usage(*self.tokens),
         )
 
 
@@ -13221,11 +19374,6 @@ def patch_supervisor(provider: SupervisorProvider) -> None:
             return self._model
 
     orchestrator_module.Supervisor = Patched
-
-
-# ---------------------------------------------------------------------------
-# Каркас сценария
-# ---------------------------------------------------------------------------
 
 
 def build_project(subtask_count: int = 2, agent_count: int = 2,
@@ -13276,6 +19424,8 @@ async def drive(orch: Orchestrator, workspace_id: int, task_id: int,
             if gate and gate.pending():
                 request = gate.pending()[0]
                 decision, comment = plan.pop(0) if plan else (fallback, "авто")
+                if decision not in request.options:
+                    decision = request.options[0]
                 gate.resolve(request.id, decision, comment)
             await asyncio.sleep(0.02)
 
@@ -13284,6 +19434,69 @@ async def drive(orch: Orchestrator, workspace_id: int, task_id: int,
         return await asyncio.wait_for(orch.run_task(workspace_id, task_id), timeout)
     finally:
         helper.cancel()
+````
+
+### `tests/smoke.py`
+
+*344 строк*
+
+````python
+"""Смоук-тесты ядра: все девять этапов MVP без сети и без GUI.
+
+Запуск::
+
+    python tests/smoke.py
+
+Модели подменяются фейковыми провайдерами, поэтому тесты не ходят в интернет,
+не тратят токены и выполняются за секунды. Проверяется именно логика ядра:
+шифрование, изоляция агентов, конвейер выполнения, супервайзер, паузы,
+экспорт и бюджеты. Интерфейс сюда не входит — его надо смотреть глазами.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import os
+import shutil
+import sys
+import tempfile
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+
+# Изолированный каталог данных, чтобы не трогать реальный профиль.
+_TEMP_HOME = Path(tempfile.mkdtemp(prefix="aiorc_smoke_"))
+os.environ["AGENTFORGE_HOME"] = str(_TEMP_HOME)
+
+from app.config import PATHS  # noqa: E402
+from core.budget import load_states  # noqa: E402
+from core.events import EventBus, EventType  # noqa: E402
+from core.export.bundle import ExportOptions, collect, detect_format  # noqa: E402
+from core.export.exporters import export, suggest_filename  # noqa: E402
+from core.hitl import Decision  # noqa: E402
+from core.orchestrator import Orchestrator  # noqa: E402
+
+_passed: list[str] = []
+_failed: list[str] = []
+
+
+def check(name: str, condition: bool, detail: str = "") -> None:
+    """Печатает результат одной проверки и копит статистику."""
+    mark = "OK  " if condition else "FAIL"
+    print(f"  [{mark}] {name}" + (f" — {detail}" if detail else ""))
+    (_passed if condition else _failed).append(name)
+
+
+# Подменные провайдеры и каркас сценариев вынесены в tests/fakes.py:
+# их же используют pytest-тесты.
+from tests.fakes import (  # noqa: E402
+    SupervisorProvider,
+    Worker,
+    build_project,
+    drive,
+    patch_supervisor,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -13543,7 +19756,7 @@ async def test_export() -> None:
 
 async def main() -> int:
     print("=" * 66)
-    print("Смоук-тесты AI Orchestrator (без сети, без GUI)")
+    print("Смоук-тесты Agent Forge (без сети, без GUI)")
     print(f"Временный каталог данных: {_TEMP_HOME}")
     print("=" * 66)
 
@@ -13574,522 +19787,813 @@ if __name__ == "__main__":
     sys.exit(code)
 ````
 
-### `tests/ui_smoke.py`
+### `tests/test_core_fixes.py`
 
-*511 строк*
+*430 строк*
 
 ````python
-"""Смоук-прогон интерфейса: полный пользовательский сценарий без сети.
+"""Регрессионные тесты на исправления ядра версии 1.1.
 
-Запуск::
-
-    python tests/ui_smoke.py              # без окон (offscreen), скриншоты в temp
-    python tests/ui_smoke.py --show       # с настоящими окнами
-    python tests/ui_smoke.py --out DIR    # куда сложить скриншоты
-
-Сценарий: создание профиля → воркспейс → ключ → агенты → задача и
-автоматическое разбиение → прогон с паузой human-in-the-loop → супервайзер,
-дашборд, бюджеты → экспорт во все форматы → смена темы и языка.
-
-Модальные диалоги подменяются заполнителями, модели — фейковым провайдером.
-Любое исключение в слоте Qt, в обработчике шины или в фоновой задаче
-считается провалом.
+Каждый тест фиксирует конкретную ошибку, найденную при ревью: если она
+вернётся, тест упадёт с понятным названием.
 """
 
 from __future__ import annotations
 
-import argparse
-import asyncio
-import logging
+import json
+
+import httpx
+import pytest
+
+from core.budget import BudgetGuard
+from core.events import EventBus, EventType
+from core.hitl import ApprovalGate, Decision, Reason
+from core.orchestrator import Orchestrator
+from core.supervisor.checklist import Anonymizer
+from providers.base import ChatMessage, ToolSpec
+from storage.db import Database
+from storage.repositories import Repos, UserRepo
+from tests.fakes import SupervisorProvider, Worker, build_project, drive, patch_supervisor
+
+
+def _events(bus: EventBus, *types: EventType) -> list:
+    seen: list = []
+    bus.subscribe(lambda e: seen.append(e) if not types or e.type in types else None)
+    return seen
+
+
+# --- хранилище ----------------------------------------------------------------
+
+
+def test_history_returns_latest_messages_in_order():
+    repos, _, task, agents, _ = build_project(subtask_count=1)
+    subtask = repos.tasks.subtasks(task.id)[0]
+    for i in range(10):
+        repos.messages.add(agents[0].id, "user", f"сообщение {i}", subtask.id)
+    rows = repos.messages.history(agents[0].id, subtask.id, limit=3)
+    assert [r["content"] for r in rows] == ["сообщение 7", "сообщение 8", "сообщение 9"]
+
+
+def test_change_password_is_atomic(monkeypatch):
+    repos, _, _, _, key = build_project()
+    original = repos.db.transaction
+
+    def broken_transaction():
+        class Boom:
+            def __enter__(self_inner):
+                self_inner.ctx = original()
+                conn = self_inner.ctx.__enter__()
+
+                class Proxy:
+                    def executemany(self, *a):
+                        return conn.executemany(*a)
+
+                    def execute(self, sql, *a):
+                        if sql.startswith("UPDATE users"):
+                            raise RuntimeError("сбой диска посередине")
+                        return conn.execute(sql, *a)
+                return Proxy()
+
+            def __exit__(self_inner, *exc):
+                return self_inner.ctx.__exit__(*exc)
+        return Boom()
+
+    monkeypatch.setattr(repos.db, "transaction", broken_transaction)
+    with pytest.raises(RuntimeError):
+        repos.users.change_password(repos.session, "password123", "newpassword456")
+    monkeypatch.undo()
+
+    # Старый пароль по-прежнему открывает профиль, и ключ им же расшифровывается.
+    session = repos.users.authenticate(repos.session.username, "password123")
+    assert session is not None
+    assert Repos(repos.db, session).keys.reveal(key.id) == "sk-secret-value"
+
+
+def test_secret_codec_roundtrip_and_plain_fallback():
+    repos, *_ = build_project()
+    sealed = repos.secrets.seal("tvly-123")
+    assert sealed.startswith("enc:") and "tvly-123" not in sealed
+    assert repos.secrets.open(sealed) == "tvly-123"
+    assert repos.secrets.open("legacy-plain") == "legacy-plain"
+    assert repos.secrets.open("") == ""
+
+
+def test_recover_interrupted_runs_resets_stale_statuses():
+    repos, _, task, agents, _ = build_project(subtask_count=1)
+    subtask = repos.tasks.subtasks(task.id)[0]
+    repos.tasks.update(task.id, status="running")
+    repos.tasks.update_subtask(subtask.id, status="running")
+    repos.agents.set_status(agents[0].id, "running")
+    assert repos.recover_interrupted_runs() >= 3
+    assert repos.tasks.get(task.id).status == "stopped"
+    assert repos.tasks.get_subtask(subtask.id).status == "paused"
+    assert repos.agents.get(agents[0].id).status == "idle"
+
+
+# --- оркестратор ----------------------------------------------------------------
+
+
+async def test_agent_lock_is_taken_before_concurrency_slot():
+    """Подзадачи одного агента не должны занимать слоты, ожидая свой же лок."""
+    repos, ws, task, agents, _ = build_project(subtask_count=0)
+    for i in range(3):
+        repos.tasks.add_subtask(task.id, f"A{i}", "", agents[0].id)
+    repos.tasks.add_subtask(task.id, "B", "", agents[1].id)
+
+    bus = EventBus()
+    seen = _events(bus, EventType.SUBTASK_STARTED, EventType.SUBTASK_FINISHED)
+    patch_supervisor(SupervisorProvider())
+    orch = Orchestrator(repos, bus)
+    workers = {a.id: Worker(a.name, delay=0.05) for a in agents}
+    orch._provider_for = lambda agent: workers[agent.id]
+
+    await drive(orch, ws.id, task.id)  # параллельность по умолчанию достаточна
+    repos2, ws2, task2, agents2, _ = build_project(subtask_count=0)
+    for i in range(3):
+        repos2.tasks.add_subtask(task2.id, f"A{i}", "", agents2[0].id)
+    b = repos2.tasks.add_subtask(task2.id, "B", "", agents2[1].id)
+    bus2 = EventBus()
+    seen2 = _events(bus2, EventType.SUBTASK_STARTED, EventType.SUBTASK_FINISHED)
+    orch2 = Orchestrator(repos2, bus2)
+    workers2 = {a.id: Worker(a.name, delay=0.05) for a in agents2}
+    orch2._provider_for = lambda agent: workers2[agent.id]
+    await drive_with_concurrency(orch2, ws2.id, task2.id, concurrency=2)
+
+    first_finish = next(i for i, e in enumerate(seen2) if e.type is EventType.SUBTASK_FINISHED)
+    b_start = next(i for i, e in enumerate(seen2)
+                   if e.type is EventType.SUBTASK_STARTED and e.subtask_id == b.id)
+    assert b_start < first_finish, "агент B ждал, пока A освободит слоты"
+    assert len([e for e in seen if e.type is EventType.SUBTASK_FINISHED]) == 4
+
+
+async def drive_with_concurrency(orch, ws_id, task_id, concurrency):
+    return await orch.run_task(ws_id, task_id, concurrency=concurrency)
+
+
+async def test_failed_dependency_is_reported_as_such():
+    repos, ws, task, agents, _ = build_project(subtask_count=2)
+    first, second = repos.tasks.subtasks(task.id)
+    repos.tasks.update_subtask(second.id, depends_on=str(first.id))
+    repos.agents.update(agents[0].id, enabled=False)      # первая упадёт сразу
+
+    bus = EventBus()
+    failed = _events(bus, EventType.SUBTASK_FAILED)
+    patch_supervisor(SupervisorProvider())
+    orch = Orchestrator(repos, bus)
+    orch._provider_for = lambda agent: Worker(agent.name)
+    await drive(orch, ws.id, task.id)
+
+    messages = " | ".join(e.message for e in failed)
+    assert "не выполнена зависимость «Подзадача 1»" in messages
+    assert "цикл" not in messages
+
+
+async def test_cycle_is_reported_as_cycle():
+    repos, ws, task, _, _ = build_project(subtask_count=2)
+    first, second = repos.tasks.subtasks(task.id)
+    repos.tasks.update_subtask(first.id, depends_on=str(second.id))
+    repos.tasks.update_subtask(second.id, depends_on=str(first.id))
+    bus = EventBus()
+    failed = _events(bus, EventType.SUBTASK_FAILED)
+    patch_supervisor(SupervisorProvider())
+    orch = Orchestrator(repos, bus)
+    orch._provider_for = lambda agent: Worker(agent.name)
+    await drive(orch, ws.id, task.id)
+    assert any("замкнуты в цикл" in e.message for e in failed)
+
+
+async def test_unverified_result_does_not_flow_to_dependents_without_hitl():
+    repos, ws, task, _, _ = build_project(subtask_count=2)
+    first, second = repos.tasks.subtasks(task.id)
+    repos.tasks.update_subtask(second.id, depends_on=str(first.id))
+    patch_supervisor(SupervisorProvider(fail_reviews=True))
+    orch = Orchestrator(repos, EventBus())
+    orch._provider_for = lambda agent: Worker(agent.name)
+    state = await drive(orch, ws.id, task.id)
+
+    statuses = {s.id: s.status for s in repos.tasks.subtasks(task.id)}
+    assert statuses[first.id] == "review"      # ждёт человека, не «done»
+    assert statuses[second.id] == "error"      # на непроверенном не строим
+    assert state.finished == 0 and state.escalated == 1
+    assert any(i.kind == "unverified" for i in repos.incidents.list(ws.id))
+
+
+async def test_unverified_result_asks_human_when_hitl_on():
+    repos, ws, task, _, _ = build_project(
+        subtask_count=1, settings={"human_in_the_loop": True,
+                                   "hitl_confidence_threshold": 0.0})
+    patch_supervisor(SupervisorProvider(fail_reviews=True))
+    orch = Orchestrator(repos, EventBus())
+    orch._provider_for = lambda agent: Worker(agent.name)
+    state = await drive(orch, ws.id, task.id, answers=[(Decision.APPROVE, "проверил сам")])
+    history = repos.approvals.history(ws.id)
+    assert history and history[0]["reason"] == Reason.UNVERIFIED.value
+    assert state.finished == 1
+    assert repos.tasks.subtasks(task.id)[0].status == "done"
+
+
+async def test_supervisor_spend_counts_toward_task_limit():
+    repos, ws, task, _, _ = build_project(subtask_count=2, token_limit=600)
+    first, second = repos.tasks.subtasks(task.id)
+    repos.tasks.update_subtask(second.id, depends_on=str(first.id))
+    # Исполнитель: 280 токенов; супервайзер: 400 на каждую проверку.
+    patch_supervisor(SupervisorProvider(tokens=(350, 50)))
+    orch = Orchestrator(repos, EventBus())
+    worker = Worker("A", tokens=(200, 80))
+    orch._provider_for = lambda agent: worker
+    state = await drive(orch, ws.id, task.id)
+
+    # Без учёта супервайзера лимит 600 пропустил бы обе подзадачи
+    # (2 × 280 = 560). С учётом — вторая упирается в лимит.
+    assert worker.calls == 1
+    assert state.tokens >= 280 + 400
+    assert repos.tasks.subtasks(task.id)[1].status == "error"
+
+
+async def test_budget_exceeded_event_is_emitted_once():
+    repos, ws, task, agents, _ = build_project(subtask_count=3, agent_count=3)
+    repos.budgets.upsert("workspace", ws.id, 100, None, 0.8)
+    bus = EventBus()
+    exceeded = _events(bus, EventType.BUDGET_EXCEEDED)
+    patch_supervisor(SupervisorProvider())
+    orch = Orchestrator(repos, bus)
+    orch._provider_for = lambda agent: Worker(agent.name, delay=0.02)
+    await drive(orch, ws.id, task.id)
+    assert len(exceeded) == 1
+
+
+async def test_budget_extension_with_hitl_continues_the_run():
+    repos, ws, task, agents, _ = build_project(
+        subtask_count=2, agent_count=1,
+        settings={"human_in_the_loop": True, "hitl_confidence_threshold": 0.0})
+    first, second = repos.tasks.subtasks(task.id)
+    repos.tasks.update_subtask(second.id, depends_on=str(first.id))
+    repos.budgets.upsert("agent", agents[0].id, 250, None, 0.9)
+    patch_supervisor(SupervisorProvider())
+    orch = Orchestrator(repos, EventBus())
+    worker = Worker("A", tokens=(200, 80))
+    orch._provider_for = lambda agent: worker
+    state = await drive(orch, ws.id, task.id, answers=[(Decision.EXTEND, "")])
+
+    assert state.finished == 2
+    reasons = [r["reason"] for r in repos.approvals.history(ws.id)]
+    assert Reason.BUDGET.value in reasons
+    assert repos.budgets.get("agent", agents[0].id).token_limit >= 420
+
+
+async def test_steps_exhausted_on_tools_gets_a_real_summary():
+    repos, ws, task, _, _ = build_project(subtask_count=1,
+                                          settings={"agent_max_steps": 2})
+    patch_supervisor(SupervisorProvider())
+    orch = Orchestrator(repos, EventBus())
+    worker = Worker("A", always_tool=True)
+    orch._provider_for = lambda agent: worker
+    await drive(orch, ws.id, task.id)
+    subtask = repos.tasks.subtasks(task.id)[0]
+    # Два шага ушли на инструменты, третий вызов — подведение итога.
+    assert worker.calls == 3
+    assert subtask.result.startswith("Результат от A")
+    assert "Посчитаю в песочнице" not in subtask.result
+
+
+async def test_agent_output_is_streamed_to_the_bus():
+    repos, ws, task, _, _ = build_project(subtask_count=1)
+    bus = EventBus()
+    deltas = _events(bus, EventType.AGENT_DELTA)
+    patch_supervisor(SupervisorProvider())
+    orch = Orchestrator(repos, bus)
+    orch._provider_for = lambda agent: Worker(agent.name)
+    await drive(orch, ws.id, task.id)
+    text = "".join(e.message for e in deltas)
+    assert "RESULT:" in text
+    assert all(e.payload.get("stream") == "text" for e in deltas)
+
+
+# --- human-in-the-loop -----------------------------------------------------------
+
+
+async def test_gate_rejects_unknown_and_foreign_decisions():
+    db = Database()
+    session = UserRepo(db).create("gate-user", "password123")
+    repos = Repos(db, session)
+    ws = repos.workspaces.create(session.user_id, "ws", "", {})
+    gate = ApprovalGate(repos, EventBus(), ws.id)
+
+    import asyncio
+
+    asking = asyncio.ensure_future(gate.ask(Reason.MILESTONE, "Продолжать?"))
+    await asyncio.sleep(0)
+    request = gate.pending()[0]
+    assert gate.resolve(request.id, "definitely-not-a-decision") is False
+    assert gate.resolve(request.id, Decision.REWORK) is False   # не из вариантов вехи
+    assert gate.resolve(request.id, Decision.APPROVE) is True
+    assert (await asking).decision is Decision.APPROVE
+
+
+# --- супервайзер -------------------------------------------------------------------
+
+
+def test_scrub_replaces_whole_words_longest_first():
+    anon = Anonymizer()
+    names = {1: "Лев", 2: "Аналитик Пётр"}
+    out = anon.scrub("Аналитик Пётр и Лев согласны; Левша тоже.", names)
+    assert "Левша" in out                      # «Лев» не режет чужое слово
+    assert "Пётр" not in out
+    assert out.count("Исполнитель") == 2
+
+
+def test_budget_guard_extend_updates_task_form_limit():
+    repos, ws, task, agents, _ = build_project(subtask_count=1, token_limit=1000)
+    guard = BudgetGuard(repos, EventBus(), ws.id, task.id, task.token_limit)
+    state = next(s for s in guard.snapshot() if s.scope == "task")
+    state.tokens = 1200
+    guard.extend(state)
+    assert repos.tasks.get(task.id).token_limit == 1800
+
+
+# --- провайдеры: разбор потоков ---------------------------------------------------
+
+
+def _sse(events: list[dict | str]) -> bytes:
+    lines = []
+    for ev in events:
+        payload = ev if isinstance(ev, str) else json.dumps(ev, ensure_ascii=False)
+        lines.append(f"data: {payload}\n\n")
+    return "".join(lines).encode("utf-8")
+
+
+async def test_openai_stream_assembles_text_tool_calls_and_usage():
+    from providers.openai_compat import OpenAICompatProvider
+
+    body = _sse([
+        {"model": "m", "choices": [{"delta": {"reasoning_content": "думаю "}}]},
+        {"choices": [{"delta": {"content": "Сейчас "}}]},
+        {"choices": [{"delta": {"content": "посчитаю"}}]},
+        {"choices": [{"delta": {"tool_calls": [
+            {"index": 0, "id": "c1", "function": {"name": "code_exec", "arguments": "{\"co"}}]}}]},
+        {"choices": [{"delta": {"tool_calls": [
+            {"index": 0, "function": {"arguments": "de\": \"print(1)\"}"}}]},
+            "finish_reason": "tool_calls"}]},
+        {"choices": [], "usage": {"prompt_tokens": 11, "completion_tokens": 7}},
+        "[DONE]",
+    ])
+    provider = OpenAICompatProvider("k", "https://example.test/v1")
+    provider._client = httpx.AsyncClient(transport=httpx.MockTransport(
+        lambda request: httpx.Response(200, content=body)))
+    got: list[tuple[str, str]] = []
+    result = await provider.stream_complete(
+        "m", [ChatMessage("user", "привет")],
+        tools=[ToolSpec("code_exec", "", {"type": "object"})],
+        on_delta=lambda t, k: got.append((k, t)))
+    await provider.aclose()
+
+    assert result.text == "Сейчас посчитаю"
+    assert result.tool_calls[0].name == "code_exec"
+    assert result.tool_calls[0].arguments == {"code": "print(1)"}
+    assert (result.usage.input_tokens, result.usage.output_tokens) == (11, 7)
+    assert ("reasoning", "думаю ") in got
+
+
+async def test_openai_stream_retries_without_stream_options():
+    from providers.openai_compat import OpenAICompatProvider
+
+    calls: list[dict] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        payload = json.loads(request.content)
+        calls.append(payload)
+        if "stream_options" in payload:
+            return httpx.Response(400, json={"error": {"message": "unknown field stream_options"}})
+        return httpx.Response(200, content=_sse([
+            {"choices": [{"delta": {"content": "ок"}}]}, "[DONE]"]))
+
+    provider = OpenAICompatProvider("", "http://localhost:1/v1")
+    provider._client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    result = await provider.stream_complete("m", [ChatMessage("user", "привет всем")])
+    await provider.aclose()
+    assert result.text == "ок"
+    assert len(calls) == 2
+    assert result.usage.total > 0          # расход оценён, а не ноль
+
+
+async def test_anthropic_stream_assembles_blocks():
+    from providers.anthropic_provider import AnthropicProvider
+
+    body = _sse([
+        {"type": "message_start", "message": {"model": "claude", "usage": {"input_tokens": 20, "output_tokens": 1}}},
+        {"type": "content_block_start", "index": 0, "content_block": {"type": "text", "text": ""}},
+        {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "Ищу "}},
+        {"type": "content_block_start", "index": 1,
+         "content_block": {"type": "tool_use", "id": "tu1", "name": "web_search", "input": {}}},
+        {"type": "content_block_delta", "index": 1,
+         "delta": {"type": "input_json_delta", "partial_json": "{\"query\": \"qt"}},
+        {"type": "content_block_delta", "index": 1,
+         "delta": {"type": "input_json_delta", "partial_json": "\"}"}},
+        {"type": "message_delta", "delta": {"stop_reason": "tool_use"}, "usage": {"output_tokens": 15}},
+        {"type": "message_stop"},
+    ])
+    provider = AnthropicProvider("k", "https://example.test/v1")
+    provider._client = httpx.AsyncClient(transport=httpx.MockTransport(
+        lambda request: httpx.Response(200, content=body)))
+    result = await provider.stream_complete("claude", [ChatMessage("user", "q")])
+    await provider.aclose()
+    assert result.text == "Ищу "
+    assert result.tool_calls[0].arguments == {"query": "qt"}
+    assert (result.usage.input_tokens, result.usage.output_tokens) == (20, 15)
+    assert result.finish_reason == "tool_use"
+
+
+async def test_gemini_stream_skips_thoughts_in_text():
+    from providers.gemini_provider import GeminiProvider
+
+    body = _sse([
+        {"candidates": [{"content": {"parts": [{"text": "план", "thought": True}]}}]},
+        {"candidates": [{"content": {"parts": [{"text": "Ответ"}]}, "finishReason": "STOP"}],
+         "usageMetadata": {"promptTokenCount": 5, "candidatesTokenCount": 3,
+                           "thoughtsTokenCount": 4}},
+    ])
+    provider = GeminiProvider("k", "https://example.test/v1beta")
+    provider._client = httpx.AsyncClient(transport=httpx.MockTransport(
+        lambda request: httpx.Response(200, content=body)))
+    kinds: list[str] = []
+    result = await provider.stream_complete("g", [ChatMessage("user", "q")],
+                                            on_delta=lambda t, k: kinds.append(k))
+    await provider.aclose()
+    assert result.text == "Ответ"
+    assert kinds == ["reasoning", "text"]
+    assert result.usage.output_tokens == 7
+````
+
+### `tests/test_ui.py`
+
+*65 строк*
+
+````python
+"""Интерфейс на Qt Quick: загрузка всех экранов и живой прогон без сети.
+
+Тур запускается отдельным процессом: у Qt и qasync свой цикл событий, и
+смешивать его с циклом pytest-asyncio в одном процессе ненадёжно.
+"""
+
+from __future__ import annotations
+
 import os
+import subprocess
 import sys
-import tempfile
-import traceback
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--show", action="store_true", help="показывать настоящие окна")
-parser.add_argument("--out", default="", help="каталог для скриншотов")
-ARGS = parser.parse_args()
-
-if not ARGS.show:
-    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-    # offscreen-платформа сама системные шрифты не находит — без этого
-    # на скриншотах вместо текста квадраты
-    if sys.platform == "win32":
-        os.environ.setdefault("QT_QPA_FONTDIR", os.path.join(os.environ.get("WINDIR", "C:\\Windows"), "Fonts"))
-    elif sys.platform == "darwin":
-        os.environ.setdefault("QT_QPA_FONTDIR", "/System/Library/Fonts")
-    else:
-        os.environ.setdefault("QT_QPA_FONTDIR", "/usr/share/fonts")
-_TEMP_HOME = Path(tempfile.mkdtemp(prefix="aiorc_ui_"))
-os.environ["AIORC_HOME"] = str(_TEMP_HOME)
-SHOTS = Path(ARGS.out) if ARGS.out else _TEMP_HOME / "shots"
-SHOTS.mkdir(parents=True, exist_ok=True)
-
-import qasync  # noqa: E402
-import shiboken6  # noqa: E402
-from PySide6.QtWidgets import QApplication, QDialog, QMessageBox, QPushButton  # noqa: E402
-
-from app.config import PATHS, AppSettings  # noqa: E402
-from app.i18n import set_language  # noqa: E402
-from core.hitl import DECISION_TITLES, Decision  # noqa: E402
-from providers.base import CompletionResult, LLMProvider, ToolCall, Usage  # noqa: E402
-from storage.db import Database  # noqa: E402
-from ui.theme import stylesheet  # noqa: E402
-
-# ---------------------------------------------------------------------------
-# Сбор ошибок
-# ---------------------------------------------------------------------------
-
-ERRORS: list[str] = []
-_passed: list[str] = []
-_failed: list[str] = []
 
 
-def check(name: str, condition: bool, detail: str = "") -> None:
-    mark = "OK  " if condition else "FAIL"
-    print(f"  [{mark}] {name}" + (f" — {detail}" if detail else ""))
-    (_passed if condition else _failed).append(name)
+def test_bridge_properties_notify_qml():
+    """Каждое свойство моста либо константное, либо с сигналом изменения.
+
+    Иначе биндинги QML молча перестают обновляться (так было с сигналом,
+    унаследованным от базового класса).
+    """
+    from ui.bridge import (backend, c_agents, c_budget, c_dashboard, c_export, c_keys,
+                           c_prefs, c_run, c_supervisor, c_task, c_workspaces, i18n_bridge,
+                           listmodel)
+
+    modules = (c_agents, c_budget, c_dashboard, c_export, c_keys, c_prefs, c_run,
+               c_supervisor, c_task, c_workspaces)
+    classes = [backend.Backend, i18n_bridge.I18n, listmodel.DictListModel] + [
+        getattr(m, n) for m in modules for n in dir(m)
+        if n.endswith("Controller") and n != "Controller"]
+    silent = []
+    for cls in classes:
+        mo = cls.staticMetaObject
+        for i in range(mo.propertyOffset(), mo.propertyCount()):
+            prop = mo.property(i)
+            if not prop.hasNotifySignal() and not prop.isConstant():
+                silent.append(f"{cls.__name__}.{prop.name()}")
+    assert not silent, silent
 
 
-def _excepthook(kind, value, tb) -> None:
-    ERRORS.append("".join(traceback.format_exception(kind, value, tb)))
+def test_translation_keys_exist_in_both_languages():
+    import re
+
+    from app import i18n
+
+    used = set()
+    for f in (ROOT / "ui" / "qml").rglob("*.qml"):
+        used |= set(re.findall(r'i18n\.t\["([^"]+)"\]', f.read_text("utf-8")))
+    missing_ru = sorted(k for k in used if k not in i18n.RU)
+    missing_en = sorted(k for k in i18n.RU if k not in i18n.EN)
+    assert not missing_ru, missing_ru
+    assert not missing_en, missing_en
 
 
-class _ErrorLog(logging.Handler):
-    """Ошибки, которые ядро глотает и пишет в лог (шина, run_async)."""
+def test_ui_tour_runs_without_qml_errors(tmp_path):
+    env = dict(os.environ, QT_QPA_PLATFORM="offscreen",
+               AGENTFORGE_HOME=str(tmp_path / "data"))
+    proc = subprocess.run([sys.executable, str(ROOT / "tests" / "ui_tour.py"),
+                           str(tmp_path / "shots")],
+                          cwd=ROOT, env=env, capture_output=True, text=True,
+                          encoding="utf-8", errors="replace", timeout=300)
+    assert proc.returncode == 0, proc.stdout[-3000:] + proc.stderr[-3000:]
+    shots = sorted(p.name for p in (tmp_path / "shots").glob("*.png"))
+    assert len(shots) >= 15, shots
+````
 
-    def emit(self, record: logging.LogRecord) -> None:
-        if record.levelno >= logging.ERROR:
-            text = record.getMessage()
-            if record.exc_info:
-                text += "\n" + "".join(traceback.format_exception(*record.exc_info))
-            ERRORS.append(text)
+### `tests/ui_tour.py`
+
+*281 строк*
+
+````python
+"""Сквозной прогон интерфейса без реальной сети: вход, данные, все экраны.
+
+Используется двумя способами:
+
+* ``pytest tests/test_ui.py`` — проверяет, что каждый экран открывается
+  без ошибок QML и что живой прогон с фейковыми агентами доходит до конца;
+* ``python tests/ui_tour.py [каталог]`` — то же самое, плюс сохраняет
+  скриншоты всех экранов, чтобы их можно было посмотреть глазами.
+
+Окно рисуется без экрана (``QT_QPA_PLATFORM=offscreen``), модели заменены
+фейковым провайдером со стримингом, поэтому ни токены, ни сеть не тратятся.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import os
+import sys
+import tempfile
+from pathlib import Path
+
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+if "AGENTFORGE_HOME" not in os.environ:
+    os.environ["AGENTFORGE_HOME"] = tempfile.mkdtemp(prefix="aiorc_ui_")
+
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+PAGES = ["dashboard", "workspaces", "agents", "task", "run", "supervisor",
+         "keys", "budget", "export", "settings"]
 
 
-sys.excepthook = _excepthook
-logging.getLogger().addHandler(_ErrorLog())
-logging.getLogger().setLevel(logging.INFO)
+class StreamingWorker:
+    """Фабрика фейковых провайдеров, которые «печатают» ответ по кусочкам."""
 
-# ---------------------------------------------------------------------------
-# Фейковая модель: одна на всех, роль определяется по промпту
-# ---------------------------------------------------------------------------
+    @staticmethod
+    def make(name: str, confidence: str = "0.85", delay: float = 0.01):
+        from providers.base import CompletionResult, LLMProvider, ToolCall, Usage
+
+        class Provider(LLMProvider):
+            def __init__(self) -> None:
+                super().__init__()
+                self.calls = 0
+
+            async def list_models(self):
+                return ["demo-model"]
+
+            async def aclose(self):
+                return None
+
+            async def complete(self, model, messages, *, temperature=0.7, max_tokens=2048, tools=None):
+                return await self.stream_complete(model, messages, tools=tools)
+
+            async def stream_complete(self, model, messages, *, temperature=0.7, max_tokens=2048,
+                                      tools=None, on_delta=None):
+                self.calls += 1
+                if self.calls == 1 and tools:
+                    thought = f"{name}: сначала соберу данные по теме, затем проверю цифры.\n"
+                    for part in thought.split(" "):
+                        if on_delta:
+                            on_delta(part + " ", "reasoning")
+                        await asyncio.sleep(delay)
+                    return CompletionResult(
+                        text="Проверю расчёт в песочнице.",
+                        tool_calls=[ToolCall("c1", "code_exec", {"code": "print(21 * 2)"})],
+                        usage=Usage(420, 60))
+                text = (f"Итоги работы {name}. Сравнил три источника, расхождений в ключевых "
+                        f"цифрах нет; оценка рынка подтверждена расчётом.\n"
+                        f"CONFIDENCE: {confidence}\nRESULT:\nКраткий вывод {name}: рынок растёт "
+                        f"на 18% в год, основные риски связаны с регулированием.")
+                for i in range(0, len(text), 9):
+                    if on_delta:
+                        on_delta(text[i:i + 9], "text")
+                    await asyncio.sleep(delay)
+                return CompletionResult(text=text, usage=Usage(900, 180))
+
+        return Provider()
 
 
-class FakeModel(LLMProvider):
-    calls: dict[str, int] = {}
+class Tour:
+    """Проходит интерфейс и складывает сообщения QML и скриншоты."""
 
-    async def list_models(self) -> list[str]:
-        return ["fake-mini", "fake-large"]
+    def __init__(self, shots_dir: Path | None = None) -> None:
+        import qasync
+        from PySide6.QtWidgets import QApplication
 
-    async def aclose(self) -> None:
+        from app.config import AppSettings
+        from app.i18n import set_language
+
+        self.shots_dir = shots_dir
+        set_language("ru")
+        self.qapp = QApplication.instance() or QApplication(sys.argv)
+        self.loop = qasync.QEventLoop(self.qapp)
+        asyncio.set_event_loop(self.loop)
+        from ui.app import QML_MESSAGES, UiApp
+
+        self.messages = QML_MESSAGES
+        self.ui = UiApp(AppSettings())
+        self.window = self.ui.window
+        self.window.setProperty("width", 1480)
+        self.window.setProperty("height", 940)
+        self.backend = self.ui.backend
+
+    # -- утилиты --------------------------------------------------------------
+    async def wait(self, seconds: float) -> None:
+        await asyncio.sleep(seconds)
+
+    def play(self, coro):
+        """Весь сценарий идёт внутри одного работающего цикла — как в приложении.
+
+        Если прерывать цикл между шагами, Qt продолжает обрабатывать события
+        (например, при снимке окна), и корутины агентов просыпаются вне цикла.
+        """
+        return self.loop.run_until_complete(coro)
+
+    def shot(self, name: str) -> None:
+        if self.shots_dir is None:
+            return
+        self.shots_dir.mkdir(parents=True, exist_ok=True)
+        self.window.grabWindow().save(str(self.shots_dir / f"{name}.png"))
+
+    def errors(self) -> list[str]:
+        # Сообщение Qt о системном каталоге шрифтов к интерфейсу не относится:
+        # приложение приносит свои шрифты.
+        return [m for level, m in self.messages
+                if level in ("warning", "error") and "font directory" not in m]
+
+    def shell(self):
+        from PySide6.QtCore import QObject
+
+        for obj in self.window.findChildren(QObject):
+            if obj.property("pageFiles") is not None:
+                return obj
         return None
 
-    async def complete(self, model, messages, *, temperature=0.7,
-                       max_tokens=2048, tools=None):
-        await asyncio.sleep(0.05)
-        system, user = messages[0].content, messages[-1].content
-        joined = "\n".join(m.content for m in messages)
-        if "планировщик работ" in system:
-            return CompletionResult(
-                text='{"subtasks": ['
-                     '{"title": "Собрать требования", "description": "Опросить источники", '
-                     '"assignee_role": "analyst"},'
-                     '{"title": "Написать скрипт", "description": "Сохранить main.py", '
-                     '"assignee_role": "developer"}]}',
-                usage=Usage(300, 120))
-        if "ПРОВЕРЯЕМАЯ ПОДЗАДАЧА" in joined:
-            return CompletionResult(text='{"verdict":"ok","notes":"","issues":[]}',
-                                    usage=Usage(150, 20))
-        if "Сравни результаты" in system:
-            return CompletionResult(
-                text='{"conflicts":[{"description":"Сроки в отчётах расходятся",'
-                     '"severity":"medium","labels":[],"auto_resolvable":true,'
-                     '"resolution":"Берём более поздний срок"}]}',
-                usage=Usage(120, 40))
-        if "Составь краткую сводку" in system:
-            return CompletionResult(
-                text="ФАКТЫ:\nтребования собраны\nРАСХОЖДЕНИЯ:\nнет\nОТКРЫТЫЕ ВОПРОСЫ:\nнет",
-                usage=Usage(120, 50))
+    def mark(self, name: str) -> None:
+        self.messages.append(("mark", name))
 
-        # Исполнитель: разработчик сначала пишет файл, аналитик один раз
-        # отвечает неуверенно — это должно остановить прогон.
-        wants_file = "Сохранить main.py" in joined
-        if wants_file and tools and not self.calls.get("file"):
-            self.calls["file"] = 1
-            return CompletionResult(
-                text="Сохраняю файл.",
-                tool_calls=[ToolCall("c1", "write_file",
-                                     {"path": "main.py", "content": "print('hello')\n"})],
-                usage=Usage(250, 60))
-        low = "Собрать требования" in joined and not self.calls.get("low")
-        if low:
-            self.calls["low"] = 1
-        confidence = "0.3" if low else "0.9"
-        return CompletionResult(
-            text=f"Готово.\nCONFIDENCE: {confidence}\nRESULT:\nИтог работы по «{user[:60]}».",
-            usage=Usage(400, 150))
+    def go(self, page: str) -> None:
+        self.mark("go " + page)
+        shell = self.shell()
+        assert shell is not None, "оболочка приложения не найдена"
+        shell.setProperty("page", page)
+        assert shell.property("page") == page
 
-
-def fake_build_provider(*_args, **_kwargs) -> LLMProvider:
-    return FakeModel()
-
-
-import core.orchestrator  # noqa: E402
-import core.planner  # noqa: E402
-import core.supervisor.supervisor  # noqa: E402
-import ui.pages.agents_page  # noqa: E402
-import ui.pages.keys_page  # noqa: E402
-
-for module in (core.orchestrator, core.planner, core.supervisor.supervisor,
-               ui.pages.agents_page, ui.pages.keys_page):
-    module.build_provider = fake_build_provider
-
-# ---------------------------------------------------------------------------
-# Подмена модальных окон
-# ---------------------------------------------------------------------------
-
-FILLERS: dict[str, object] = {}
-MESSAGES: list[str] = []
-
-
-def _fake_exec(self) -> int:
-    filler = FILLERS.pop(type(self).__name__, None)
-    if filler is None:
-        ERRORS.append(f"неожиданный диалог {type(self).__name__}")
-        return QDialog.DialogCode.Rejected
-    self.show()
-    filler(self)
-    self.layout().activate()
-    self.grab().save(str(SHOTS / f"dialog_{type(self).__name__}.png"))
-    self.hide()
-    return QDialog.DialogCode.Accepted
-
-
-QDialog.exec = _fake_exec
-QMessageBox.warning = staticmethod(lambda _p, _t, text, *a, **k: MESSAGES.append(text))
-QMessageBox.information = staticmethod(lambda _p, _t, text, *a, **k: MESSAGES.append(text))
-
-import ui.widgets.common as common  # noqa: E402
-
-_yes = lambda *_a, **_k: True  # noqa: E731
-common.confirm = _yes
-for name in ("workspaces_page", "keys_page", "agents_page", "task_page", "run_page"):
-    setattr(sys.modules.get(f"ui.pages.{name}") or __import__(f"ui.pages.{name}",
-            fromlist=["x"]), "confirm", _yes)
-
-
-# ---------------------------------------------------------------------------
-# Сценарий
-# ---------------------------------------------------------------------------
-
-
-def shot(widget, name: str) -> None:
-    # processEvents() здесь нельзя: внутри корутины он повторно входит в луп
-    # qasync и ломает чужие таски. Отрисовку дают паузы settle().
-    widget.grab().save(str(SHOTS / f"{name}.png"))
-
-
-async def settle(seconds: float = 0.2) -> None:
-    await asyncio.sleep(seconds)
-
-
-async def wait_for(predicate, timeout: float = 20.0) -> bool:
-    loop = asyncio.get_event_loop()
-    end = loop.time() + timeout
-    while loop.time() < end:
-        if predicate():
-            return True
-        await settle(0.05)
-    return False
-
-
-async def scenario(app: QApplication) -> None:
-    from main import start_ui
-
-    settings = AppSettings.load()
-    db = Database()
-
-    # Та же связка окон, что в приложении: вход → главное окно → выход → вход.
-    windows = start_ui(db, settings)
-
-    print("\n[1] Вход")
-    login = windows["login"]
-    login.resize(520, 640)
-    await settle()
-    shot(login, "01_signup")
-    check("без профилей открыт экран регистрации", login.stack.currentIndex() == 1)
-
-    login.su_username.setText("tester")
-    login.su_password.setText("short")
-    login.su_password2.setText("short")
-    login._do_signup()
-    check("короткий пароль отвергнут", "main" not in windows and login.su_error.isVisible())
-    login.su_password.setText("password123")
-    login.su_password2.setText("password123")
-    login._do_signup()
-    check("профиль создан", "main" in windows)
-
-    print("\n[2] Главное окно")
-    window = windows["main"]
-    await settle(0.5)
-    check("приложение не закрылось при переходе из окна входа",
-          asyncio.get_event_loop().is_running() and window.isVisible())
-    for i in range(window.stack.count()):
-        window._select_page(i)
-        await settle(0.05)
-        shot(window, f"02_empty_{i:02d}")
-    check("все страницы открываются без воркспейса", not ERRORS)
-
-    print("\n[3] Воркспейс, ключ, агенты")
-    window._select_page(0)
-
-    def fill_ws(dlg):
-        dlg.name.setText("Демо-проект")
-        dlg.description.setPlainText("Проверка интерфейса")
-    FILLERS["WorkspaceDialog"] = fill_ws
-    window.page_workspaces._create()
-    await settle()
-    check("воркспейс создан и выбран", window.workspace_id is not None)
-    shot(window, "03_workspaces")
-
-    window._select_page(1)
-
-    def fill_key(dlg):
-        dlg.provider.setCurrentIndex(dlg.provider.findData("openai"))
-        dlg.secret.setText("sk-test-123")
-    FILLERS["KeyDialog"] = fill_key
-    window.page_keys._create()
-    await settle()
-    keys = window.repos.keys.list()
-    check("ключ сохранён", len(keys) == 1)
-    for button in window.page_keys.findChildren(QPushButton):
-        if button.text() == common.tr("common.test"):
-            button.click()
-    await settle(0.5)
-    shot(window, "04_keys")
-    check("проверка ключа закэшировала модели",
-          window.repos.keys.get(keys[0].id).meta.get("models") == ["fake-mini", "fake-large"])
-
-    window._select_page(2)
-    for role, is_sup in (("analyst", False), ("developer", False), ("supervisor", True)):
-        def fill_agent(dlg, role=role, is_sup=is_sup):
-            idx = dlg.template.findData(role)
-            if idx < 0:
-                idx = 0
-            dlg.template.setCurrentIndex(idx)
-            dlg._load_models()
-            dlg.model.setCurrentText("fake-mini")
-            dlg.is_supervisor.setChecked(is_sup)
-        FILLERS["AgentDialog"] = fill_agent
-        window.page_agents._create()
-        await settle(0.2)
-    agents = window.repos.agents.list(window.workspace_id)
-    check("три агента созданы", len(agents) == 3, ", ".join(a.name for a in agents))
-    shot(window, "05_agents")
-
-    print("\n[4] Задача")
-    window._select_page(3)
-    page = window.page_task
-    page.title_edit.setText("Демо-задача")
-    page.body_edit.setPlainText("Подготовить демо: требования и небольшой скрипт")
-    page.token_limit.setText("100 000")
-    page._autosplit()
-    ok = await wait_for(lambda: page.btn_auto.isEnabled())
-    subtasks = window.repos.tasks.subtasks(page.task.id)
-    check("автоматическое разбиение", ok and len(subtasks) == 2,
-          f"подзадач: {len(subtasks)}")
-    check("исполнители назначены по ролям", all(s.agent_id for s in subtasks))
-
-    def fill_sub(dlg):
-        dlg.title.setText("Проверить итог")
-        dlg.description.setPlainText("Свести результаты")
-        dlg.assignee.setCurrentIndex(1)
-    FILLERS["SubtaskDialog"] = fill_sub
-    page._add_subtask()
-    await settle()
-    page._move(window.repos.tasks.subtasks(page.task.id)[-1].id, -1)
-    await settle()
-    shot(window, "06_task")
-    check("подзадача добавлена вручную",
-          len(window.repos.tasks.subtasks(page.task.id)) == 3)
-
-    print("\n[5] Настройки воркспейса")
-    window._select_page(9)
-    sp = window.page_settings
-    sp.hitl.setChecked(True)
-    sp.hitl_threshold.setValue(0.5)
-    idx = sp.sup_agent.findData(next(a.id for a in agents if a.is_supervisor))
-    sp.sup_agent.setCurrentIndex(idx)
-    await settle()
-    ws = window.repos.workspaces.get(window.workspace_id)
-    check("human-in-the-loop включён", ws.settings.get("human_in_the_loop") is True)
-    supervisor_id = next(a.id for a in agents if a.is_supervisor)
-    check("список агентов в настройках актуален", idx >= 0, f"индекс: {idx}")
-    check("супервайзер выбран", ws.settings.get("supervisor_agent_id") == supervisor_id)
-    shot(window, "07_settings")
-
-    print("\n[6] Прогон")
-    window.page_task._request_run()
-    await settle()
-    check("кнопка «Запустить» переводит на страницу выполнения",
-          window.stack.currentWidget() is window.page_run)
-    window.page_run.btn_start.click()
-    run = window.page_run
-    paused = await wait_for(lambda: run.approvals.isVisible(), 20)
-    await settle(0.3)
-    shot(window, "08_run_paused")
-    confidences = [r.confidence for r in window.repos.reports.list_reports(window.workspace_id)]
-    check("появилась панель решения", paused, f"уверенность в отчётах: {confidences}")
-
-    window._select_page(6)
-    await settle(1.3)
-    shot(window, "09_dashboard_live")
-    window._select_page(4)
-
-    approve = DECISION_TITLES[Decision.APPROVE]
-    for _ in range(10):
-        buttons = [b for b in run.approvals.findChildren(QPushButton)
-                   if b.text() == approve and b.isEnabled() and b.isVisible()]
-        if not buttons:
-            if not window.orchestrator.state.running:
+    # -- сценарий ------------------------------------------------------------------
+    async def login(self) -> None:
+        self.shot("00_signup")
+        done: list[tuple[bool, str]] = []
+        self.backend.authFinished.connect(lambda ok, err: done.append((ok, err)))
+        self.backend.signUp("demo", "demo-password-1", "demo-password-1")
+        for _ in range(100):
+            if done:
                 break
-            await settle(0.2)
-            continue
-        buttons[0].click()
-        await settle(0.3)
-    finished = await wait_for(lambda: not window.orchestrator.state.running, 30)
-    await settle(0.5)
-    shot(window, "10_run_done")
-    statuses = [s.status for s in window.repos.tasks.subtasks(page.task.id)]
-    check("прогон завершён", finished, f"статусы: {statuses}")
-    check("все подзадачи выполнены", all(s == "done" for s in statuses))
-    check("разработчик записал файл инструментом write_file",
-          (PATHS.workspace_dir(window.workspace_id) / "main.py").exists())
-    check("кнопки вернулись в исходное состояние",
-          run.btn_start.isEnabled() and not run.btn_stop.isEnabled())
+            await self.wait(0.05)
+        assert done and done[0][0], f"вход не удался: {done}"
+        await self.wait(0.8)
 
-    print("\n[7] Супервайзер, дашборд, бюджеты")
-    window._select_page(5)
-    for i in range(window.page_supervisor.tabs.count()):
-        window.page_supervisor.tabs.setCurrentIndex(i)
-        await settle(0.05)
-        shot(window, f"11_supervisor_{i}")
-    check("история решений не пуста",
-          bool(window.repos.approvals.history(window.workspace_id)))
+    async def seed(self) -> None:
+        """Проект с агентами, задачей и подзадачами — как у живого пользователя."""
+        self.mark("seed")
+        b = self.backend
+        b.workspaces.create("Анализ рынка EdTech", "Исследование рынка онлайн-обучения для отчёта инвестору")
+        b.workspaces.create("Бот поддержки", "Прототип ассистента первой линии")
+        repos = b.repos
+        ws_id = b.workspace_id
+        # Ключ без сети: Ollama не требует секрета.
+        key = repos.keys.create("Локальный Ollama", "ollama", "", "http://localhost:11434/v1")
+        roles = [("Аналитик", "analyst"), ("Исследователь", "researcher"), ("Критик", "critic")]
+        agents = []
+        for name, role in roles:
+            agents.append(repos.agents.create(
+                ws_id, name, role, f"Ты — {name.lower()}.", key.id, "ollama", "qwen2.5:7b-instruct",
+                {"temperature": 0.4, "max_tokens": 1024, "tools": ["web_search", "code_exec"]}))
+        sup = repos.agents.create(ws_id, "Супервайзер", "supervisor", "Проверяй отчёты.", key.id,
+                                  "ollama", "qwen2.5:14b-instruct", {}, is_supervisor=True)
+        ws = repos.workspaces.get(ws_id)
+        repos.workspaces.update(ws_id, settings={**ws.settings, "supervisor_agent_id": sup.id,
+                                                 "summary_interval_minutes": 0,
+                                                 "human_in_the_loop": True,
+                                                 "hitl_confidence_threshold": 0.6})
+        task = repos.tasks.create(ws_id, "Рынок EdTech в 2026 году",
+                                  "Оценить объём рынка онлайн-обучения, ключевых игроков и риски. "
+                                  "Результат: короткий отчёт для инвестора.", "docx", 60000)
+        s1 = repos.tasks.add_subtask(task.id, "Собрать данные об объёме рынка", "Источники за 2024-2026", agents[1].id)
+        s2 = repos.tasks.add_subtask(task.id, "Проанализировать ключевых игроков", "", agents[0].id)
+        s3 = repos.tasks.add_subtask(task.id, "Оценить риски и ограничения", "", agents[2].id)
+        s4 = repos.tasks.add_subtask(task.id, "Свести выводы для инвестора", "", agents[0].id)
+        repos.tasks.update_subtask(s2.id, depends_on=str(s1.id))
+        repos.tasks.update_subtask(s3.id, depends_on=str(s1.id))
+        repos.tasks.update_subtask(s4.id, depends_on=f"{s2.id},{s3.id}")
+        repos.budgets.upsert("workspace", ws_id, 500000, 5.0, 0.8)
+        for c in b._controllers.values():
+            c.refresh()
+        await self.wait(0.3)
 
-    window._select_page(6)
-    await settle(1.2)
-    dash = window.page_dashboard
-    shot(window, "12_dashboard")
-    check("график расходов получил точки", len(dash.cost_chart._points) >= 2,
-          f"точек: {len(dash.cost_chart._points)}")
-    check("распределение по агентам заполнено", len(dash.agent_chart._bars) >= 1)
+    async def run_with_fakes(self, decide: bool = True) -> None:
+        """Живой прогон с фейковыми агентами: стриминг, граф, вопрос человеку."""
+        from core.hitl import Decision
+        from tests.fakes import SupervisorProvider, patch_supervisor
 
-    window._select_page(7)
-    await settle()
-    rows = [w for w in window.page_budget.findChildren(
-        sys.modules["ui.pages.budget_page"].LimitRow)]
-    check("бюджеты отображаются по уровням", len(rows) >= 3, f"строк: {len(rows)}")
-    if rows:
-        rows[0].tokens_edit.setText("5000")
-        rows[0].tokens_edit.editingFinished.emit()
-        await settle()
-    shot(window, "13_budget")
+        orch = self.backend.orchestrator
+        providers = {}
+        low = {"Критик"}
 
-    print("\n[8] Экспорт")
-    window._select_page(8)
-    await settle()
-    ep = window.page_export
-    auto_fmt = ep.format_box.currentData()
-    check("формат определён автоматически", auto_fmt == "zip", f"формат: {auto_fmt}")
-    shot(window, "14_export")
-    for fmt in ("markdown", "docx", "pdf", "zip"):
-        ep.format_box.setCurrentIndex(ep.format_box.findData(fmt))
-        ep.opt_reports.setChecked(True)
-        ep.opt_summaries.setChecked(True)
-        ep.opt_decisions.setChecked(True)
-        before = len(MESSAGES)
-        ep._export()
-        path = Path(ep.path_edit.text())
-        check(f"экспорт {fmt}", path.exists() and path.stat().st_size > 0
-              and len(MESSAGES) == before,
-              MESSAGES[-1] if len(MESSAGES) > before else path.name)
+        def provider_for(agent):
+            if agent.id not in providers:
+                providers[agent.id] = StreamingWorker.make(
+                    agent.name, confidence="0.4" if agent.name in low else "0.86")
+            return providers[agent.id]
 
-    print("\n[9] Тема и язык")
-    window._select_page(9)
-    sp.theme_box.setCurrentIndex(1)
-    await settle()
-    for i in (6, 4, 9):
-        window._select_page(i)
-        await settle(0.1)
-        shot(window, f"15_light_{i:02d}")
-    sp.theme_box.setCurrentIndex(0)
-    sp.lang_box.setCurrentIndex(sp.lang_box.findData("en"))
-    await settle(0.5)
-    rebuilt = windows["main"]
-    nav = rebuilt.nav_group.button(0).text() if rebuilt is not window else ""
-    check("смена языка пересобрала окно", rebuilt is not window and rebuilt.isVisible()
-          and not shiboken6.isValid(window) and nav == "Workspaces",
-          f"кнопка навигации: {nav!r}")
-    check("после пересборки открыта та же страница",
-          rebuilt.stack.currentWidget() is rebuilt.page_settings)
-    shot(rebuilt, "16_main_en")
-
-    rebuilt._logout()
-    await settle(0.5)
-    login2 = windows["login"]
-    check("после выхода снова открыто окно входа",
-          login2 is not login and login2.isVisible()
-          and login2.stack.currentIndex() == 0)
-    shot(login2, "17_login_en")
-    login2.password.setText("password123")
-    login2._do_signin()
-    await settle(0.5)
-    check("повторный вход по паролю",
-          windows["main"] is not rebuilt and windows["main"].isVisible())
-    shot(windows["main"], "18_main_after_login")
-    set_language("ru")
+        orch._provider_for = provider_for
+        self.mark("run")
+        patch_supervisor(SupervisorProvider())
+        self.go("run")
+        await self.wait(0.4)
+        self.backend.run.start()
+        shot_taken = False
+        for _ in range(400):
+            await self.wait(0.05)
+            gate = orch.gate
+            if gate and gate.pending():
+                if not shot_taken:
+                    await self.wait(0.5)
+                    self.shot("05b_run_decision")
+                    shot_taken = True
+                if decide:
+                    req = gate.pending()[0]
+                    self.backend.run.decide(req.id, Decision.APPROVE.value, "Проверено вручную")
+            if not orch.state.running and orch.state.task_id is not None and _ > 5:
+                break
+        await self.wait(0.6)
 
 
-def main() -> int:
-    settings = AppSettings.load()
-    set_language(settings.language)
-    PATHS.ensure()
-    app = QApplication(sys.argv)
-    app.setStyleSheet(stylesheet(settings.theme))
-    loop = qasync.QEventLoop(app)
-    asyncio.set_event_loop(loop)
+async def scenario(tour: "Tour") -> None:
+    await tour.login()
+    await tour.seed()
+    for i, page in enumerate(PAGES):
+        tour.go(page)
+        await tour.wait(1.0)
+        tour.shot(f"{i + 1:02d}_{page}")
+    await tour.run_with_fakes()
+    tour.go("run")
+    await tour.wait(0.8)
+    tour.shot("20_run_after")
+    for page in ("dashboard", "supervisor", "task", "export"):
+        tour.go(page)
+        await tour.wait(1.0)
+        tour.shot(f"21_{page}_after")
 
-    with loop:
-        try:
-            loop.run_until_complete(asyncio.wait_for(scenario(app), 120))
-        except Exception:  # noqa: BLE001
-            ERRORS.append(traceback.format_exc())
 
-    print(f"\nСкриншоты: {SHOTS}")
-    if ERRORS:
-        print(f"\nОШИБКИ ({len(ERRORS)}):")
-        for text in dict.fromkeys(ERRORS):
-            print("-" * 66)
-            print(text.rstrip())
-    print("\n" + "=" * 66)
-    total = len(_passed) + len(_failed)
-    if _failed or ERRORS:
-        print(f"ПРОВАЛЕНО: {len(_failed)} из {total}, ошибок в слотах: {len(ERRORS)}")
-        for name in _failed:
-            print(f"  - {name}")
-        return 1
-    print(f"ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ: {total} из {total}")
-    return 0
+def main(shots_dir: str) -> int:
+    tour = Tour(Path(shots_dir))
+    tour.play(scenario(tour))
+    tour.mark("end")
+    for level, m in tour.messages:
+        if level == "mark":
+            print("--", m)
+        elif level in ("warning", "error") and "font directory" not in m:
+            print("   ", m[:160])
+    errors = tour.errors()
+    orch = tour.backend.orchestrator
+    task = tour.backend.repos.tasks.current(tour.backend.workspace_id)
+    statuses = [s.status for s in tour.backend.repos.tasks.subtasks(task.id)]
+    print(f"Статусы подзадач после прогона: {statuses}")
+    if statuses != ["done"] * len(statuses) or orch.state.running:
+        errors.append(f"прогон не завершился успешно: {statuses}")
+    print(f"Скриншоты: {shots_dir}")
+    print(f"Сообщений QML с предупреждениями: {len(errors)}")
+    for e in errors[:60]:
+        print("  ", e)
+    tour.ui.dispose()
+    # Закрытие цикла останавливает поток исполнителя qasync; без этого
+    # процесс падает при выходе с «QThread: Destroyed while thread is running».
+    tour.loop.close()
+    return 1 if errors else 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else str(ROOT / "shots")))
+````
+
+### `pytest.ini`
+
+*5 строк*
+
+````ini
+[pytest]
+testpaths = tests
+python_files = test_*.py
+asyncio_mode = auto
+asyncio_default_fixture_loop_scope = function
 ````
 
 
@@ -14101,7 +20605,7 @@ if __name__ == "__main__":
 
 ````text
 # ============================================================================
-#  AI Orchestrator — зависимости
+#  Agent Forge — зависимости
 #  Установка:  pip install -r requirements.txt
 # ============================================================================
 
@@ -14133,7 +20637,7 @@ reportlab>=4.2           # экспорт в PDF
 
 ````bash
 #!/usr/bin/env bash
-# Запуск AI Orchestrator на Linux и macOS.
+# Запуск Agent Forge на Linux и macOS.
 # При первом запуске создаёт виртуальное окружение и ставит зависимости.
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -14171,7 +20675,7 @@ exec ./.venv/bin/python main.py "$@"
 ````batch
 @echo off
 REM ===========================================================
-REM  AI Orchestrator - launcher for Windows
+REM  Agent Forge - launcher for Windows
 REM  Creates a virtual environment on first run, then starts.
 REM  Messages are in Latin script on purpose: the Windows
 REM  console uses a legacy code page and would garble UTF-8.
@@ -14225,20 +20729,236 @@ if not exist ".venv" (
 if errorlevel 1 (
     echo.
     echo  The application exited with an error.
-    echo  See the log: %%APPDATA%%\ai-orchestrator\logs\app.log
+    echo  See the log: %%APPDATA%%\agent-forge\logs\app.log
     pause
 )
 ````
 
 ### `.gitignore`
 
-*10 строк*
+*226 строк*
 
 ````text
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.py[cod]
-.venv/
+*.py[codz]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#   Usually these files are written by a python script from a template
+#   before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py.cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+#   For a library or package, you might want to ignore these files since the code is
+#   intended to run in multiple environments; otherwise, check them in:
+# .python-version
+
+# pipenv
+#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
+#   However, in case of collaboration, if having platform-specific dependencies or dependencies
+#   having no cross-platform support, pipenv may install dependencies that don't work, or not
+#   install all needed dependencies.
+# Pipfile.lock
+
+# UV
+#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
+#   This is especially recommended for binary packages to ensure reproducibility, and is more
+#   commonly ignored for libraries.
+# uv.lock
+
+# poetry
+#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
+#   This is especially recommended for binary packages to ensure reproducibility, and is more
+#   commonly ignored for libraries.
+#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
+# poetry.lock
+# poetry.toml
+
+# pdm
+#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
+#   pdm recommends including project-wide configuration in pdm.toml, but excluding .pdm-python.
+#   https://pdm-project.org/en/latest/usage/project/#working-with-version-control
+# pdm.lock
+# pdm.toml
+.pdm-python
+.pdm-build/
+
+# pixi
+#   Similar to Pipfile.lock, it is generally recommended to include pixi.lock in version control.
+# pixi.lock
+#   Pixi creates a virtual environment in the .pixi directory, just like venv module creates one
+#   in the .venv directory. It is recommended not to include this directory in version control.
+.pixi
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# Redis
+*.rdb
+*.aof
+*.pid
+
+# RabbitMQ
+mnesia/
+rabbitmq/
+rabbitmq-data/
+
+# ActiveMQ
+activemq-data/
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.envrc
+.venv
+env/
 venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# PyCharm
+#   JetBrains specific template is maintained in a separate JetBrains.gitignore that can
+#   be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
+#   and can be added to the global gitignore or merged into this file.  For a more nuclear
+#   option (not recommended) you can uncomment the following to ignore the entire idea folder.
+# .idea/
+
+# Abstra
+#   Abstra is an AI-powered process automation framework.
+#   Ignore directories containing user credentials, local state, and settings.
+#   Learn more at https://abstra.io/docs
+.abstra/
+
+# Visual Studio Code
+#   Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
+#   that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
+#   and can be added to the global gitignore or merged into this file. However, if you prefer, 
+#   you could uncomment the following to ignore the entire vscode folder
+# .vscode/
+# Temporary file for partial code execution
+tempCodeRunnerFile.py
+
+# Ruff stuff:
+.ruff_cache/
+
+# PyPI configuration file
+.pypirc
+
+# Marimo
+marimo/_static/
+marimo/_lsp/
+__marimo__/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Agent Forge
 *.db
 *.db-wal
 *.db-shm
@@ -14253,71 +20973,45 @@ exports/
 
 # Что осталось сделать
 
-## Сделано при первом запуске интерфейса
+## Сделано в версии 1.1
 
-Интерфейс впервые запущен и пройден сценарием 	ests/ui_smoke.py. Найдено
-и исправлено:
+- **Интерфейс переписан на Qt Quick**: дизайн-система `Ao`, живой фон,
+  каскадные анимации, уведомления, палитра команд, выключатель анимаций.
+- **Стриминг рассуждений агентов** во всех трёх семействах провайдеров
+  (OpenAI-совместимые, Anthropic, Gemini), с вызовами инструментов и
+  расходом токенов; при отказе сервера от стриминга вызов повторяется обычным.
+- **Исправления ядра** (каждое закреплено тестом в `tests/test_core_fixes.py`):
+  учёт расходов супервайзера в лимитах, порядок «лок агента, потом слот»,
+  освобождение слота на время вопроса человеку, строгий режим для
+  непроверенных результатов, вопрос о продлении бюджета, различение упавшей
+  зависимости и цикла, последние сообщения в истории агента, атомарная смена
+  пароля, итог при исчерпании шагов, дерево процессов в песочнице.
+- **Проект переименован** из AI Orchestrator в Agent Forge; старый каталог
+  данных подхватывается автоматически.
 
-- **Дашборд не обновлялся в реальном времени.** Обработчик шины ссылался на
-  несуществующий EventType.TOOL_CALL и падал на каждом событии. Шина
-  глотала исключение, так что снаружи ничего не было видно.
-- **Файловые инструменты не доходили до агентов.** Шаблоны ролей и
-  	ools_enabled в настройках по умолчанию используют групповое имя
-  iles, а в реестре есть только 
-ead_file, write_file и list_dir
-  (так же web_search без etch_url). Группы теперь разворачивает
-  expand_tool_names в core/tools/base.py, в том числе для уже
-  сохранённых агентов и воркспейсов.
-- **Диалог агента.** При смене шаблона имя не менялось (все агенты
-  становились «Аналитиками»), а промпт, поправленный руками, затирался.
-  Теперь меняется только то, что было подставлено автоматически.
-- **Настройки воркспейса** не перечитывали список агентов, поэтому выбор
-  супервайзера был пустым, если агентов создали после открытия страницы.
-- **Смена языка** теперь пересобирает главное окно сразу, на той же странице.
-  Во время прогона — после выхода и повторного входа, чтобы не прерывать
-  агентов. Связка окон вынесена в main.start_ui.
-- **Время** везде показывалось в UTC. Хранится по-прежнему UTC, а для показа
-  есть storage.db.local_time.
-- **Оформление.** Правило QWidget { background } давало тёмные подложки под
-  каждой надписью в карточках. Стрелки у выпадающих списков и счётчиков
-  пропадали, а трюк с треугольником из рамок Qt не рисует: теперь это PNG,
-  которые рисуются при старте в cache/theme (вариант @2x для HiDPI;
-  плагина SVG в сборке PySide6 может не быть). Неактивная основная кнопка
-  выглядела активной. Кнопки ▲▼ были обрезаны. Бейджи статуса растягивались.
-  Имена в ленте были не видны в светлой теме. Предупреждение на экране
-  регистрации обрезалось, потому что QStackedWidget не передаёт
-  height-for-width: вместо него PageSwitcher.
-- **Мелочи.** Константа WD_STYLE_TYPE.PARAGRAPH вместо числа в экспорте
-  DOCX. Подписи столбцов обрезаются по пикселям. Расход проверок
-  супервайзера подписан отдельно от агента-супервайзера. Важность и тип
-  инцидентов переведены на русский.
-
-Графики на QPainter (charts.py) работали с первого раза.
 ## Функциональные доработки
 
 **Фильтр графиков по прогонам.** Дашборд показывает всю историю воркспейса
 без разделения по запускам. В `usage_log` нет идентификатора прогона —
 его нужно добавить и прокинуть через `BudgetRepo.log_call`.
 
-**Слот параллельности при паузе.** Пока система ждёт решения человека,
-занятый агент удерживает свой слот: другие подзадачи волны продолжают
-работать, но новая на его место не встанет. Лечится освобождением семафора
-на время ожидания в `ApprovalGate.ask`.
+**Граф зависимостей от планировщика.** ИИ-планировщик пока не расставляет
+`depends_on`: зависимости задаются вручную в редакторе подзадачи. Следующая
+волна стартует после завершения всей текущей волны; запуск по готовности
+зависимостей сократит простой.
 
 **Суммаризация длинной истории агента.** Сейчас история обрезается по
 лимиту сообщений. Для длинных задач нужна сворачивающая суммаризация при
 приближении к контекстному окну модели.
 
-**Стриминг ответов в интерфейс.** Провайдеры умеют `stream()`, но
-`AgentRunner` использует только `complete()`. Для активного агента поток
-токенов в ленту сделал бы ожидание менее глухим.
+**Инструменты через MCP и RAG по документам проекта** — в плане курса.
 
 **Шаблоны воркспейсов.** Готовые наборы «аналитик + разработчик +
 тестировщик» с настроенными промптами, чтобы не собирать команду заново
 под каждый проект.
 
-**Повторный запуск подзадач.** Сейчас перезапуск прогона берёт все
-незавершённые подзадачи. Нужна возможность перезапустить одну конкретную.
+**Повторный запуск подзадач** уже есть (кнопка на карточке подзадачи);
+следующий шаг — перезапуск одной подзадачи без прогона всей задачи.
 
 ## Технический долг
 
@@ -14325,8 +21019,8 @@ ead_file, write_file и list_dir
 и требует сверки с прайс-листами. Стоит добавить дату последнего обновления
 и предупреждение в интерфейсе, если она старше нескольких месяцев.
 
-**Нет автотестов интерфейса.** `tests/smoke.py` покрывает только ядро.
-Для виджетов имело бы смысл добавить `pytest-qt`.
+**Защита `fetch_url` от обращений в локальную сеть** и фильтр prompt
+injection для содержимого страниц — в плане курса (зона платформы).
 
 **`TokenBudget` в `core/agents/runner.py`** остался как совместимая обёртка
 после появления `BudgetGuard`. Используется только в тестах — можно убрать,

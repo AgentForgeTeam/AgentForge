@@ -18,7 +18,7 @@ _CURRENT = "ru"
 
 RU: dict[str, str] = {
     # --- общее ---
-    "app.title": "AI Orchestrator — оркестрация ИИ-агентов",
+    "app.title": "Agent Forge — оркестрация ИИ-агентов",
     "common.ok": "OK",
     "common.cancel": "Отмена",
     "common.save": "Сохранить",
@@ -155,7 +155,7 @@ RU: dict[str, str] = {
     "nav.settings": "Настройки",
     "nav.logout": "Выйти",
     # --- воркспейсы ---
-    "ws.title": "Воркспейсы (параллельные проекты)",
+    "ws.title": "Воркспейсы",
     "ws.new": "Новый воркспейс",
     "ws.name": "Название проекта",
     "ws.empty": "Ещё нет ни одного воркспейса. Создайте первый, чтобы начать.",
@@ -270,7 +270,7 @@ RU: dict[str, str] = {
 }
 
 EN: dict[str, str] = {
-    "app.title": "AI Orchestrator — multi-agent orchestration",
+    "app.title": "Agent Forge — multi-agent orchestration",
     "common.ok": "OK",
     "common.cancel": "Cancel",
     "common.save": "Save",
@@ -400,7 +400,7 @@ EN: dict[str, str] = {
     "nav.dashboard": "Dashboard",
     "nav.settings": "Settings",
     "nav.logout": "Log out",
-    "ws.title": "Workspaces (parallel projects)",
+    "ws.title": "Workspaces",
     "ws.new": "New workspace",
     "ws.name": "Project name",
     "ws.empty": "No workspaces yet. Create one to get started.",
@@ -508,6 +508,12 @@ EN: dict[str, str] = {
     "settings.budget": "Budgets and limits",
 }
 
+# Строки нового интерфейса лежат в отдельном модуле и вливаются сюда.
+from app.i18n_ui import EN_UI, RU_UI  # noqa: E402
+
+RU.update(RU_UI)
+EN.update(EN_UI)
+
 _CATALOG: dict[str, dict[str, str]] = {"ru": RU, "en": EN}
 
 
@@ -525,6 +531,11 @@ def set_language(code: str) -> None:
 
 def current_language() -> str:
     return _CURRENT
+
+
+def catalog_for(code: str) -> dict[str, str]:
+    """Словарь строк языка (для моста QML)."""
+    return _CATALOG.get(code, RU)
 
 
 def available_languages() -> list[tuple[str, str]]:

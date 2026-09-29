@@ -124,7 +124,7 @@ class Session:
 # Необязательная интеграция с хранилищем секретов ОС («запомнить пароль»)
 # ---------------------------------------------------------------------------
 
-_KEYRING_SERVICE = "ai-orchestrator"
+_KEYRING_SERVICE = "agent-forge"
 
 
 def keyring_available() -> bool:
