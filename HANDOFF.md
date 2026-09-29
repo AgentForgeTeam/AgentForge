@@ -186,6 +186,7 @@ AI Orchestrator.
 **Сборка и запуск**
 
 - `requirements.txt`
+- `requirements-dev.txt`
 - `run.sh`
 - `run.bat`
 - `.gitignore`
@@ -5130,7 +5131,7 @@ def title(template: RoleTemplate, lang: str) -> str:
 
 ### `core/agents/runner.py`
 
-*492 строк*
+*496 строк*
 
 ````python
 """Этап 4 — исполнитель одного агента над одной подзадачей.
@@ -5150,6 +5151,7 @@ import asyncio
 import logging
 import re
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from app.config import PATHS
 from core.events import Event, EventBus, EventType
@@ -5158,6 +5160,9 @@ from providers.base import ChatMessage, CompletionResult, LLMProvider, ProviderE
 from providers.factory import estimate_cost
 from storage.models import Agent, Subtask, Task
 from storage.repositories import Repos
+
+if TYPE_CHECKING:  # pragma: no cover
+    from core.budget import BudgetGuard
 
 log = logging.getLogger("aiorc.runner")
 
@@ -9240,7 +9245,7 @@ class I18n(QObject):
 
 ### `ui/bridge/backend.py`
 
-*441 строк*
+*435 строк*
 
 ````python
 """Корневой объект моста: профиль, воркспейс, события ядра, уведомления.
@@ -9253,7 +9258,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -9679,11 +9683,6 @@ class Backend(StateObject):
         """Закрытие окна: гасим агентов, чтобы не оставить висящих запросов."""
         if self.orchestrator and self.orchestrator.state.running:
             self.orchestrator.stop()
-
-    @staticmethod
-    def open_in_explorer(path: str) -> None:  # pragma: no cover — зависит от ОС
-        if sys.platform == "win32":
-            os.startfile(path)  # noqa: S606
 ````
 
 ### `ui/bridge/pages.py`
@@ -10457,7 +10456,7 @@ class TaskController(Controller):
 
 ### `ui/bridge/c_run.py`
 
-*475 строк*
+*465 строк*
 
 ````python
 """Выполнение: запуск прогона, живые рассуждения агентов, граф, лента, решения.
@@ -10477,9 +10476,9 @@ from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot
 
 from app.i18n import tr
 from core.events import Event, EventType
-from core.hitl import DECISION_TITLES, Decision, Reason
+from core.hitl import Reason
 from ui.bridge.c_agents import ROLE_ICONS
-from ui.bridge.core import Controller, elide, error_text, fmt_money, fmt_tokens, status_title
+from ui.bridge.core import Controller, elide, error_text, fmt_tokens, status_title
 from ui.bridge.listmodel import DictListModel
 from utils.asyncutils import run_async
 
@@ -10925,16 +10924,6 @@ class RunController(Controller):
     def fullText(self, agent_id: int) -> str:  # noqa: N802
         """Текст рассуждения без разметки — для копирования в буфер."""
         return "".join(t for _, t in self._streams[agent_id].segments)
-
-
-def decision_title(value: str) -> str:
-    try:
-        return DECISION_TITLES[Decision(value)]
-    except ValueError:
-        return value
-
-
-__all__ = ["RunController", "fmt_money"]
 ````
 
 ### `ui/bridge/c_supervisor.py`
@@ -20631,6 +20620,19 @@ reportlab>=4.2           # экспорт в PDF
 # argon2-cffi>=23.1
 ````
 
+### `requirements-dev.txt`
+
+*6 строк*
+
+````text
+# Зависимости для разработки и тестов (приложению не нужны)
+# Установка:  pip install -r requirements-dev.txt
+-r requirements.txt
+pytest>=8.0
+pytest-asyncio>=0.24
+pyflakes>=3.0
+````
+
 ### `run.sh`
 
 *30 строк*
@@ -20736,7 +20738,7 @@ if errorlevel 1 (
 
 ### `.gitignore`
 
-*226 строк*
+*229 строк*
 
 ````text
 # Byte-compiled / optimized / DLL files
@@ -20965,6 +20967,9 @@ __marimo__/
 logs/
 exports/
 .DS_Store
+
+# скриншоты тура по интерфейсу
+shots/
 ````
 
 

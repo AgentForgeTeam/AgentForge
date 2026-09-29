@@ -150,6 +150,7 @@ FILE_ORDER = [
     ]),
     ("Сборка и запуск", [
         "requirements.txt",
+        "requirements-dev.txt",
         "run.sh",
         "run.bat",
         ".gitignore",
