@@ -163,6 +163,27 @@ class BudgetGuard:
                 used[0], used[1],
             )
 
+    def reload_limits(self) -> None:
+        """Перечитывает лимиты из базы, сохраняя накопленный расход.
+
+        Нужно, когда пользователь правит лимиты на странице бюджетов прямо
+        во время прогона: иначе новое значение вступило бы в силу только со
+        следующим запуском, а до тех пор агенты работали бы по старому.
+        """
+        for (scope, scope_id), state in self._scopes.items():
+            limit = self._limit_of(scope, scope_id)
+            if scope == "task" and limit.token_limit is None:
+                task = self.repos.tasks.get(scope_id)
+                if task is not None and task.token_limit:
+                    limit.token_limit = task.token_limit
+                    self._task_limit_from_form = self.repos.budgets.get(
+                        "task", scope_id) is None
+            state.limit = limit
+            if not state.exceeded():
+                state.exceeded_reported = False
+            if state.ratio() < limit.alert_threshold:
+                state.alerted = False
+
     def _limit_of(self, scope: str, scope_id: int) -> Limit:
         row = self.repos.budgets.get(scope, scope_id)
         if row is None:

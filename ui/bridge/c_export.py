@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 
 from PySide6.QtCore import Property, Signal, Slot
@@ -11,6 +12,7 @@ from app.i18n import tr
 from core.export.bundle import ExportOptions, collect, detect_format
 from core.export.exporters import ExportError, export, suggest_filename
 from ui.bridge.core import Controller, error_text
+from utils.asyncutils import run_async
 
 FORMATS = [("markdown", "file-text"), ("docx", "file-type"), ("pdf", "book-open"),
            ("zip", "file-archive")]
@@ -124,7 +126,7 @@ class ExportController(Controller):
 
     @Slot()
     def exportNow(self) -> None:  # noqa: N802
-        if self._bundle is None:
+        if self._bundle is None or self._s.get("exporting") or self.ws_id is None:
             return
         raw = (self._s.get("path") or "").strip()
         if not raw:
@@ -139,22 +141,30 @@ class ExportController(Controller):
             include_decisions=o.get("decisions", False),
             include_files=o.get("files", True) and fmt == "zip",
             include_stats=o.get("stats", True), anonymize=o.get("anon", False))
+        repos, ws_id, target = self.repos, self.ws_id, Path(raw).expanduser()
         self._set(exporting=True)
-        try:
-            result = export(self._bundle, options, fmt, Path(raw).expanduser())
-        except ExportError as exc:
-            self.toast("error", tr("toast.export_failed"), str(exc))
-            return
-        except Exception as exc:  # noqa: BLE001
-            self.toast("error", tr("toast.export_failed"), error_text(exc))
-            return
-        finally:
+
+        def job():
+            # Данные собираются заново: с момента открытия экрана агенты
+            # могли дописать результаты. Сборка DOCX/PDF занимает секунды —
+            # в отдельном потоке, чтобы окно не замирало.
+            bundle = collect(repos, ws_id)
+            return export(bundle, options, fmt, target)
+
+        def done(result) -> None:
             self._set(exporting=False)
-        info = f"{result.path.name} · {human_size(result.size)}"
-        if result.note:
-            info += f" · {result.note}"
-        self._set(lastPath=str(result.path), lastInfo=info)
-        self.toast("success", tr("toast.exported"), info)
+            info = f"{result.path.name} · {human_size(result.size)}"
+            if result.note:
+                info += f" · {result.note}"
+            self._set(lastPath=str(result.path), lastInfo=info)
+            self.toast("success", tr("toast.exported"), info)
+
+        def failed(exc: Exception) -> None:
+            self._set(exporting=False)
+            text = str(exc) if isinstance(exc, ExportError) else error_text(exc)
+            self.toast("error", tr("toast.export_failed"), text)
+
+        run_async(asyncio.to_thread(job), done, failed)
 
     @Slot()
     def openFolder(self) -> None:  # noqa: N802

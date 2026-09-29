@@ -110,7 +110,7 @@ Page {
                             AText { text: model.roleTitle + " · " + model.statusTitle; mute: true; size: Theme.fsSmall }
                         }
                         Toggle {
-                            checked: model.enabled
+                            isOn: model.enabled
                             onToggled: page.ctl.setEnabled(model.id, checked)
                         }
                     }
@@ -264,6 +264,8 @@ Page {
         Connections {
             target: page.ctl
             function onModelsLoaded(keyId, list, err) {
+                // Пока шёл запрос, могли выбрать другой ключ: чужой список не нужен.
+                if (keyId !== keySelect.value) return
                 editor.loadingModels = false
                 if (err !== "") { editor.error = err; return }
                 var current = modelSelect.combo.editText
@@ -282,7 +284,7 @@ Page {
                     required property var modelData
                     text: modelData.title
                     iconName: modelData.icon
-                    checked: editor.role === modelData.key
+                    isOn: editor.role === modelData.key
                     onClicked: editor.applyTemplate(modelData.key)
                 }
             }
@@ -298,7 +300,7 @@ Page {
                 label: i18n.t["agents.provider_key"]
                 icon: "key-round"
                 options: page.ctl.keyOptions.map(function(k) { return { value: k.id, title: k.title } })
-                onPicked: function(v) { keySelect.value = v; editor.refreshModels() }
+                onPicked: function(v) { keySelect.value = v; editor.loadingModels = false; editor.refreshModels() }
             }
         }
 
@@ -351,7 +353,7 @@ Page {
                 delegate: Chip {
                     required property var modelData
                     text: modelData.title
-                    checked: editor.tools.indexOf(modelData.name) >= 0
+                    isOn: editor.tools.indexOf(modelData.name) >= 0
                     onClicked: editor.toggleTool(modelData.name, checked)
                 }
             }

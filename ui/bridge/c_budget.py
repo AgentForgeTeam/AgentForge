@@ -108,6 +108,10 @@ class BudgetController(Controller):
             self.repos.budgets.delete_limit(scope, scope_id)
         else:
             self.repos.budgets.upsert(scope, scope_id, tokens, cost, round(threshold, 2))
+        # Идёт прогон — новый лимит действует сразу, а не со следующего запуска.
+        orch = self.backend.orchestrator
+        if orch is not None and orch.state.running and orch.budget is not None:
+            orch.budget.reload_limits()
         self.refresh()
         self.backend.task.refresh()
         return ""

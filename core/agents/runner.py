@@ -343,11 +343,12 @@ class AgentRunner:
         last_text = ""
         last_step_used_tools = False
 
+        # Об ошибке подзадачи сообщает оркестратор по ``RunResult.error``:
+        # если сообщать и здесь, в ленте и уведомлениях всё удваивается.
         for step in range(1, self.max_steps + 1):
             blocked = await self._check_budget()
             if blocked:
                 totals.error = blocked
-                self._emit(EventType.SUBTASK_FAILED, totals.error)
                 return totals
 
             totals.steps = step
@@ -359,12 +360,10 @@ class AgentRunner:
                 raise
             except ProviderError as exc:
                 totals.error = f"Провайдер: {exc}"
-                self._emit(EventType.SUBTASK_FAILED, totals.error)
                 return totals
             except Exception as exc:  # noqa: BLE001
                 log.exception("Сбой вызова модели")
                 totals.error = f"{type(exc).__name__}: {exc}"
-                self._emit(EventType.SUBTASK_FAILED, totals.error)
                 return totals
 
             self._add_usage(totals, result)
@@ -377,10 +376,14 @@ class AgentRunner:
 
             if not result.tool_calls:
                 last_step_used_tools = False
-                if looks_done(result.text) or step == self.max_steps:
-                    return self._finish(totals, result.text)
-                # Модель ответила текстом, но не обозначила финал — просим завершить.
-                messages.append(ChatMessage("assistant", result.text))
+                if looks_done(result.text) or (step == self.max_steps and last_text):
+                    # Пустой последний ответ не затирает то, что модель
+                    # сказала шагом раньше.
+                    return self._finish(totals, result.text or last_text)
+                if result.text:
+                    # Пустое сообщение ассистента часть провайдеров отвергает.
+                    messages.append(ChatMessage("assistant", result.text))
+                # Модель не обозначила финал — просим завершить.
                 nudge = ("Если подзадача выполнена — выдай итог после строки RESULT: "
                          "и строку CONFIDENCE. Если нет — продолжай работу.")
                 messages.append(ChatMessage("user", nudge))

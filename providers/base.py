@@ -34,15 +34,20 @@ class ToolCall:
     id: str
     name: str
     arguments: dict[str, Any] = field(default_factory=dict)
+    #: служебная подпись вызова, которую провайдер просит вернуть вместе с
+    #: ним в следующем запросе (``thoughtSignature`` у Gemini)
+    signature: str = ""
 
     @staticmethod
     def parse_args(raw: Any) -> dict[str, Any]:
+        """Аргументы вызова всегда словарь: инструменты получают их как ``**kwargs``."""
         if isinstance(raw, dict):
             return raw
         try:
-            return json.loads(raw or "{}")
+            data = json.loads(raw or "{}")
         except (TypeError, ValueError):
             return {"_raw": str(raw)}
+        return data if isinstance(data, dict) else {"_raw": str(raw)}
 
 
 @dataclass

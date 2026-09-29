@@ -38,6 +38,8 @@ ColumnLayout {
         snapMode: T.Slider.SnapAlways
         hoverEnabled: true
         onPressedChanged: if (!pressed) root.committed(value)
+        // Стрелки и колёсико двигают ползунок без нажатия — применяем сразу.
+        onMoved: if (!pressed) root.committed(value)
 
         background: Rectangle {
             x: slider.leftPadding

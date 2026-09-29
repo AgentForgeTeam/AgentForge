@@ -12,12 +12,14 @@
 from __future__ import annotations
 
 import logging
+import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
 from app.config import PATHS
 from core.hitl import parse_payload
+from storage.db import local_time
 from storage.models import Incident, Report, Subtask, Summary, Task, Workspace
 from storage.repositories import Repos
 
@@ -148,6 +150,9 @@ def collect(repos: Repos, workspace_id: int) -> ResultBundle:
     def of_task(items):
         return [i for i in items if task is None or i.task_id in (task.id, None)]
 
+    decisions = [row for row in repos.approvals.history(workspace_id, limit=200)
+                 if task is None or row.get("task_id") in (task.id, None)]
+
     bundle = ResultBundle(
         workspace=workspace,
         task=task,
@@ -155,7 +160,7 @@ def collect(repos: Repos, workspace_id: int) -> ResultBundle:
         reports=of_task(repos.reports.list_reports(workspace_id, limit=500)),
         summaries=of_task(repos.reports.list_summaries(workspace_id, limit=100)),
         incidents=of_task(repos.incidents.list(workspace_id, limit=500)),
-        decisions=repos.approvals.history(workspace_id, limit=200),
+        decisions=decisions,
         agent_names={a.id: a.name for a in repos.agents.list(workspace_id)},
         files=scan_files(PATHS.workspace_dir(workspace_id)),
         tokens=tokens,
@@ -218,9 +223,14 @@ def detect_format(bundle: ResultBundle) -> tuple[str, str]:
         bundle.task.description if bundle.task else "",
     ])).lower()
 
-    if any(word in haystack for word in CODE_HINTS):
+    # Совпадение с начала слова: иначе «api» находится в «capital», а «код»
+    # в «эпизоде», и задача про историю уходит в ZIP как «код».
+    def mentions(words: tuple[str, ...]) -> bool:
+        return any(re.search(rf"(?<!\w){re.escape(w)}", haystack) for w in words)
+
+    if mentions(CODE_HINTS):
         return "zip", "Формулировка задачи говорит о коде — собираем архив."
-    if any(word in haystack for word in DOC_HINTS):
+    if mentions(DOC_HINTS):
         return "docx", "Формулировка задачи говорит о документе."
 
     total = sum(len(s.result) for s in bundle.subtasks)
@@ -368,7 +378,8 @@ def _status_title(status: str) -> str:
 
 
 def _when(raw: str) -> str:
-    return (raw or "")[:19].replace("T", " ")
+    # В базе время в UTC; в документе — местное, как и «Сформировано».
+    return local_time(raw, "%d.%m.%Y %H:%M") if raw else ""
 
 
 def _human_size(path: Path) -> str:

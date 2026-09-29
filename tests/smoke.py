@@ -178,9 +178,9 @@ async def test_hitl() -> None:
     worker = Worker("Агент", confidence="0.4")
     orch._provider_for = lambda agent: worker
 
-    state = await drive(orch, workspace.id, task.id,
-                        answers=[(Decision.REWORK, "Добавь источники"),
-                                 (Decision.APPROVE, "теперь годится")])
+    await drive(orch, workspace.id, task.id,
+               answers=[(Decision.REWORK, "Добавь источники"),
+                        (Decision.APPROVE, "теперь годится")])
     subtask = repos.tasks.subtasks(task.id)[0]
     check("пауза по низкой уверенности сработала", worker.calls == 2,
           f"вызовов модели: {worker.calls}")
@@ -238,7 +238,7 @@ async def test_budget() -> None:
     worker = Worker("Агент", tokens=(300, 100))
     orch._provider_for = lambda agent: worker
 
-    state = await drive(orch, workspace.id, task.id)
+    await drive(orch, workspace.id, task.id)
     statuses = [s.status for s in repos.tasks.subtasks(task.id)]
 
     check("лимит остановил работу", worker.calls == 1,

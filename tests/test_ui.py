@@ -53,6 +53,14 @@ def test_translation_keys_exist_in_both_languages():
     assert not missing_en, missing_en
 
 
+def test_toggles_show_saved_state_after_click():
+    env = dict(os.environ, QT_QPA_PLATFORM="offscreen")
+    proc = subprocess.run([sys.executable, str(ROOT / "tests" / "qml_controls_check.py")],
+                          cwd=ROOT, env=env, capture_output=True, text=True,
+                          encoding="utf-8", errors="replace", timeout=120)
+    assert proc.returncode == 0, proc.stdout[-3000:] + proc.stderr[-3000:]
+
+
 def test_ui_tour_runs_without_qml_errors(tmp_path):
     env = dict(os.environ, QT_QPA_PLATFORM="offscreen",
                AGENTFORGE_HOME=str(tmp_path / "data"))

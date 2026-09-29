@@ -17,6 +17,8 @@ from core.tools.base import Tool, ToolContext, ToolError
 
 MAX_RESULTS = 8
 MAX_PAGE_CHARS = 20_000
+#: сколько байт страницы скачивать не больше
+MAX_DOWNLOAD_BYTES = 5_000_000
 
 
 class WebSearchTool(Tool):
@@ -40,7 +42,10 @@ class WebSearchTool(Tool):
         query = (kwargs.get("query") or "").strip()
         if not query:
             raise ToolError("Пустой поисковый запрос")
-        n = max(1, min(int(kwargs.get("max_results") or 5), MAX_RESULTS))
+        try:
+            n = max(1, min(int(kwargs.get("max_results") or 5), MAX_RESULTS))
+        except (TypeError, ValueError):
+            n = 5
 
         backend = ctx.search_backend
         if backend == "tavily" and ctx.search_api_key:
@@ -83,13 +88,32 @@ class WebFetchTool(Tool):
                 timeout=30, follow_redirects=True,
                 headers={"User-Agent": "Mozilla/5.0 (compatible; AgentForge/1.1)"},
             ) as client:
-                resp = await client.get(url)
+                async with client.stream("GET", url) as resp:
+                    if resp.status_code >= 400:
+                        raise ToolError(f"HTTP {resp.status_code} при загрузке {url}")
+                    kind = resp.headers.get("content-type", "").split(";")[0].strip().lower()
+                    if kind and not (kind.startswith("text/") or "html" in kind
+                                     or "xml" in kind or "json" in kind):
+                        raise ToolError(f"По ссылке не страница, а файл ({kind}) — "
+                                        "его текст этим инструментом не прочитать")
+                    # Ограничение объёма: ссылка на гигабайтный файл не должна
+                    # выкачиваться в память целиком.
+                    body = bytearray()
+                    async for chunk in resp.aiter_bytes():
+                        body += chunk
+                        if len(body) >= MAX_DOWNLOAD_BYTES:
+                            break
+                    encoding = resp.encoding or "utf-8"
+        except ToolError:
+            raise
         except Exception as exc:  # noqa: BLE001
             raise ToolError(f"Не удалось загрузить страницу: {exc}") from exc
-        if resp.status_code >= 400:
-            raise ToolError(f"HTTP {resp.status_code} при загрузке {url}")
 
-        text = await asyncio.to_thread(_extract_text, resp.text)
+        try:
+            html = bytes(body).decode(encoding, "replace")
+        except LookupError:          # сервер назвал несуществующую кодировку
+            html = bytes(body).decode("utf-8", "replace")
+        text = await asyncio.to_thread(_extract_text, html)
         clipped = text[:MAX_PAGE_CHARS]
         tail = "\n\n(текст обрезан)" if len(text) > MAX_PAGE_CHARS else ""
         return f"Источник: {url}\n\n{clipped}{tail}"

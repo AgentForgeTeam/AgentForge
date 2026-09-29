@@ -126,6 +126,21 @@ def when(iso: str | None, fmt: str = "%d.%m %H:%M") -> str:
     return local_time(iso or "", fmt) if iso else ""
 
 
+def as_int(value: Any, default: int = -1) -> int:
+    """Число из QML: там вместо него легко приходит ``undefined``, строка или 3.0."""
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def as_float(value: Any, default: float) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
 def elide(text: str, limit: int) -> str:
     text = (text or "").strip().replace("\n", " ")
     return text if len(text) <= limit else text[: limit - 1] + "…"

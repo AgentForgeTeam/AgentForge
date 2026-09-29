@@ -169,8 +169,7 @@ class AnthropicProvider(LLMProvider):
             if block.get("type") == "text":
                 text_parts.append(block.get("text", ""))
             elif block.get("type") == "tool_use":
-                args = ToolCall.parse_args(block["_json"]) if block["_json"] \
-                    else (block.get("input") or {})
+                args = ToolCall.parse_args(block["_json"] or block.get("input") or {})
                 calls.append(ToolCall(id=block.get("id", ""), name=block.get("name", ""),
                                       arguments=args))
         return CompletionResult(text="".join(text_parts), tool_calls=calls,
@@ -198,7 +197,7 @@ class AnthropicProvider(LLMProvider):
                 text_parts.append(block.get("text", ""))
             elif block.get("type") == "tool_use":
                 calls.append(ToolCall(id=block.get("id", ""), name=block.get("name", ""),
-                                      arguments=block.get("input") or {}))
+                                      arguments=ToolCall.parse_args(block.get("input") or {})))
         u = data.get("usage") or {}
         return CompletionResult(
             text="".join(text_parts),
@@ -244,7 +243,9 @@ class AnthropicProvider(LLMProvider):
 
     async def list_models(self) -> list[str]:
         try:
-            resp = await self._http().get(f"{self.base_url}/models", headers=self._headers())
+            # Список постраничный (по умолчанию 20 штук) — просим сразу все.
+            resp = await self._http().get(f"{self.base_url}/models", headers=self._headers(),
+                                          params={"limit": 1000})
         except httpx.HTTPError as exc:
             raise ProviderError(f"Сетевая ошибка: {exc}") from exc
         if resp.status_code >= 400:

@@ -95,17 +95,26 @@ class Agent:
             bool(r["enabled"]), r["status"], bool(r["is_supervisor"]), r["created_at"],
         )
 
+    # Параметры лежат в JSON и могли быть поправлены руками или старой
+    # версией: битое значение не должно ронять запуск агента.
     @property
     def temperature(self) -> float:
-        return float(self.params.get("temperature", 0.7))
+        try:
+            return float(self.params.get("temperature", 0.7))
+        except (TypeError, ValueError):
+            return 0.7
 
     @property
     def max_tokens(self) -> int:
-        return int(self.params.get("max_tokens", 2048))
+        try:
+            return max(1, int(self.params.get("max_tokens", 2048)))
+        except (TypeError, ValueError):
+            return 2048
 
     @property
     def tools(self) -> list[str]:
-        return list(self.params.get("tools", []))
+        raw = self.params.get("tools")
+        return [str(t) for t in raw] if isinstance(raw, list) else []
 
 
 @dataclass

@@ -74,6 +74,29 @@ class OpenAICompatProvider(LLMProvider):
             out.append(item)
         return out
 
+    def _payload(self, model: str, messages: list[ChatMessage], temperature: float,
+                 max_tokens: int, tools: list[ToolSpec] | None) -> dict[str, Any]:
+        """Тело запроса с поправками под особенности конкретного API.
+
+        Официальный OpenAI API для новых моделей не принимает ``max_tokens``
+        (нужен ``max_completion_tokens``), а «рассуждающие» модели (o1, o3,
+        o4, gpt-5) отвергают любую температуру, кроме стандартной. Совместимые
+        серверы (Groq, Ollama, vLLM…) знают только ``max_tokens``.
+        """
+        payload: dict[str, Any] = {"model": model, "messages": self._to_wire(messages)}
+        if self.key == "openai":
+            payload["max_completion_tokens"] = max_tokens
+            if not _is_reasoning_model(model):
+                payload["temperature"] = temperature
+        else:
+            payload["max_tokens"] = max_tokens
+            payload["temperature"] = temperature
+        tool_payload = self._tools_payload(tools)
+        if tool_payload:
+            payload["tools"] = tool_payload
+            payload["tool_choice"] = "auto"
+        return payload
+
     @staticmethod
     def _tools_payload(tools: list[ToolSpec] | None) -> list[dict] | None:
         if not tools:
@@ -89,16 +112,7 @@ class OpenAICompatProvider(LLMProvider):
     async def complete(self, model: str, messages: list[ChatMessage], *,
                        temperature: float = 0.7, max_tokens: int = 2048,
                        tools: list[ToolSpec] | None = None) -> CompletionResult:
-        payload: dict[str, Any] = {
-            "model": model,
-            "messages": self._to_wire(messages),
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-        }
-        tool_payload = self._tools_payload(tools)
-        if tool_payload:
-            payload["tools"] = tool_payload
-            payload["tool_choice"] = "auto"
+        payload = self._payload(model, messages, temperature, max_tokens, tools)
 
         try:
             resp = await self._http().post(
@@ -110,7 +124,7 @@ class OpenAICompatProvider(LLMProvider):
         if resp.status_code >= 400:
             raise ProviderError(_error_text(resp), resp.status_code)
 
-        data = resp.json()
+        data = _json_body(resp)
         choice = (data.get("choices") or [{}])[0]
         msg = choice.get("message") or {}
         calls = [
@@ -119,12 +133,20 @@ class OpenAICompatProvider(LLMProvider):
                      arguments=ToolCall.parse_args((c.get("function") or {}).get("arguments")))
             for c in (msg.get("tool_calls") or [])
         ]
+        text = msg.get("content") or ""
         u = data.get("usage") or {}
+        if u:
+            usage = Usage(_int(u.get("prompt_tokens")), _int(u.get("completion_tokens")))
+        else:
+            # Сервер не прислал расход — оценка лучше нуля, иначе вызов
+            # незаметно обходил бы лимиты бюджета.
+            usage = Usage(sum(len(m.content or "") for m in messages) // 4,
+                          estimate_tokens(text))
         return CompletionResult(
-            text=msg.get("content") or "",
+            text=text,
             tool_calls=calls,
-            usage=Usage(int(u.get("prompt_tokens", 0)), int(u.get("completion_tokens", 0))),
-            finish_reason=choice.get("finish_reason", ""),
+            usage=usage,
+            finish_reason=choice.get("finish_reason") or "",
             model=data.get("model", model),
             raw=data,
         )
@@ -141,18 +163,9 @@ class OpenAICompatProvider(LLMProvider):
         ``stream_options.include_usage``; часть совместимых серверов этот
         параметр не знает — тогда запрос повторяется без него.
         """
-        payload: dict[str, Any] = {
-            "model": model,
-            "messages": self._to_wire(messages),
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-            "stream": True,
-            "stream_options": {"include_usage": True},
-        }
-        tool_payload = self._tools_payload(tools)
-        if tool_payload:
-            payload["tools"] = tool_payload
-            payload["tool_choice"] = "auto"
+        payload = self._payload(model, messages, temperature, max_tokens, tools)
+        payload["stream"] = True
+        payload["stream_options"] = {"include_usage": True}
         try:
             return await self._stream_once(payload, model, messages, on_delta)
         except ProviderError as exc:
@@ -187,6 +200,8 @@ class OpenAICompatProvider(LLMProvider):
                     try:
                         chunk = json.loads(raw)
                     except ValueError:
+                        continue
+                    if not isinstance(chunk, dict):
                         continue
                     if chunk.get("error"):
                         err = chunk["error"]
@@ -226,8 +241,8 @@ class OpenAICompatProvider(LLMProvider):
             for index, slot in sorted(calls.items()) if slot["name"]
         ]
         if usage:
-            result_usage = Usage(int(usage.get("prompt_tokens", 0)),
-                                 int(usage.get("completion_tokens", 0)))
+            result_usage = Usage(_int(usage.get("prompt_tokens")),
+                                 _int(usage.get("completion_tokens")))
         else:
             prompt = sum(len(m.content or "") for m in messages)
             output = text + "".join(reasoning_parts) + "".join(
@@ -239,13 +254,8 @@ class OpenAICompatProvider(LLMProvider):
     async def stream(self, model: str, messages: list[ChatMessage], *,
                      temperature: float = 0.7,
                      max_tokens: int = 2048) -> AsyncIterator[str]:
-        payload = {
-            "model": model,
-            "messages": self._to_wire(messages),
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-            "stream": True,
-        }
+        payload = self._payload(model, messages, temperature, max_tokens, None)
+        payload["stream"] = True
         try:
             async with self._http().stream(
                 "POST", f"{self.base_url}/chat/completions",
@@ -276,10 +286,41 @@ class OpenAICompatProvider(LLMProvider):
             raise ProviderError(f"Сетевая ошибка: {exc}") from exc
         if resp.status_code >= 400:
             raise ProviderError(_error_text(resp), resp.status_code)
-        data = resp.json()
-        items = data.get("data", data if isinstance(data, list) else [])
+        try:
+            data = resp.json()
+        except ValueError as exc:
+            raise ProviderError(f"Сервер вернул не JSON: {resp.text[:200]}") from exc
+        # Обычно {"data": [...]}, но часть серверов отдаёт голый список.
+        items = data if isinstance(data, list) else (data.get("data") or data.get("models") or [])
         names = [it.get("id") or it.get("name", "") for it in items if isinstance(it, dict)]
         return sorted(n for n in names if n)
+
+
+#: модели OpenAI, которые принимают только стандартную температуру
+_REASONING_PREFIXES = ("o1", "o3", "o4", "gpt-5")
+
+
+def _is_reasoning_model(model: str) -> bool:
+    name = (model or "").lower().rsplit("/", 1)[-1]
+    return name.startswith(_REASONING_PREFIXES) and not name.startswith("gpt-5-chat")
+
+
+def _int(value: Any) -> int:
+    try:
+        return int(value or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _json_body(resp: httpx.Response) -> dict[str, Any]:
+    """Тело ответа как словарь; прокси и заглушки иногда отдают HTML."""
+    try:
+        data = resp.json()
+    except ValueError as exc:
+        raise ProviderError(f"Сервер вернул не JSON: {resp.text[:200]}", resp.status_code) from exc
+    if not isinstance(data, dict):
+        raise ProviderError("Неожиданный формат ответа сервера", resp.status_code)
+    return data
 
 
 def _error_text(resp: httpx.Response) -> str:

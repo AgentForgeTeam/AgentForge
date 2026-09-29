@@ -128,7 +128,12 @@ async def plan_subtasks(repos: Repos, workspace_id: int,
                            "Попробуйте ещё раз или выберите другую модель.") from exc
 
     # Некоторые модели отвечают голым списком вместо объекта — принимаем и так.
-    items = data if isinstance(data, list) else (data.get("subtasks") or [])
+    if isinstance(data, list):
+        items = data
+    elif isinstance(data, dict) and isinstance(data.get("subtasks"), list):
+        items = data["subtasks"]
+    else:
+        items = []
     out: list[PlannedSubtask] = []
     for item in items:
         if not isinstance(item, dict):
@@ -139,7 +144,7 @@ async def plan_subtasks(repos: Repos, workspace_id: int,
         out.append(PlannedSubtask(
             title=title,
             description=str(item.get("description", "")).strip(),
-            assignee_role=(item.get("assignee_role") or None),
+            assignee_role=(str(item.get("assignee_role") or "").strip() or None),
         ))
     if not out:
         raise RuntimeError("Модель не вернула ни одной подзадачи.")
@@ -148,9 +153,11 @@ async def plan_subtasks(repos: Repos, workspace_id: int,
 
 def match_agent_by_role(repos: Repos, workspace_id: int, role: str | None) -> int | None:
     """Подбирает агента под предложенную планировщиком роль."""
-    if not role:
+    wanted = str(role or "").strip().lower()
+    if not wanted:
         return None
+    # Модель пишет роль как вздумается: «Analyst», « analyst».
     for a in repos.agents.list(workspace_id):
-        if a.enabled and not a.is_supervisor and a.role == role:
+        if a.enabled and not a.is_supervisor and (a.role or "").strip().lower() == wanted:
             return a.id
     return None

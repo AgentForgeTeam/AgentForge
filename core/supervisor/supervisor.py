@@ -34,7 +34,7 @@ from core.supervisor.checklist import (
     parse_conflicts,
     parse_verdict,
 )
-from providers.base import ChatMessage, LLMProvider, ProviderError
+from providers.base import ChatMessage, LLMProvider
 from providers.factory import build_provider, estimate_cost
 from storage.models import Report, Subtask, Task
 from storage.repositories import Repos
@@ -78,6 +78,11 @@ class Supervisor:
         self._model: SupervisorModel | None = None
         self._summary_task: asyncio.Task | None = None
         self._stop = asyncio.Event()
+        #: текст последней ошибки сводки — чтобы интерфейс не выдавал её за
+        #: «нечего пересказывать»
+        self.last_error = ""
+        #: задача текущего прогона — для привязки событий к нему
+        self._task_id: int | None = None
 
     def _label(self, agent_id: int | None) -> str:
         """Как подписать автора: анонимной меткой или по имени (если выключено)."""
@@ -110,7 +115,12 @@ class Supervisor:
             return self._model
 
         agent_id = self.settings.get("supervisor_agent_id")
-        agent = self.repos.agents.get(int(agent_id)) if agent_id else None
+        try:
+            agent = self.repos.agents.get(int(agent_id)) if agent_id else None
+        except (TypeError, ValueError):
+            agent = None
+        if agent is not None and agent.workspace_id != self.workspace_id:
+            agent = None        # агент из другого воркспейса здесь не судья
         if agent is None:
             # Запасной вариант: агент, помеченный звёздочкой в списке.
             agent = next((a for a in self.repos.agents.list(self.workspace_id)
@@ -179,7 +189,8 @@ class Supervisor:
         return result.text
 
     def _emit(self, kind: EventType, message: str, **payload) -> None:
-        self.bus.emit(Event(kind, workspace_id=self.workspace_id,
+        self.bus.emit(Event(kind, workspace_id=self.workspace_id, task_id=self._task_id,
+                            subtask_id=payload.get("subtask_id"),
                             agent_name="Супервайзер", message=message,
                             payload=payload))
 
@@ -191,6 +202,7 @@ class Supervisor:
         вердикт — ``unverified``: такой результат не считается принятым и
         не уходит дальше по конвейеру, пока его не посмотрит человек.
         """
+        self._task_id = task.id
         label = self._label(report.agent_id)
         context = self._accepted_context(task.id, exclude_subtask=subtask.id)
 
@@ -246,7 +258,9 @@ class Supervisor:
         for st in self.repos.tasks.subtasks(task_id):
             if st.id == exclude_subtask or not st.result:
                 continue
-            if st.status not in ("done", "review"):
+            # Только принятое: статус review — это отчёт, который ещё
+            # проверяется или ждёт человека, мерить им другие рано.
+            if st.status != "done":
                 continue
             chunks.append(f"[{self._label(st.agent_id)}] {st.title}:\n"
                           f"{st.result[:1200]}")
@@ -260,6 +274,8 @@ class Supervisor:
         подхватывает последнюю сводку при следующем запуске, не зная,
         кто из коллег что написал.
         """
+        self._task_id = task.id
+        self.last_error = ""
         materials = self._summary_materials(task.id)
         if not materials:
             return ""
@@ -273,8 +289,11 @@ class Supervisor:
                 task.id,
                 max_tokens=1200,
             )
-        except (ProviderError, RuntimeError) as exc:
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:  # noqa: BLE001 — сводка не повод ронять прогон
             self._emit(EventType.ERROR, f"сводка не составлена: {exc}")
+            self.last_error = str(exc)
             return ""
 
         # Страховка: вычищаем имена агентов, если модель их всё-таки назвала.
@@ -297,7 +316,8 @@ class Supervisor:
         """Обезличенные материалы для сводки."""
         chunks: list[str] = []
         for st in self.repos.tasks.subtasks(task_id):
-            if not st.result:
+            # У упавшей подзадачи в поле результата текст ошибки, а не работа.
+            if not st.result or st.status == "error":
                 continue
             chunks.append(f"[{self._label(st.agent_id)}] {st.title}:\n"
                           f"{st.result[:2500]}")
@@ -332,6 +352,7 @@ class Supervisor:
         готовом результате вызов модели пропускается — это экономит токены,
         а не срезает проверку.
         """
+        self._task_id = task.id
         with_results = [s for s in self.repos.tasks.subtasks(task.id) if s.result.strip()]
         if len(with_results) < 2:
             return []
@@ -347,7 +368,9 @@ class Supervisor:
                 task.id,
                 max_tokens=1200,
             )
-        except (ProviderError, RuntimeError) as exc:
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:  # noqa: BLE001
             self._emit(EventType.ERROR, f"поиск конфликтов пропущен: {exc}")
             return []
 

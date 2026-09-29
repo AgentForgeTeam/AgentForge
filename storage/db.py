@@ -90,14 +90,24 @@ class Database:
 
     def execute(self, sql: str, params: Sequence[Any] = ()) -> sqlite3.Cursor:
         with self._lock:
-            cur = self.conn.execute(sql, params)
-            self.conn.commit()
+            try:
+                cur = self.conn.execute(sql, params)
+                self.conn.commit()
+            except BaseException:
+                # Упавшая команда оставляет открытой неявную транзакцию, и
+                # следующий ``transaction()`` споткнулся бы на её ``BEGIN``.
+                self.conn.rollback()
+                raise
             return cur
 
     def executemany(self, sql: str, seq: Iterable[Sequence[Any]]) -> None:
         with self._lock:
-            self.conn.executemany(sql, seq)
-            self.conn.commit()
+            try:
+                self.conn.executemany(sql, seq)
+                self.conn.commit()
+            except BaseException:
+                self.conn.rollback()
+                raise
 
     def query(self, sql: str, params: Sequence[Any] = ()) -> list[sqlite3.Row]:
         with self._lock:

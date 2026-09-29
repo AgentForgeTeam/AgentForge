@@ -386,7 +386,7 @@ Page {
                 delegate: Chip {
                     visible: model.id !== subEditor.subId
                     text: model.index + ". " + model.title
-                    checked: subEditor.deps.indexOf(model.id) >= 0
+                    isOn: subEditor.deps.indexOf(model.id) >= 0
                     onClicked: subEditor.toggleDep(model.id, checked)
                 }
             }

@@ -6,6 +6,8 @@ UI и ядро никогда не пишут SQL напрямую: это уп�
 
 from __future__ import annotations
 
+import base64
+import json
 from typing import Any
 
 from core.security.crypto import (
@@ -30,6 +32,14 @@ from storage.models import (
     Workspace,
     dumps,
 )
+
+
+def _loads(raw: str | None) -> dict:
+    try:
+        data = json.loads(raw or "{}")
+    except ValueError:
+        return {}
+    return data if isinstance(data, dict) else {}
 
 
 class UserRepo:
@@ -87,9 +97,26 @@ class UserRepo:
         reencrypted = [
             (new_box.encrypt(old_box.decrypt(r["secret_blob"])), r["id"]) for r in rows
         ]
+        # Ключ поискового API лежит в настройках воркспейсов, зашифрованный
+        # тем же мастер-ключом. Без перешифровки он молча пропал бы после
+        # смены пароля: расшифровать его новым ключом уже нельзя.
+        resealed_ws = []
+        for ws in self.db.query(
+            "SELECT id, settings_json FROM workspaces WHERE user_id = ?", (session.user_id,)
+        ):
+            settings = _loads(ws["settings_json"])
+            token = settings.get("search_api_key") or ""
+            if isinstance(token, str) and token.startswith(SecretCodec.PREFIX):
+                plain = SecretCodec(session).open(token)
+                settings["search_api_key"] = (
+                    SecretCodec.PREFIX + base64.b64encode(new_box.encrypt(plain)).decode("ascii")
+                    if plain else ""
+                )
+                resealed_ws.append((dumps(settings), ws["id"]))
         new_hash = hash_password(new_password, new_verify_salt)
         with self.db.transaction() as conn:
             conn.executemany("UPDATE api_keys SET secret_blob = ? WHERE id = ?", reencrypted)
+            conn.executemany("UPDATE workspaces SET settings_json = ? WHERE id = ?", resealed_ws)
             conn.execute(
                 "UPDATE users SET password_hash = ?, verify_salt = ?, kdf_salt = ? WHERE id = ?",
                 (new_hash, new_verify_salt, new_kdf_salt, session.user_id),
@@ -208,6 +235,21 @@ class ApiKeyRepo:
         params.extend([key_id, self.session.user_id])
         self.db.execute(
             f"UPDATE api_keys SET {', '.join(sets)} WHERE id = ? AND user_id = ?", params
+        )
+
+    def update_meta(self, key_id: int, **changes: Any) -> None:
+        """Правит только метаданные (кэш моделей и т.п.), не трогая подпись и адрес.
+
+        Фоновая проверка ключа пишет результат сюда: запись целиком затёрла
+        бы правку, которую пользователь успел сделать, пока шёл запрос.
+        """
+        key = self.get(key_id)
+        if key is None:
+            return
+        meta = {**key.meta, **changes}
+        self.db.execute(
+            "UPDATE api_keys SET meta_json = ? WHERE id = ? AND user_id = ?",
+            (dumps(meta), key_id, self.session.user_id),
         )
 
     def delete(self, key_id: int) -> None:
@@ -537,9 +579,9 @@ class BudgetRepo:
         """
         rows = self.db.query(
             "SELECT created_at, tokens_in + tokens_out AS tokens, cost_usd FROM ("
-            "  SELECT created_at, tokens_in, tokens_out, cost_usd FROM usage_log "
+            "  SELECT id, created_at, tokens_in, tokens_out, cost_usd FROM usage_log "
             "  WHERE workspace_id = ? ORDER BY id DESC LIMIT ?"
-            ") ORDER BY created_at",
+            ") ORDER BY id",
             (ws_id, limit),
         )
         return [(r["created_at"], int(r["tokens"]), float(r["cost_usd"])) for r in rows]
@@ -657,8 +699,6 @@ class SecretCodec:
     def seal(self, text: str) -> str:
         if not text:
             return ""
-        import base64
-
         return self.PREFIX + base64.b64encode(self.session.box.encrypt(text)).decode("ascii")
 
     def open(self, token: str) -> str:
@@ -666,8 +706,6 @@ class SecretCodec:
             return ""
         if not token.startswith(self.PREFIX):
             return token          # старое значение, сохранённое открытым текстом
-        import base64
-
         try:
             return self.session.box.decrypt(base64.b64decode(token[len(self.PREFIX):]))
         except Exception:  # noqa: BLE001 — повреждённый секрет равен отсутствующему

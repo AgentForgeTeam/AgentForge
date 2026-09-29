@@ -211,12 +211,19 @@ def parse_verdict(text: str) -> Verdict:
             raw=text,
         )
 
-    verdict = str(data.get("verdict", "ok")).lower().strip()
+    # Ответ без вердикта (пустой объект, список вместо объекта) — это не
+    # «принято»: по той же логике, что и нечитаемый ответ, отправляем на
+    # доработку, а не пропускаем непроверенным.
+    verdict = str(data.get("verdict") or "").lower().strip()
     if verdict not in _VALID_VERDICTS:
+        if not data.get("notes"):
+            data = {**data, "notes": "Супервайзер не вынес вердикт. "
+                                     "Переформулируй отчёт короче и по пунктам."}
         verdict = "rework"
 
     issues: list[Issue] = []
-    for item in data.get("issues") or []:
+    raw_issues = data.get("issues")
+    for item in raw_issues if isinstance(raw_issues, list) else []:
         if not isinstance(item, dict):
             continue
         kind = str(item.get("kind", "contradiction")).lower()
@@ -249,7 +256,8 @@ def parse_conflicts(text: str) -> list[Conflict]:
     except ValueError:
         return []
     out: list[Conflict] = []
-    for item in data.get("conflicts") or []:
+    raw_conflicts = data.get("conflicts")
+    for item in raw_conflicts if isinstance(raw_conflicts, list) else []:
         if not isinstance(item, dict):
             continue
         description = str(item.get("description", "")).strip()
@@ -259,7 +267,7 @@ def parse_conflicts(text: str) -> list[Conflict]:
         out.append(Conflict(
             description=description,
             severity=severity if severity in _VALID_SEVERITY else "medium",
-            labels=[str(x) for x in (item.get("labels") or [])],
+            labels=[str(x) for x in item["labels"]] if isinstance(item.get("labels"), list) else [],
             auto_resolvable=bool(item.get("auto_resolvable")),
             resolution=str(item.get("resolution", "")).strip(),
         ))

@@ -112,7 +112,7 @@ Page {
                             hint: modelData.key === "files" && page.ctl.format !== "zip" ? i18n.t["exp.files_zip_only"]
                                 : modelData.key === "anon" ? i18n.t["exp.opt_anon_hint"] : ""
                             enabled: modelData.key !== "files" || page.ctl.format === "zip"
-                            checked: !!page.ctl.options[modelData.key]
+                            isOn: !!page.ctl.options[modelData.key]
                             onToggled: page.ctl.setOption(modelData.key, checked)
                         }
                     }

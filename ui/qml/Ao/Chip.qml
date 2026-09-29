@@ -2,12 +2,23 @@ import QtQuick
 import QtQuick.Controls.Basic as T
 
 // Переключаемая «таблетка»: для инструментов, опций, фильтров.
+// Состояние из данных — через isOn (подробности в Toggle.qml).
 T.AbstractButton {
     id: control
     property string iconName: ""
     property color accent: Theme.violet
+    property var isOn: undefined
     checkable: true
+    checked: isOn === undefined ? false : !!isOn
     hoverEnabled: true
+
+    function resync() {
+        control.checked = Qt.binding(function() { return !!control.isOn })
+    }
+    Connections {
+        target: control
+        function onToggled() { if (control.isOn !== undefined) Qt.callLater(control.resync) }
+    }
     implicitHeight: 32
     implicitWidth: row.implicitWidth + 26
     scale: pressed ? 0.95 : 1

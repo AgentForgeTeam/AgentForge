@@ -71,7 +71,7 @@ Page {
                 Layout.fillWidth: true
                 label: i18n.t["settings.hitl"]
                 hint: i18n.t["settings.hitl_hint"]
-                checked: !!page.ws.human_in_the_loop
+                isOn: !!page.ws.human_in_the_loop
                 onToggled: page.set("human_in_the_loop", checked)
             }
             RangeSlider {
@@ -90,7 +90,7 @@ Page {
                 enabled: !!page.ws.human_in_the_loop
                 label: i18n.t["settings.hitl_milestone"]
                 hint: i18n.t["settings.hitl_milestone_hint"]
-                checked: !!page.ws.hitl_pause_on_milestone
+                isOn: !!page.ws.hitl_pause_on_milestone
                 onToggled: page.set("hitl_pause_on_milestone", checked)
             }
         }
@@ -153,14 +153,14 @@ Page {
                 Layout.fillWidth: true
                 label: i18n.t["settings.summary_on_event"]
                 hint: i18n.t["settings.summary_cost_hint"]
-                checked: !!page.ws.summary_on_event
+                isOn: !!page.ws.summary_on_event
                 onToggled: page.set("summary_on_event", checked)
             }
             Toggle {
                 Layout.fillWidth: true
                 label: i18n.t["settings.anonymize"]
                 hint: i18n.t["settings.anonymize_hint"]
-                checked: page.ws.anonymize_summaries !== false
+                isOn: page.ws.anonymize_summaries !== false
                 onToggled: page.set("anonymize_summaries", checked)
             }
         }
@@ -209,7 +209,7 @@ Page {
                     delegate: Chip {
                         required property var modelData
                         text: modelData.title
-                        checked: (page.ws.tools_enabled || []).indexOf(modelData.key) >= 0
+                        isOn: (page.ws.tools_enabled || []).indexOf(modelData.key) >= 0
                         onClicked: page.ctl.setTool(modelData.key, checked)
                     }
                 }
@@ -244,7 +244,7 @@ Page {
             Toggle {
                 Layout.fillWidth: true
                 label: i18n.t["settings.fetch_pages"]
-                checked: page.ws.fetch_pages !== false
+                isOn: page.ws.fetch_pages !== false
                 onToggled: page.set("fetch_pages", checked)
             }
         }
