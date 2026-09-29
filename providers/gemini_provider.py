@@ -16,6 +16,7 @@ import httpx
 from providers.base import (
     ChatMessage,
     CompletionResult,
+    DeltaHandler,
     LLMProvider,
     ProviderError,
     ToolCall,
@@ -71,9 +72,8 @@ class GeminiProvider(LLMProvider):
                 contents.append({"role": "user", "parts": [{"text": m.content}]})
         return "\n\n".join(p for p in system_parts if p), contents
 
-    async def complete(self, model: str, messages: list[ChatMessage], *,
-                       temperature: float = 0.7, max_tokens: int = 2048,
-                       tools: list[ToolSpec] | None = None) -> CompletionResult:
+    def _payload(self, messages: list[ChatMessage], temperature: float, max_tokens: int,
+                 tools: list[ToolSpec] | None) -> dict[str, Any]:
         system, contents = self._split(messages)
         payload: dict[str, Any] = {
             "contents": contents,
@@ -89,7 +89,68 @@ class GeminiProvider(LLMProvider):
                     for t in tools
                 ]
             }]
+        return payload
 
+    async def stream_complete(self, model: str, messages: list[ChatMessage], *,
+                              temperature: float = 0.7, max_tokens: int = 2048,
+                              tools: list[ToolSpec] | None = None,
+                              on_delta: DeltaHandler | None = None) -> CompletionResult:
+        """``streamGenerateContent`` в режиме SSE.
+
+        Каждый чанк — полноценный ответ с частью ``parts``; вызовы функций
+        приходят целиком, а ``usageMetadata`` в последнем чанке содержит
+        итоговый расход.
+        """
+        import json as _json
+
+        payload = self._payload(messages, temperature, max_tokens, tools)
+        url = f"{self.base_url}/models/{model}:streamGenerateContent?alt=sse"
+        text_parts: list[str] = []
+        calls: list[ToolCall] = []
+        usage: dict[str, Any] = {}
+        finish_reason = ""
+        try:
+            async with self._http().stream("POST", url, headers=self._headers(),
+                                           json=payload) as resp:
+                if resp.status_code >= 400:
+                    await resp.aread()
+                    raise ProviderError(_error_text(resp), resp.status_code)
+                async for line in resp.aiter_lines():
+                    if not line.startswith("data:"):
+                        continue
+                    try:
+                        chunk = _json.loads(line[5:].strip())
+                    except ValueError:
+                        continue
+                    usage = chunk.get("usageMetadata") or usage
+                    for candidate in chunk.get("candidates") or []:
+                        finish_reason = candidate.get("finishReason") or finish_reason
+                        for part in (candidate.get("content") or {}).get("parts", []):
+                            if "functionCall" in part:
+                                fc = part["functionCall"]
+                                calls.append(ToolCall(id=uuid.uuid4().hex[:12],
+                                                      name=fc.get("name", ""),
+                                                      arguments=fc.get("args") or {}))
+                            elif part.get("text"):
+                                kind = "reasoning" if part.get("thought") else "text"
+                                if kind == "text":
+                                    text_parts.append(part["text"])
+                                if on_delta:
+                                    on_delta(part["text"], kind)
+        except httpx.HTTPError as exc:
+            raise ProviderError(f"Сетевая ошибка: {exc}") from exc
+        return CompletionResult(
+            text="".join(text_parts), tool_calls=calls,
+            usage=Usage(int(usage.get("promptTokenCount", 0)),
+                        int(usage.get("candidatesTokenCount", 0))
+                        + int(usage.get("thoughtsTokenCount", 0))),
+            finish_reason=finish_reason, model=model,
+        )
+
+    async def complete(self, model: str, messages: list[ChatMessage], *,
+                       temperature: float = 0.7, max_tokens: int = 2048,
+                       tools: list[ToolSpec] | None = None) -> CompletionResult:
+        payload = self._payload(messages, temperature, max_tokens, tools)
         url = f"{self.base_url}/models/{model}:generateContent"
         try:
             resp = await self._http().post(url, headers=self._headers(), json=payload)
@@ -102,18 +163,21 @@ class GeminiProvider(LLMProvider):
         candidate = (data.get("candidates") or [{}])[0]
         text_parts, calls = [], []
         for part in (candidate.get("content") or {}).get("parts", []):
-            if "text" in part:
-                text_parts.append(part["text"])
-            elif "functionCall" in part:
+            if "functionCall" in part:
                 fc = part["functionCall"]
                 calls.append(ToolCall(id=uuid.uuid4().hex[:12], name=fc.get("name", ""),
                                       arguments=fc.get("args") or {}))
+            elif "text" in part and not part.get("thought"):
+                # Рассуждение «думающих» моделей в ответ не входит.
+                text_parts.append(part["text"])
         u = data.get("usageMetadata") or {}
         return CompletionResult(
             text="".join(text_parts),
             tool_calls=calls,
+            # Токены рассуждения оплачиваются как выходные.
             usage=Usage(int(u.get("promptTokenCount", 0)),
-                        int(u.get("candidatesTokenCount", 0))),
+                        int(u.get("candidatesTokenCount", 0))
+                        + int(u.get("thoughtsTokenCount", 0))),
             finish_reason=candidate.get("finishReason", ""),
             model=model,
             raw=data,

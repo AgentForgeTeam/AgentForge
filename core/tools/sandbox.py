@@ -28,6 +28,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
+import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
@@ -171,12 +173,21 @@ class SubprocessSandbox(Sandbox):
 
 
 def _kill_tree(proc) -> None:
-    """Убивает процесс вместе с его группой."""
+    """Убивает процесс вместе со всеми потомками.
+
+    На Windows ``proc.kill()`` завершает только сам процесс: запущенные им
+    дочерние (``subprocess``, ``multiprocessing``) продолжили бы работать
+    после таймаута. ``taskkill /T`` снимает всё дерево.
+    """
     try:
         if os.name == "posix":
             os.killpg(os.getpgid(proc.pid), 9)
         else:
-            proc.kill()
+            subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                           capture_output=True, timeout=10,
+                           creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            if proc.returncode is None:
+                proc.kill()
     except Exception:  # noqa: BLE001
         try:
             proc.kill()
@@ -205,13 +216,19 @@ class DockerSandbox(Sandbox):
                  "bash": ["bash", "/work/" + script.name],
                  "node": ["node", "/work/" + script.name]}[language]
 
+        # Имя нужно, чтобы по таймауту остановить именно контейнер: убийство
+        # процесса docker CLI оставило бы контейнер работать в фоне.
+        name = f"aiorc-{uuid.uuid4().hex[:12]}"
         cmd = [
-            "docker", "run", "--rm",
+            "docker", "run", "--rm", "--name", name,
             "--network", "bridge" if network else "none",
             "--memory", f"{memory_mb}m", "--memory-swap", f"{memory_mb}m",
             "--cpus", "1", "--pids-limit", "128",
             "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
             "--user", "1000:1000",
+            # Корень контейнера только для чтения; писать можно в /tmp и в
+            # одноразовый каталог со скриптом.
+            "--read-only", "--tmpfs", "/tmp:rw,size=64m",
             "-v", f"{tmpdir}:/work",
             "-w", "/work",
             self.IMAGES[language], *inner,
@@ -226,6 +243,7 @@ class DockerSandbox(Sandbox):
                 out, err = await asyncio.wait_for(proc.communicate(), timeout=timeout + 15)
             except asyncio.TimeoutError:
                 timed_out = True
+                await _docker_kill(name)
                 proc.kill()
                 out, err = b"", "Контейнер остановлен по таймауту".encode("utf-8")
             return SandboxResult(
@@ -237,22 +255,49 @@ class DockerSandbox(Sandbox):
             shutil.rmtree(tmpdir, ignore_errors=True)
 
 
-def docker_available() -> bool:
-    """Проверяет, что Docker установлен и демон отвечает."""
-    if shutil.which("docker") is None:
-        return False
+async def _docker_kill(name: str) -> None:
     try:
-        res = subprocess.run(["docker", "info", "--format", "{{json .ServerVersion}}"],
-                             capture_output=True, timeout=5)
-        return res.returncode == 0 and bool(json.loads(res.stdout or b'""'))
-    except Exception:  # noqa: BLE001
-        return False
+        proc = await asyncio.create_subprocess_exec(
+            "docker", "kill", name,
+            stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL,
+        )
+        await asyncio.wait_for(proc.wait(), timeout=10)
+    except Exception:  # noqa: BLE001 — контейнер мог уже завершиться сам
+        pass
 
 
-def get_sandbox(backend: str = "auto") -> Sandbox:
+#: результат проверки Docker кэшируется: ``docker info`` занимает секунды
+_DOCKER_CACHE: dict[str, float | bool] = {}
+_DOCKER_TTL = 60.0
+
+
+def docker_available(use_cache: bool = True) -> bool:
+    """Проверяет, что Docker установлен и демон отвечает."""
+    now = time.monotonic()
+    if use_cache and _DOCKER_CACHE and now - float(_DOCKER_CACHE["at"]) < _DOCKER_TTL:
+        return bool(_DOCKER_CACHE["ok"])
+    ok = False
+    if shutil.which("docker") is not None:
+        try:
+            res = subprocess.run(["docker", "info", "--format", "{{json .ServerVersion}}"],
+                                 capture_output=True, timeout=5,
+                                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            ok = res.returncode == 0 and bool(json.loads(res.stdout or b'""'))
+        except Exception:  # noqa: BLE001
+            ok = False
+    _DOCKER_CACHE.update(ok=ok, at=now)
+    return ok
+
+
+async def docker_available_async() -> bool:
+    """То же, но без блокировки общего asyncio-лупа (и интерфейса вместе с ним)."""
+    return await asyncio.to_thread(docker_available)
+
+
+async def get_sandbox(backend: str = "auto") -> Sandbox:
     """Фабрика песочницы по настройке воркспейса."""
     if backend == "docker":
         return DockerSandbox()
     if backend == "subprocess":
         return SubprocessSandbox()
-    return DockerSandbox() if docker_available() else SubprocessSandbox()
+    return DockerSandbox() if await docker_available_async() else SubprocessSandbox()

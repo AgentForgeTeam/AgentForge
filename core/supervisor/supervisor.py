@@ -18,7 +18,9 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass
+from typing import Callable
 
+from core.budget import BudgetBlocked, BudgetGuard
 from core.events import Event, EventBus, EventType
 from core.supervisor.checklist import (
     CONFLICT_SYSTEM,
@@ -60,15 +62,28 @@ class Supervisor:
     """Проверяющий над командой агентов."""
 
     def __init__(self, repos: Repos, bus: EventBus, workspace_id: int,
-                 settings: dict) -> None:
+                 settings: dict, budget: BudgetGuard | None = None,
+                 on_usage: Callable[[int, float], None] | None = None) -> None:
         self.repos = repos
         self.bus = bus
         self.workspace_id = workspace_id
         self.settings = settings
+        #: лимиты прогона: проверки супервайзера — самая дорогая часть
+        #: системы, поэтому они обязаны проходить через тот же бюджет
+        self.budget = budget
+        self.on_usage = on_usage
+        self.anonymize = bool(settings.get("anonymize_summaries", True))
         self.anon = Anonymizer()
+        self._names = {a.id: a.name for a in repos.agents.list(workspace_id)}
         self._model: SupervisorModel | None = None
         self._summary_task: asyncio.Task | None = None
         self._stop = asyncio.Event()
+
+    def _label(self, agent_id: int | None) -> str:
+        """Как подписать автора: анонимной меткой или по имени (если выключено)."""
+        if not self.anonymize and agent_id in self._names:
+            return self._names[agent_id]
+        return self.anon.label(agent_id)
 
     # -- модель --------------------------------------------------------------
     def available(self) -> bool:
@@ -134,6 +149,10 @@ class Supervisor:
                 "Супервайзер не настроен: выберите агента или локальную модель "
                 "на вкладке «Настройки»."
             )
+        if self.budget is not None:
+            blocked = await self.budget.ensure_allowed(None)
+            if blocked is not None:
+                raise BudgetBlocked(f"лимит исчерпан — {blocked.reason()}")
         result = await model.provider.complete(
             model.model,
             [ChatMessage("system", system), ChatMessage("user", user)],
@@ -147,6 +166,16 @@ class Supervisor:
             model.provider_key, model.model,
             result.usage.input_tokens, result.usage.output_tokens, cost,
         )
+        if self.budget is not None:
+            self.budget.add(result.usage.total, cost, None)
+        if self.on_usage is not None:
+            self.on_usage(result.usage.total, cost)
+        self.bus.emit(Event(
+            EventType.USAGE, workspace_id=self.workspace_id, task_id=task_id,
+            agent_name="Супервайзер",
+            message=f"+{result.usage.total} токенов (~${cost:.4f})",
+            payload={"tokens": result.usage.total, "cost": cost, "supervisor": True},
+        ))
         return result.text
 
     def _emit(self, kind: EventType, message: str, **payload) -> None:
@@ -156,8 +185,13 @@ class Supervisor:
 
     # -- проверка отчёта -----------------------------------------------------
     async def review(self, task: Task, subtask: Subtask, report: Report) -> Verdict:
-        """Проверяет отчёт по чек-листу и возвращает вердикт."""
-        label = self.anon.label(report.agent_id)
+        """Проверяет отчёт по чек-листу и возвращает вердикт.
+
+        Если проверить не удалось (сеть, лимит, модель не настроена),
+        вердикт — ``unverified``: такой результат не считается принятым и
+        не уходит дальше по конвейеру, пока его не посмотрит человек.
+        """
+        label = self._label(report.agent_id)
         context = self._accepted_context(task.id, exclude_subtask=subtask.id)
 
         user = REVIEW_USER.format(
@@ -173,12 +207,16 @@ class Supervisor:
         self._emit(EventType.AGENT_THINKING, f"проверяю «{subtask.title}»")
         try:
             raw = await self._ask(REVIEW_SYSTEM, user, task.id)
-        except ProviderError as exc:
-            log.warning("Супервайзер недоступен: %s", exc)
-            # Недоступность проверяющего не должна ронять весь прогон:
-            # отчёт принимается, но факт пропуска проверки фиксируется.
-            self._emit(EventType.ERROR, f"проверка пропущена: {exc}")
-            return Verdict(verdict="ok", notes=f"Проверка не выполнена: {exc}")
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:  # noqa: BLE001 — любая причина равна «не проверено»
+            log.warning("Супервайзер не смог проверить отчёт: %s", exc)
+            # Раньше непроверенный отчёт молча принимался. Это опаснее, чем
+            # остановиться: ошибка ушла бы в зависимые подзадачи без следа.
+            self._emit(EventType.ERROR, f"проверка не выполнена: {exc}")
+            notes = f"Проверка не выполнена: {exc}"
+            self.repos.reports.mark_reviewed(report.id, "unverified", notes)
+            return Verdict(verdict="unverified", notes=notes)
 
         verdict = parse_verdict(raw)
         self.repos.reports.mark_reviewed(report.id, verdict.verdict, verdict.notes)
@@ -210,7 +248,7 @@ class Supervisor:
                 continue
             if st.status not in ("done", "review"):
                 continue
-            chunks.append(f"[{self.anon.label(st.agent_id)}] {st.title}:\n"
+            chunks.append(f"[{self._label(st.agent_id)}] {st.title}:\n"
                           f"{st.result[:1200]}")
         return "\n\n".join(chunks[-CONTEXT_REPORTS:])
 
@@ -241,7 +279,7 @@ class Supervisor:
 
         # Страховка: вычищаем имена агентов, если модель их всё-таки назвала.
         names = {a.id: a.name for a in self.repos.agents.list(self.workspace_id)}
-        content = self.anon.scrub(raw.strip(), names)
+        content = self.anon.scrub(raw.strip(), names) if self.anonymize else raw.strip()
         if not content:
             return ""
 
@@ -261,7 +299,7 @@ class Supervisor:
         for st in self.repos.tasks.subtasks(task_id):
             if not st.result:
                 continue
-            chunks.append(f"[{self.anon.label(st.agent_id)}] {st.title}:\n"
+            chunks.append(f"[{self._label(st.agent_id)}] {st.title}:\n"
                           f"{st.result[:2500]}")
         return "\n\n".join(chunks[-CONTEXT_REPORTS:])
 

@@ -15,6 +15,7 @@ import httpx
 from providers.base import (
     ChatMessage,
     CompletionResult,
+    DeltaHandler,
     LLMProvider,
     ProviderError,
     ToolCall,
@@ -76,9 +77,8 @@ class AnthropicProvider(LLMProvider):
                 wire.append({"role": m.role, "content": m.content})
         return "\n\n".join(p for p in system_parts if p), wire
 
-    async def complete(self, model: str, messages: list[ChatMessage], *,
-                       temperature: float = 0.7, max_tokens: int = 2048,
-                       tools: list[ToolSpec] | None = None) -> CompletionResult:
+    def _payload(self, model: str, messages: list[ChatMessage], temperature: float,
+                 max_tokens: int, tools: list[ToolSpec] | None) -> dict[str, Any]:
         system, wire = self._split(messages)
         payload: dict[str, Any] = {
             "model": model,
@@ -93,7 +93,94 @@ class AnthropicProvider(LLMProvider):
                 {"name": t.name, "description": t.description, "input_schema": t.parameters}
                 for t in tools
             ]
+        return payload
 
+    async def stream_complete(self, model: str, messages: list[ChatMessage], *,
+                              temperature: float = 0.7, max_tokens: int = 2048,
+                              tools: list[ToolSpec] | None = None,
+                              on_delta: DeltaHandler | None = None) -> CompletionResult:
+        """Потоковый Messages API: текст, рассуждение и вызовы инструментов.
+
+        Блоки ответа приходят событиями ``content_block_*``; аргументы
+        ``tool_use`` приходят кусками JSON (``input_json_delta``) и
+        собираются по индексу блока.
+        """
+        import json as _json
+
+        payload = self._payload(model, messages, temperature, max_tokens, tools)
+        payload["stream"] = True
+        blocks: dict[int, dict[str, Any]] = {}
+        usage_in = usage_out = 0
+        stop_reason = ""
+        model_name = model
+        try:
+            async with self._http().stream(
+                "POST", f"{self.base_url}/messages", headers=self._headers(), json=payload
+            ) as resp:
+                if resp.status_code >= 400:
+                    await resp.aread()
+                    raise ProviderError(_error_text(resp), resp.status_code)
+                async for line in resp.aiter_lines():
+                    if not line.startswith("data:"):
+                        continue
+                    try:
+                        event = _json.loads(line[5:].strip())
+                    except ValueError:
+                        continue
+                    kind = event.get("type")
+                    if kind == "message_start":
+                        message = event.get("message") or {}
+                        model_name = message.get("model", model_name)
+                        u = message.get("usage") or {}
+                        usage_in = int(u.get("input_tokens", 0))
+                        usage_out = int(u.get("output_tokens", 0))
+                    elif kind == "content_block_start":
+                        block = dict(event.get("content_block") or {})
+                        block["_json"] = ""
+                        blocks[int(event.get("index", len(blocks)))] = block
+                    elif kind == "content_block_delta":
+                        block = blocks.setdefault(int(event.get("index", 0)),
+                                                  {"type": "text", "text": "", "_json": ""})
+                        delta = event.get("delta") or {}
+                        if delta.get("type") == "text_delta":
+                            piece = delta.get("text", "")
+                            block["text"] = block.get("text", "") + piece
+                            if on_delta and piece:
+                                on_delta(piece, "text")
+                        elif delta.get("type") == "thinking_delta":
+                            piece = delta.get("thinking", "")
+                            if on_delta and piece:
+                                on_delta(piece, "reasoning")
+                        elif delta.get("type") == "input_json_delta":
+                            block["_json"] += delta.get("partial_json", "")
+                    elif kind == "message_delta":
+                        stop_reason = (event.get("delta") or {}).get("stop_reason") or stop_reason
+                        u = event.get("usage") or {}
+                        usage_out = int(u.get("output_tokens", usage_out))
+                    elif kind == "error":
+                        err = event.get("error") or {}
+                        raise ProviderError(err.get("message", "ошибка потока Anthropic"))
+        except httpx.HTTPError as exc:
+            raise ProviderError(f"Сетевая ошибка: {exc}") from exc
+
+        text_parts: list[str] = []
+        calls: list[ToolCall] = []
+        for _, block in sorted(blocks.items()):
+            if block.get("type") == "text":
+                text_parts.append(block.get("text", ""))
+            elif block.get("type") == "tool_use":
+                args = ToolCall.parse_args(block["_json"]) if block["_json"] \
+                    else (block.get("input") or {})
+                calls.append(ToolCall(id=block.get("id", ""), name=block.get("name", ""),
+                                      arguments=args))
+        return CompletionResult(text="".join(text_parts), tool_calls=calls,
+                                usage=Usage(usage_in, usage_out),
+                                finish_reason=stop_reason, model=model_name)
+
+    async def complete(self, model: str, messages: list[ChatMessage], *,
+                       temperature: float = 0.7, max_tokens: int = 2048,
+                       tools: list[ToolSpec] | None = None) -> CompletionResult:
+        payload = self._payload(model, messages, temperature, max_tokens, tools)
         try:
             resp = await self._http().post(
                 f"{self.base_url}/messages", headers=self._headers(), json=payload

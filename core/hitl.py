@@ -31,6 +31,7 @@ class Decision(str, Enum):
     REWORK = "rework"      # вернуть исполнителю с комментарием
     SKIP = "skip"          # пометить подзадачу как неудачную и продолжить
     ABORT = "abort"        # остановить весь прогон
+    EXTEND = "extend"      # поднять исчерпанный лимит бюджета и продолжить
 
 
 class Reason(str, Enum):
@@ -40,6 +41,8 @@ class Reason(str, Enum):
     NOT_ACCEPTED = "not_accepted"      # доработки исчерпаны, результат не принят
     LOW_CONFIDENCE = "low_confidence"  # агент сам не уверен в результате
     MILESTONE = "milestone"            # завершён этап работ
+    UNVERIFIED = "unverified"          # супервайзер не смог проверить результат
+    BUDGET = "budget"                  # исчерпан лимит бюджета
 
 
 REASON_TITLES = {
@@ -47,6 +50,8 @@ REASON_TITLES = {
     Reason.NOT_ACCEPTED: "Результат не принят супервайзером",
     Reason.LOW_CONFIDENCE: "Низкая уверенность исполнителя",
     Reason.MILESTONE: "Завершён этап работ",
+    Reason.UNVERIFIED: "Результат не проверен",
+    Reason.BUDGET: "Исчерпан лимит бюджета",
 }
 
 #: какие кнопки показывать для каждой причины
@@ -55,6 +60,8 @@ REASON_OPTIONS: dict[Reason, list[Decision]] = {
     Reason.NOT_ACCEPTED: [Decision.APPROVE, Decision.REWORK, Decision.SKIP, Decision.ABORT],
     Reason.LOW_CONFIDENCE: [Decision.APPROVE, Decision.REWORK, Decision.ABORT],
     Reason.MILESTONE: [Decision.APPROVE, Decision.ABORT],
+    Reason.UNVERIFIED: [Decision.APPROVE, Decision.REWORK, Decision.SKIP, Decision.ABORT],
+    Reason.BUDGET: [Decision.EXTEND, Decision.SKIP, Decision.ABORT],
 }
 
 DECISION_TITLES = {
@@ -62,6 +69,7 @@ DECISION_TITLES = {
     Decision.REWORK: "На доработку",
     Decision.SKIP: "Пропустить",
     Decision.ABORT: "Остановить прогон",
+    Decision.EXTEND: "Увеличить лимит на 50%",
 }
 
 
@@ -182,8 +190,13 @@ class ApprovalGate:
             try:
                 decision = Decision(decision)
             except ValueError:
-                decision = Decision.APPROVE
-        future.set_result(Answer(decision, comment.strip()))
+                # Неизвестное решение не превращаем молча в «Принять»:
+                # это ровно та ошибка, ради которой человека и спрашивают.
+                return False
+        request = self._open.get(approval_id)
+        if request is not None and request.options and decision not in request.options:
+            return False
+        future.set_result(Answer(decision, (comment or "").strip()))
         return True
 
     def cancel_all(self) -> None:

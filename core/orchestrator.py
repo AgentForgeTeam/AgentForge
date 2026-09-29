@@ -2,7 +2,7 @@
 
 Отвечает за расписание: какие подзадачи можно запускать сейчас, какие ждут
 предшественников, сколько агентов работают параллельно. Каждый агент
-выполняет свои подзадачи последовательно (семафор на агента), разные агенты —
+выполняет свои подзадачи последовательно (лок на агента), разные агенты —
 параллельно, все в одном asyncio-лупе.
 
 Оркестратор ведёт весь жизненный цикл: статусы, отчёты, расход, паузы и
@@ -17,9 +17,9 @@ from dataclasses import dataclass, field
 
 from app.config import DEFAULT_WORKSPACE_SETTINGS, PATHS
 from core.agents.runner import AgentRunner, RunResult
-from core.budget import BudgetGuard
+from core.budget import BudgetGuard, ScopeState
 from core.events import Event, EventBus, EventType
-from core.hitl import ApprovalGate, Decision, Reason
+from core.hitl import Answer, ApprovalGate, Decision, Reason
 from core.supervisor.supervisor import Supervisor
 from core.tools.base import ToolRegistry, default_registry
 from providers.base import LLMProvider
@@ -33,7 +33,7 @@ log = logging.getLogger("aiorc.orchestrator")
 #: сверх автоматического лимита супервайзера
 USER_REWORK_LIMIT = 3
 
-#: сколько агентов могут работать одновременно
+#: сколько агентов могут работать одновременно, если в настройках не указано
 DEFAULT_CONCURRENCY = 6
 
 
@@ -76,6 +76,8 @@ class Orchestrator:
         self._summary_on_event: bool = True
         self._gate: ApprovalGate | None = None
         self._confidence_threshold: float = 0.0
+        self._semaphore: asyncio.Semaphore | None = None
+        self._workspace_id: int | None = None
 
     # -- управление ----------------------------------------------------------
     def pause(self) -> None:
@@ -83,6 +85,7 @@ class Orchestrator:
             self.state.paused = True
             self._pause.clear()
             self.bus.emit(Event(EventType.RUN_PAUSED, task_id=self.state.task_id,
+                                workspace_id=self._workspace_id,
                                 message="Выполнение поставлено на паузу"))
 
     def resume(self) -> None:
@@ -90,6 +93,7 @@ class Orchestrator:
             self.state.paused = False
             self._pause.set()
             self.bus.emit(Event(EventType.RUN_RESUMED, task_id=self.state.task_id,
+                                workspace_id=self._workspace_id,
                                 message="Выполнение возобновлено"))
 
     def stop(self) -> None:
@@ -97,14 +101,17 @@ class Orchestrator:
             return
         self._stop.set()
         self._pause.set()                       # разбудить ожидающих
+        if self._gate is not None:
+            self._gate.cancel_all()             # снять висящие вопросы
         for task in list(self._tasks):
             task.cancel()
         self.bus.emit(Event(EventType.RUN_STOPPED, task_id=self.state.task_id,
+                            workspace_id=self._workspace_id,
                             message="Остановка по команде пользователя"))
 
     # -- основной запуск -----------------------------------------------------
     async def run_task(self, workspace_id: int, task_id: int,
-                       concurrency: int = DEFAULT_CONCURRENCY) -> RunState:
+                       concurrency: int | None = None) -> RunState:
         """Прогоняет все подзадачи задачи с учётом зависимостей."""
         if self.state.running:
             raise RuntimeError("Выполнение уже запущено")
@@ -117,8 +124,7 @@ class Orchestrator:
         settings = {**DEFAULT_WORKSPACE_SETTINGS, **workspace.settings}
         PATHS.workspace_dir(workspace_id).mkdir(parents=True, exist_ok=True)
 
-        subtasks = [s for s in self.repos.tasks.subtasks(task_id)
-                    if s.status not in ("done",)]
+        subtasks = [s for s in self.repos.tasks.subtasks(task_id) if s.status != "done"]
         unassigned = [s for s in subtasks if not s.agent_id]
         if unassigned:
             raise RuntimeError(
@@ -128,20 +134,29 @@ class Orchestrator:
         if not subtasks:
             raise RuntimeError("Нет подзадач для выполнения")
 
+        if concurrency is None:
+            try:
+                concurrency = int(settings.get("max_parallel_agents") or DEFAULT_CONCURRENCY)
+            except (TypeError, ValueError):
+                concurrency = DEFAULT_CONCURRENCY
+
+        self._workspace_id = workspace_id
         self._reset_state(task_id, len(subtasks))
+        self._start_gate(workspace_id, settings)
         self._budget = BudgetGuard(self.repos, self.bus, workspace_id,
                                    task.id, task.token_limit)
+        if self._gate is not None:
+            self._budget.on_blocked = self._on_budget_blocked
         self.repos.tasks.update(task_id, status="running")
         self.bus.emit(Event(EventType.RUN_STARTED, workspace_id=workspace_id,
                             task_id=task_id,
                             message=f"Запуск: {len(subtasks)} подзадач"))
 
         self._start_supervisor(workspace_id, settings, task)
-        self._start_gate(workspace_id, settings)
 
-        semaphore = asyncio.Semaphore(max(1, concurrency))
+        self._semaphore = asyncio.Semaphore(max(1, concurrency))
         try:
-            await self._schedule(workspace_id, settings, task, subtasks, semaphore)
+            await self._schedule(workspace_id, settings, task, subtasks)
             if self._supervisor is not None and not self._stop.is_set():
                 # Финальный разбор: ищем расхождения между результатами
                 # и подводим общий итог для команды.
@@ -152,11 +167,7 @@ class Orchestrator:
         finally:
             await self._cleanup()
             self.state.running = False
-            self.repos.tasks.update(
-                task_id,
-                status="stopped" if self._stop.is_set()
-                else ("failed" if self.state.failed else "done"),
-            )
+            self.repos.tasks.update(task_id, status=self._final_status())
             self.bus.emit(Event(
                 EventType.RUN_FINISHED, workspace_id=workspace_id, task_id=task_id,
                 message=(f"Готово: {self.state.finished} выполнено, "
@@ -166,9 +177,19 @@ class Orchestrator:
                          f"{self.state.tokens} токенов, ~${self.state.cost:.4f}"),
                 payload={"finished": self.state.finished, "failed": self.state.failed,
                          "reworks": self.state.reworks,
-                         "escalated": self.state.escalated},
+                         "escalated": self.state.escalated,
+                         "stopped": self._stop.is_set()},
             ))
         return self.state
+
+    def _final_status(self) -> str:
+        if self._stop.is_set():
+            return "stopped"
+        if self.state.failed:
+            return "failed"
+        if self.state.escalated:
+            return "review"         # есть результаты, которые ждут человека
+        return "done"
 
     def _reset_state(self, task_id: int, total: int) -> None:
         from storage.db import utcnow
@@ -182,33 +203,27 @@ class Orchestrator:
 
     # -- расписание ----------------------------------------------------------
     async def _schedule(self, workspace_id: int, settings: dict, task: Task,
-                        subtasks: list[Subtask], semaphore: asyncio.Semaphore) -> None:
+                        subtasks: list[Subtask]) -> None:
         """Волнами запускает подзадачи, у которых выполнены зависимости."""
         pending = {s.id: s for s in subtasks}
         done_ids: set[int] = {
             s.id for s in self.repos.tasks.subtasks(task.id) if s.status == "done"
         }
+        titles = {s.id: s.title for s in self.repos.tasks.subtasks(task.id)}
 
         while pending and not self._stop.is_set():
             ready = [s for s in pending.values() if self._deps_met(s, done_ids)]
             if not ready:
-                # Циклическая или неразрешимая зависимость — не зависаем молча.
-                names = ", ".join(s.title for s in pending.values())
-                self.bus.error(f"Невозможно разрешить зависимости подзадач: {names}",
-                               workspace_id=workspace_id, task_id=task.id)
-                for s in pending.values():
-                    self.repos.tasks.update_subtask(s.id, status="error")
-                    self.state.failed += 1
+                self._block_unreachable(workspace_id, task, pending, done_ids, titles)
                 break
 
             wave = [
-                asyncio.ensure_future(
-                    self._run_subtask(workspace_id, settings, task, s, semaphore)
-                )
+                asyncio.ensure_future(self._run_subtask(workspace_id, settings, task, s))
                 for s in ready
             ]
             self._tasks.update(wave)
             results = await asyncio.gather(*wave, return_exceptions=True)
+            self._tasks.difference_update(wave)
             for subtask, outcome in zip(ready, results):
                 pending.pop(subtask.id, None)
                 # CancelledError наследуется от BaseException, а не от Exception,
@@ -241,6 +256,32 @@ class Orchestrator:
                     self._stop.set()
                     break
 
+    def _block_unreachable(self, workspace_id: int, task: Task,
+                           pending: dict[int, Subtask], done_ids: set[int],
+                           titles: dict[int, str]) -> None:
+        """Помечает подзадачи, которые уже не смогут стартовать, и объясняет почему.
+
+        Причин две, и путать их нельзя: либо не выполнена одна из
+        зависимостей (упала или не принята), либо зависимости замкнуты в
+        цикл. Раньше обе выдавались как «невозможно разрешить зависимости»,
+        и упавший предшественник выглядел как ошибка в графе.
+        """
+        for subtask in pending.values():
+            missing = [dep for dep in self._deps(subtask) if dep not in done_ids]
+            failed_deps = [dep for dep in missing if dep not in pending]
+            if failed_deps:
+                names = ", ".join(f"«{titles.get(d, d)}»" for d in failed_deps)
+                reason = f"не выполнена зависимость {names}"
+            else:
+                reason = "зависимости замкнуты в цикл"
+            self.repos.tasks.update_subtask(subtask.id, status="error")
+            self.state.failed += 1
+            self.bus.emit(Event(
+                EventType.SUBTASK_FAILED, workspace_id=workspace_id, task_id=task.id,
+                subtask_id=subtask.id, agent_id=subtask.agent_id,
+                message=f"«{subtask.title}» не запущена: {reason}",
+            ))
+
     def _wave_summary(self, task: Task, done_ids: set[int]) -> str:
         """Короткая сводка по завершённой волне — чтобы решать осознанно."""
         lines: list[str] = []
@@ -249,29 +290,34 @@ class Orchestrator:
                 continue
             body = (subtask.result or "").strip().replace("\n", " ")
             lines.append(f"· {subtask.title}: {body[:180]}" if body else f"· {subtask.title}")
-        tokens, cost = self.repos.budgets.workspace_totals(task.workspace_id)
+        tokens, cost = self.repos.budgets.task_totals(task.id)
         lines.append("")
-        lines.append(f"Израсходовано: {tokens} токенов, ~${cost:.4f}")
+        lines.append(f"Израсходовано по задаче: {tokens} токенов, ~${cost:.4f}")
         return "\n".join(lines)
 
     @staticmethod
-    def _deps_met(subtask: Subtask, done_ids: set[int]) -> bool:
+    def _deps(subtask: Subtask) -> list[int]:
         raw = (subtask.depends_on or "").strip()
-        if not raw:
-            return True
-        return all(int(tok) in done_ids
-                   for tok in (t.strip() for t in raw.split(",")) if tok.isdigit())
+        return [int(t) for t in (tok.strip() for tok in raw.split(",")) if t.isdigit()]
+
+    @classmethod
+    def _deps_met(cls, subtask: Subtask, done_ids: set[int]) -> bool:
+        return all(dep in done_ids for dep in cls._deps(subtask))
 
     # -- выполнение одной подзадачи -----------------------------------------
     async def _run_subtask(self, workspace_id: int, settings: dict, task: Task,
-                           subtask: Subtask, semaphore: asyncio.Semaphore) -> bool:
+                           subtask: Subtask) -> bool:
         agent = self.repos.agents.get(subtask.agent_id or 0)
         if agent is None or not agent.enabled:
             self._fail(subtask, agent, "Исполнитель недоступен или отключён")
             return False
 
+        # Сначала лок агента, потом слот параллельности. В обратном порядке
+        # подзадачи одного агента занимали бы слоты, простаивая в очереди
+        # к собственному локу, и другие агенты ждали бы впустую.
         lock = self._agent_locks.setdefault(agent.id, asyncio.Lock())
-        async with semaphore, lock:
+        assert self._semaphore is not None
+        async with lock, self._semaphore:
             await self._pause.wait()
             if self._stop.is_set():
                 return False
@@ -325,7 +371,7 @@ class Orchestrator:
                 if accepted is not None:
                     return accepted
 
-                # accepted is None → назначена доработка, идём на новый круг
+                # accepted is None → назначена доработка, идём на новый круг.
                 # Потолок считается по числу выданных человеком кругов,
                 # а не относительно текущей попытки: иначе граница уезжала бы
                 # вперёд на каждом круге и цикл никогда бы не закончился.
@@ -343,6 +389,21 @@ class Orchestrator:
                          agent_name=agent.name)
             return False
 
+    async def _ask_human(self, reason: Reason, question: str, **kwargs) -> Answer:
+        """Вопрос человеку изнутри подзадачи.
+
+        Пока человек думает, агент не работает, поэтому его слот
+        параллельности отдаётся другим подзадачам и забирается обратно
+        после ответа. Лок агента при этом держится: к ответу он вернётся
+        со связной историей.
+        """
+        assert self._gate is not None and self._semaphore is not None
+        self._semaphore.release()
+        try:
+            return await self._gate.ask(reason, question, **kwargs)
+        finally:
+            await self._semaphore.acquire()
+
     async def _review_result(self, workspace_id: int, task: Task, subtask: Subtask,
                              agent: Agent, result: RunResult,
                              attempt: int, max_rework: int
@@ -359,29 +420,19 @@ class Orchestrator:
             return False, "", False
 
         supervisor = self._supervisor
-        if supervisor is None:
-            # Без супервайзера отчёт принимается как есть.
+        report = self._last_report(subtask.id) if supervisor is not None else None
+        if supervisor is None or report is None:
+            # Без супервайзера отчёт принимается как есть: пользователь сам
+            # отказался от проверки, и в ленте об этом написано при старте.
             self.repos.tasks.update_subtask(subtask.id, status="done")
             self.state.finished += 1
             return True, "", False
 
-        report = self._last_report(subtask.id)
-        if report is None:
-            self.repos.tasks.update_subtask(subtask.id, status="done")
-            self.state.finished += 1
-            return True, "", False
+        verdict = await supervisor.review(task, subtask, report)
 
-        try:
-            verdict = await supervisor.review(task, subtask, report)
-        except asyncio.CancelledError:
-            raise
-        except Exception as exc:  # noqa: BLE001
-            log.exception("Супервайзер упал на проверке %s", subtask.id)
-            self.bus.error(f"Проверка не выполнена: {exc}",
-                           workspace_id=workspace_id, subtask_id=subtask.id)
-            self.repos.tasks.update_subtask(subtask.id, status="done")
-            self.state.finished += 1
-            return True, "", False
+        if verdict.verdict == "unverified":
+            return await self._handle_unverified(workspace_id, task, subtask, agent,
+                                                 report, verdict)
 
         if verdict.accepted:
             self.repos.tasks.update_subtask(subtask.id, status="done")
@@ -403,7 +454,7 @@ class Orchestrator:
             if (self._gate is not None and report.confidence is not None
                     and report.confidence < self._confidence_threshold):
                 self._set_status(agent, subtask, "paused")
-                answer = await self._gate.ask(
+                answer = await self._ask_human(
                     Reason.LOW_CONFIDENCE,
                     f"«{subtask.title}»: исполнитель оценил свою уверенность "
                     f"в {report.confidence:.2f}",
@@ -440,8 +491,6 @@ class Orchestrator:
 
         # Доработки исчерпаны либо это конфликт — фиксируем инцидент
         # и, если human-in-the-loop включён, останавливаемся и спрашиваем.
-        self.repos.tasks.update_subtask(subtask.id, status="review")
-        self.state.escalated += 1
         incident_id = self.repos.incidents.add(
             workspace_id,
             kind="conflict" if verdict.verdict == "conflict" else "contradiction",
@@ -450,26 +499,51 @@ class Orchestrator:
             severity=verdict.max_severity,
             task_id=task.id, subtask_id=subtask.id, report_id=report.id,
         )
+        reason = (Reason.CONFLICT if verdict.verdict == "conflict"
+                  else Reason.NOT_ACCEPTED)
+        return await self._escalate(workspace_id, task, subtask, agent, report,
+                                    verdict, incident_id, reason)
+
+    async def _handle_unverified(self, workspace_id: int, task: Task, subtask: Subtask,
+                                 agent: Agent, report: Report, verdict
+                                 ) -> tuple[bool | None, str, bool]:
+        """Супервайзер не смог проверить отчёт — решение за человеком."""
+        incident_id = self.repos.incidents.add(
+            workspace_id, kind="unverified",
+            description=verdict.notes or "Результат не прошёл проверку супервайзера",
+            severity="medium", task_id=task.id, subtask_id=subtask.id,
+            report_id=report.id,
+        )
+        return await self._escalate(workspace_id, task, subtask, agent, report,
+                                    verdict, incident_id, Reason.UNVERIFIED)
+
+    async def _escalate(self, workspace_id: int, task: Task, subtask: Subtask,
+                        agent: Agent, report: Report, verdict, incident_id: int,
+                        reason: Reason) -> tuple[bool | None, str, bool]:
+        """Результат не принят автоматически: спросить человека или отложить.
+
+        Без human-in-the-loop спросить некого, поэтому результат остаётся
+        на проверке и НЕ передаётся зависимым подзадачам: строить дальше на
+        непринятом результате значит размножить возможную ошибку.
+        """
+        self.repos.tasks.update_subtask(subtask.id, status="review")
+        self.state.escalated += 1
         self.repos.incidents.resolve(incident_id, "escalated",
                                      "Требуется решение пользователя")
 
         if self._gate is None:
-            # Режим без пауз: помечаем и идём дальше, решение остаётся человеку
-            # постфактум на вкладке «Супервайзер».
+            self.repos.agents.set_status(agent.id, "idle")
             self.bus.emit(Event(
                 EventType.APPROVAL_REQUESTED, workspace_id=workspace_id, task_id=task.id,
                 subtask_id=subtask.id, agent_id=agent.id, agent_name=agent.name,
                 message=f"нужно решение по «{subtask.title}»: {verdict.notes[:150]}",
                 payload={"incident_id": incident_id, "verdict": verdict.verdict},
             ))
-            self.state.finished += 1
             await self._maybe_summarize(task)
-            return True, "", False
+            return False, "", False
 
-        reason = (Reason.CONFLICT if verdict.verdict == "conflict"
-                  else Reason.NOT_ACCEPTED)
         self._set_status(agent, subtask, "paused")
-        answer = await self._gate.ask(
+        answer = await self._ask_human(
             reason,
             f"«{subtask.title}»: {verdict.notes[:200] or 'результат не принят'}",
             details=self._decision_details(subtask, report, verdict),
@@ -485,17 +559,22 @@ class Orchestrator:
             parts.append("Замечания супервайзера:\n" + "\n".join(
                 f"· [{i.severity}] {i.description}" for i in verdict.issues
             ))
+        elif verdict.notes:
+            parts.append("Супервайзер:\n" + verdict.notes[:600])
         parts.append("Результат исполнителя:\n" + (report.content or "")[:1200])
         return "\n\n".join(p for p in parts if p)
 
     async def _apply_decision(self, workspace_id: int, task: Task, subtask: Subtask,
-                              agent: Agent, answer, incident_id: int | None
+                              agent: Agent, answer: Answer, incident_id: int | None
                               ) -> tuple[bool | None, str, bool]:
         """Применяет решение пользователя к подзадаче.
 
         Третий элемент кортежа — признак того, что круг доработки назначил
         человек, а значит его надо выдать сверх автоматического лимита.
         """
+        if incident_id is not None:
+            self.state.escalated = max(0, self.state.escalated - 1)
+
         if answer.decision is Decision.ABORT:
             self.bus.log("Прогон остановлен решением пользователя",
                          workspace_id=workspace_id, task_id=task.id)
@@ -516,14 +595,12 @@ class Orchestrator:
                     incident_id, "resolved",
                     f"Пользователь отправил на доработку: {answer.comment[:200]}"
                 )
-            self.state.escalated = max(0, self.state.escalated - 1)
             return None, answer.comment or "Пользователь вернул работу на доработку.", True
 
         if answer.decision is Decision.SKIP:
             self.repos.tasks.update_subtask(subtask.id, status="error")
             self.repos.agents.set_status(agent.id, "idle")
             self.state.failed += 1
-            self.state.escalated = max(0, self.state.escalated - 1)
             if incident_id:
                 self.repos.incidents.resolve(
                     incident_id, "resolved",
@@ -539,7 +616,6 @@ class Orchestrator:
         self.repos.tasks.update_subtask(subtask.id, status="done")
         self.repos.agents.set_status(agent.id, "idle")
         self.state.finished += 1
-        self.state.escalated = max(0, self.state.escalated - 1)
         if incident_id:
             self.repos.incidents.resolve(
                 incident_id, "resolved",
@@ -547,6 +623,31 @@ class Orchestrator:
             )
         await self._maybe_summarize(task)
         return True, "", False
+
+    async def _on_budget_blocked(self, state: ScopeState) -> bool:
+        """Лимит исчерпан посреди прогона: спросить, поднимать ли его.
+
+        Возвращает ``True``, если пользователь разрешил продолжить (лимит
+        поднимает сам ``BudgetGuard``). Остановка прогона — отдельное
+        решение: тогда заблокированные вызовы завершаются ошибкой.
+        """
+        gate = self._gate
+        if gate is None or self._stop.is_set():
+            return False
+        answer = await gate.ask(
+            Reason.BUDGET,
+            f"Исчерпан лимит: {state.reason()}. Поднять лимит на 50% и продолжить?",
+            details=(f"Уровень: {state.name}\n"
+                     f"Текущий лимит: {BudgetGuard.describe_limit(state)}\n"
+                     f"Израсходовано: {state.tokens} токенов, ~${state.cost:.4f}"),
+            task_id=self.state.task_id, agent_name="Бюджет",
+        )
+        if answer.decision is Decision.ABORT:
+            self.bus.log("Прогон остановлен: лимит бюджета исчерпан",
+                         workspace_id=self._workspace_id, task_id=self.state.task_id)
+            self._stop.set()
+            self._pause.set()
+        return answer.decision is Decision.EXTEND
 
     def _last_report(self, subtask_id: int) -> Report | None:
         row = self.repos.db.query_one(
@@ -591,7 +692,7 @@ class Orchestrator:
             ))
             return False
 
-        # Отчёт — это то, что увидит супервайзер на этапе 5.
+        # Отчёт — это то, что увидит супервайзер.
         report_id = self.repos.reports.add_report(
             workspace_id, task.id, subtask.id, agent.id,
             content=result.result_text, confidence=result.confidence,
@@ -600,7 +701,8 @@ class Orchestrator:
         )
         self.repos.agents.set_status(agent.id, "idle")
 
-        confidence = f", уверенность {result.confidence:.2f}" if result.confidence else ""
+        confidence = (f", уверенность {result.confidence:.2f}"
+                      if result.confidence is not None else "")
         self.bus.emit(Event(
             EventType.REPORT_CREATED, workspace_id=workspace_id, task_id=task.id,
             subtask_id=subtask.id, agent_id=agent.id, agent_name=agent.name,
@@ -615,7 +717,7 @@ class Orchestrator:
         return True
 
     def _rework_notes(self, subtask: Subtask) -> str:
-        """Замечания супервайзера к прошлой версии подзадачи (используется на этапе 5)."""
+        """Замечания супервайзера к прошлой версии подзадачи."""
         if subtask.rework_count <= 0:
             return ""
         row = self.repos.db.query_one(
@@ -643,7 +745,8 @@ class Orchestrator:
     def _set_status(self, agent: Agent, subtask: Subtask, status: str) -> None:
         self.repos.agents.set_status(agent.id, status)
         self.repos.tasks.update_subtask(subtask.id, status=status)
-        self.bus.emit(Event(EventType.AGENT_STATUS, agent_id=agent.id,
+        self.bus.emit(Event(EventType.AGENT_STATUS, workspace_id=self._workspace_id,
+                            task_id=self.state.task_id, agent_id=agent.id,
                             agent_name=agent.name, subtask_id=subtask.id,
                             message=status, payload={"status": status}))
 
@@ -653,7 +756,8 @@ class Orchestrator:
         if agent:
             self.repos.agents.set_status(agent.id, "error")
         self.bus.emit(Event(
-            EventType.SUBTASK_FAILED, subtask_id=subtask.id,
+            EventType.SUBTASK_FAILED, workspace_id=self._workspace_id,
+            task_id=self.state.task_id, subtask_id=subtask.id,
             agent_id=agent.id if agent else None,
             agent_name=agent.name if agent else "", message=message,
         ))
@@ -679,10 +783,21 @@ class Orchestrator:
         """Ворота согласования — интерфейс отдаёт через них решения пользователя."""
         return self._gate
 
+    @property
+    def budget(self) -> BudgetGuard | None:
+        """Бюджет текущего прогона — для живых индикаторов в интерфейсе."""
+        return self._budget
+
+    def _count_supervisor_usage(self, tokens: int, cost: float) -> None:
+        self.state.tokens += tokens
+        self.state.cost += cost
+
     def _start_supervisor(self, workspace_id: int, settings: dict, task: Task) -> None:
         """Поднимает супервайзера, если он настроен, и включает сводки по таймеру."""
         self._summary_on_event = bool(settings.get("summary_on_event", True))
-        supervisor = Supervisor(self.repos, self.bus, workspace_id, settings)
+        supervisor = Supervisor(self.repos, self.bus, workspace_id, settings,
+                                budget=self._budget,
+                                on_usage=self._count_supervisor_usage)
         if not supervisor.available():
             self._supervisor = None
             self.bus.log("Супервайзер не настроен — отчёты принимаются без проверки",
@@ -695,6 +810,8 @@ class Orchestrator:
         if self._gate is not None:
             self._gate.cancel_all()
             self._gate = None
+        if self._budget is not None:
+            self._budget.on_blocked = None
         if self._supervisor is not None:
             await self._supervisor.aclose()
             self._supervisor = None

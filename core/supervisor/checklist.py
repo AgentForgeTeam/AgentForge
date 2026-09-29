@@ -298,8 +298,11 @@ class Anonymizer:
         """Вычищает имена агентов из готового текста — страховка на случай,
         если модель всё-таки назвала кого-то по имени."""
         result = text or ""
-        for agent_id, name in names.items():
+        # Длинные имена первыми: «Аналитик Пётр» не должно превратиться в
+        # «Исполнитель A Пётр» из-за того, что сначала заменили «Аналитик».
+        for agent_id, name in sorted(names.items(), key=lambda kv: -len(kv[1] or "")):
             if name and len(name) > 2:
-                result = re.sub(re.escape(name), self.label(agent_id), result,
-                                flags=re.IGNORECASE)
+                # Только целые слова: имя «Ан» не должно резать «Анализ».
+                pattern = rf"(?<!\w){re.escape(name)}(?!\w)"
+                result = re.sub(pattern, self.label(agent_id), result, flags=re.IGNORECASE)
         return result

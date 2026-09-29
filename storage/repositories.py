@@ -76,7 +76,10 @@ class UserRepo:
         new_verify_salt, new_kdf_salt = new_salt(), new_salt()
         new_box = SecretBox(derive_master_key(new_password, new_kdf_salt))
 
-        # Сначала расшифровываем всё старым ключом, затем пишем одной транзакцией.
+        # Сначала расшифровываем всё старым ключом (если что-то не читается,
+        # исключение вылетит до первой записи), затем пишем одной транзакцией:
+        # сбой посередине не должен оставить часть ключей на новом мастер-ключе
+        # при старом пароле — такие ключи было бы уже не расшифровать.
         rows = self.db.query(
             "SELECT id, secret_blob FROM api_keys WHERE user_id = ? AND secret_blob IS NOT NULL",
             (session.user_id,),
@@ -84,13 +87,13 @@ class UserRepo:
         reencrypted = [
             (new_box.encrypt(old_box.decrypt(r["secret_blob"])), r["id"]) for r in rows
         ]
-        for blob, key_id in reencrypted:
-            self.db.execute("UPDATE api_keys SET secret_blob = ? WHERE id = ?", (blob, key_id))
-        self.db.execute(
-            "UPDATE users SET password_hash = ?, verify_salt = ?, kdf_salt = ? WHERE id = ?",
-            (hash_password(new_password, new_verify_salt), new_verify_salt,
-             new_kdf_salt, session.user_id),
-        )
+        new_hash = hash_password(new_password, new_verify_salt)
+        with self.db.transaction() as conn:
+            conn.executemany("UPDATE api_keys SET secret_blob = ? WHERE id = ?", reencrypted)
+            conn.execute(
+                "UPDATE users SET password_hash = ?, verify_salt = ?, kdf_salt = ? WHERE id = ?",
+                (new_hash, new_verify_salt, new_kdf_salt, session.user_id),
+            )
         session.box = new_box
         return True
 
@@ -619,17 +622,56 @@ class MessageRepo:
 
     def history(self, agent_id: int, subtask_id: int | None = None,
                 limit: int = 200) -> list[dict]:
+        """Последние ``limit`` сообщений агента в хронологическом порядке.
+
+        Выбираются именно последние: при длинной истории (несколько кругов
+        доработки) агенту важнее свежие замечания, чем самые первые шаги.
+        """
         sql = "SELECT * FROM messages WHERE agent_id = ?"
         params: list[Any] = [agent_id]
         if subtask_id is not None:
             sql += " AND subtask_id = ?"
             params.append(subtask_id)
-        sql += " ORDER BY id LIMIT ?"
+        sql += " ORDER BY id DESC LIMIT ?"
         params.append(limit)
-        return [dict(r) for r in self.db.query(sql, params)]
+        rows = [dict(r) for r in self.db.query(sql, params)]
+        rows.reverse()
+        return rows
 
     def clear(self, agent_id: int) -> None:
         self.db.execute("DELETE FROM messages WHERE agent_id = ?", (agent_id,))
+
+
+class SecretCodec:
+    """Шифрует короткие секреты, которые хранятся не в ``api_keys``.
+
+    Например, ключ поискового API лежит в настройках воркспейса: там это
+    строка base64, а открытым текстом она существует только в памяти.
+    """
+
+    PREFIX = "enc:"
+
+    def __init__(self, session: Session) -> None:
+        self.session = session
+
+    def seal(self, text: str) -> str:
+        if not text:
+            return ""
+        import base64
+
+        return self.PREFIX + base64.b64encode(self.session.box.encrypt(text)).decode("ascii")
+
+    def open(self, token: str) -> str:
+        if not token:
+            return ""
+        if not token.startswith(self.PREFIX):
+            return token          # старое значение, сохранённое открытым текстом
+        import base64
+
+        try:
+            return self.session.box.decrypt(base64.b64decode(token[len(self.PREFIX):]))
+        except Exception:  # noqa: BLE001 — повреждённый секрет равен отсутствующему
+            return ""
 
 
 class Repos:
@@ -648,3 +690,32 @@ class Repos:
         self.budgets = BudgetRepo(db)
         self.approvals = ApprovalRepo(db)
         self.messages = MessageRepo(db)
+        self.secrets = SecretCodec(session)
+
+    def recover_interrupted_runs(self) -> int:
+        """Приводит в порядок статусы после аварийного завершения приложения.
+
+        Если процесс упал посреди прогона, в базе остаются «работающие»
+        задачи и агенты, которых на самом деле никто не выполняет. Интерфейс
+        показывал бы их как активные, а повторный запуск считал бы занятыми.
+        Возвращает количество исправленных записей.
+        """
+        user_ws = "SELECT id FROM workspaces WHERE user_id = ?"
+        uid = (self.session.user_id,)
+        with self.db.transaction() as conn:
+            changed = conn.execute(
+                f"UPDATE tasks SET status = 'stopped' WHERE status = 'running' "
+                f"AND workspace_id IN ({user_ws})", uid).rowcount
+            changed += conn.execute(
+                f"UPDATE subtasks SET status = 'paused' WHERE status = 'running' "
+                f"AND task_id IN (SELECT id FROM tasks WHERE workspace_id IN ({user_ws}))",
+                uid).rowcount
+            changed += conn.execute(
+                f"UPDATE agents SET status = 'idle' WHERE status IN ('running', 'paused') "
+                f"AND workspace_id IN ({user_ws})", uid).rowcount
+            conn.execute(
+                "UPDATE approvals SET decision = 'cancelled', "
+                "comment = 'Приложение было закрыто до решения', decided_at = ? "
+                f"WHERE decision = '' AND workspace_id IN ({user_ws})",
+                (utcnow(), *uid))
+        return changed

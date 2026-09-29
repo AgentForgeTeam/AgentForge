@@ -37,7 +37,7 @@ class CodeExecTool(Tool):
         if language not in LANG_COMMANDS:
             raise ToolError(f"Язык «{language}» не поддерживается")
 
-        sandbox = get_sandbox(ctx.sandbox_backend)
+        sandbox = await get_sandbox(ctx.sandbox_backend)
         result = await sandbox.run(
             code=code,
             language=language,

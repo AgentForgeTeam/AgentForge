@@ -88,6 +88,17 @@ async def plan_subtasks(repos: Repos, workspace_id: int,
         f"ДОСТУПНЫЕ ИСПОЛНИТЕЛИ: {json.dumps(roster, ensure_ascii=False)}"
     )
 
+    # Планирование тоже тратит бюджет, поэтому лимиты проверяются заранее.
+    from core.budget import BudgetGuard
+    from core.events import EventBus
+
+    task = repos.tasks.current(workspace_id)
+    guard = BudgetGuard(repos, EventBus(), workspace_id,
+                        task.id if task else None, task.token_limit if task else None)
+    blocked = guard.blocking_scope(agent.id)
+    if blocked is not None:
+        raise RuntimeError(f"Планирование не запущено: лимит исчерпан — {blocked.reason()}")
+
     secret = repos.keys.reveal(agent.api_key_id) if agent.api_key_id else ""
     key = repos.keys.get(agent.api_key_id) if agent.api_key_id else None
     provider = build_provider(agent.provider, secret, key.base_url if key else "")
@@ -104,7 +115,8 @@ async def plan_subtasks(repos: Repos, workspace_id: int,
     # Учёт расхода — планирование тоже стоит денег.
     cost = estimate_cost(agent.provider, agent.model,
                          result.usage.input_tokens, result.usage.output_tokens)
-    repos.budgets.log_call(workspace_id, None, None, agent.id, agent.provider,
+    repos.budgets.log_call(workspace_id, task.id if task else None, None, agent.id,
+                           agent.provider,
                            agent.model, result.usage.input_tokens,
                            result.usage.output_tokens, cost)
 
@@ -115,8 +127,12 @@ async def plan_subtasks(repos: Repos, workspace_id: int,
         raise RuntimeError("Модель вернула ответ не в формате JSON. "
                            "Попробуйте ещё раз или выберите другую модель.") from exc
 
+    # Некоторые модели отвечают голым списком вместо объекта — принимаем и так.
+    items = data if isinstance(data, list) else (data.get("subtasks") or [])
     out: list[PlannedSubtask] = []
-    for item in data.get("subtasks", []):
+    for item in items:
+        if not isinstance(item, dict):
+            continue
         title = str(item.get("title", "")).strip()
         if not title:
             continue

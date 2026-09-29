@@ -29,6 +29,7 @@ class EventType(str, Enum):
 
     AGENT_STATUS = "agent_status"        # агент сменил статус
     AGENT_THINKING = "agent_thinking"    # шаг рассуждения
+    AGENT_DELTA = "agent_delta"          # очередной фрагмент текста модели (стриминг)
     AGENT_TOOL_CALL = "agent_tool_call"  # агент вызвал инструмент
     AGENT_TOOL_RESULT = "agent_tool_result"
 
@@ -46,6 +47,7 @@ class EventType(str, Enum):
 
     BUDGET_ALERT = "budget_alert"          # расход подошёл к порогу
     BUDGET_EXCEEDED = "budget_exceeded"    # лимит исчерпан, вызовы заблокированы
+    BUDGET_EXTENDED = "budget_extended"    # пользователь поднял лимит во время прогона
     USAGE = "usage"                      # расход токенов/денег
     LOG = "log"                          # произвольное сообщение в ленту
     ERROR = "error"

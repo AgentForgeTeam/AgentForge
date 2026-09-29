@@ -30,6 +30,17 @@ log = logging.getLogger("aiorc.runner")
 HISTORY_WINDOW = 24
 #: после какого количества символов истории включается сжатие
 HISTORY_COMPACT_CHARS = 24_000
+#: фрагменты стриминга копятся до такой длины, прежде чем уйти в шину:
+#: отправлять событие на каждый токен бессмысленно дорого
+DELTA_FLUSH_CHARS = 16
+#: статусы HTTP, при которых провайдер, вероятно, просто не умеет стриминг
+STREAM_UNSUPPORTED = {400, 404, 405, 415, 422, 501}
+
+FINALIZE_PROMPT = (
+    "Лимит шагов на эту подзадачу исчерпан, инструменты больше недоступны. "
+    "Подведи итог по тому, что уже успел выяснить: выдай его после строки RESULT: "
+    "и укажи строку CONFIDENCE: <0..1>. Честно отметь, что осталось непроверенным."
+)
 
 
 class RunCancelled(Exception):
@@ -138,7 +149,8 @@ class AgentRunner:
             sandbox_memory_mb=int(self.settings.get("sandbox_memory_mb", 512)),
             allow_network_in_sandbox=False,
             search_backend=self.settings.get("search_backend", "duckduckgo"),
-            search_api_key=self.settings.get("search_api_key", ""),
+            # Ключ поискового API хранится в настройках зашифрованным.
+            search_api_key=self.repos.secrets.open(self.settings.get("search_api_key", "")),
             fetch_pages=bool(self.settings.get("fetch_pages", True)),
         )
 
@@ -252,6 +264,62 @@ class AgentRunner:
             agent_name=self.agent.name, message=message, payload=payload,
         ))
 
+    # -- вызов модели --------------------------------------------------------
+    async def _check_budget(self) -> str:
+        """Проверка ДО вызова модели: узнавать о лимите постфактум бессмысленно.
+
+        Возвращает текст ошибки, если вызов делать нельзя, иначе пустую строку.
+        """
+        if self.budget is None:
+            return ""
+        ensure = getattr(self.budget, "ensure_allowed", None)
+        blocked = (await ensure(self.agent.id) if ensure is not None
+                   else self.budget.blocking_scope(self.agent.id))
+        return f"Лимит исчерпан — {blocked.reason()}" if blocked is not None else ""
+
+    async def _call_model(self, messages: list[ChatMessage], step: int,
+                          tools: list | None) -> CompletionResult:
+        """Один вызов модели со стримингом текста в интерфейс.
+
+        Фрагменты копятся в небольшой буфер и уходят в шину пачками. Если
+        провайдер отверг потоковый запрос ещё до первого фрагмента (частая
+        история с самописными OpenAI-совместимыми серверами), вызов
+        повторяется в обычном режиме, а не роняет подзадачу.
+        """
+        buffer: dict[str, list[str]] = {"text": [], "reasoning": []}
+        streamed = False
+
+        def flush(kind: str) -> None:
+            if buffer[kind]:
+                chunk = "".join(buffer[kind])
+                buffer[kind].clear()
+                self._emit(EventType.AGENT_DELTA, chunk, step=step, stream=kind)
+
+        def on_delta(piece: str, kind: str = "text") -> None:
+            nonlocal streamed
+            streamed = True
+            kind = kind if kind in buffer else "text"
+            buffer[kind].append(piece)
+            if sum(map(len, buffer[kind])) >= DELTA_FLUSH_CHARS or "\n" in piece:
+                flush(kind)
+
+        options = dict(temperature=self.agent.temperature,
+                       max_tokens=self.agent.max_tokens, tools=tools)
+        try:
+            result = await self.provider.stream_complete(
+                self.agent.model, messages, on_delta=on_delta, **options)
+        except ProviderError as exc:
+            if streamed or exc.status not in STREAM_UNSUPPORTED:
+                raise
+            log.info("Стриминг не поддержан (%s), повтор обычным запросом", exc)
+            result = await self.provider.complete(self.agent.model, messages, **options)
+            if result.text:
+                on_delta(result.text, "text")
+        finally:
+            flush("reasoning")
+            flush("text")
+        return result
+
     # -- основной цикл -------------------------------------------------------
     async def run(self) -> RunResult:
         """Прогоняет ReAct-цикл до готового результата или до стоп-условия."""
@@ -267,14 +335,12 @@ class AgentRunner:
 
         totals = RunResult(ok=False)
         last_text = ""
+        last_step_used_tools = False
 
         for step in range(1, self.max_steps + 1):
-            # Проверка ДО вызова модели: узнавать о лимите постфактум
-            # бессмысленно — деньги уже потрачены.
-            blocked = (self.budget.blocking_scope(self.agent.id)
-                       if self.budget else None)
-            if blocked is not None:
-                totals.error = f"Лимит исчерпан — {blocked.reason()}"
+            blocked = await self._check_budget()
+            if blocked:
+                totals.error = blocked
                 self._emit(EventType.SUBTASK_FAILED, totals.error)
                 return totals
 
@@ -282,12 +348,7 @@ class AgentRunner:
             self._emit(EventType.AGENT_THINKING, f"шаг {step}/{self.max_steps}", step=step)
 
             try:
-                result = await self.provider.complete(
-                    self.agent.model, messages,
-                    temperature=self.agent.temperature,
-                    max_tokens=self.agent.max_tokens,
-                    tools=specs or None,
-                )
+                result = await self._call_model(messages, step, specs or None)
             except asyncio.CancelledError:
                 raise
             except ProviderError as exc:
@@ -300,9 +361,7 @@ class AgentRunner:
                 self._emit(EventType.SUBTASK_FAILED, totals.error)
                 return totals
 
-            totals.tokens_in += result.usage.input_tokens
-            totals.tokens_out += result.usage.output_tokens
-            totals.cost_usd += self._account(result)
+            self._add_usage(totals, result)
             last_text = result.text or last_text
 
             # Ответ модели сохраняем в её личную историю.
@@ -311,12 +370,9 @@ class AgentRunner:
                                         self.subtask.id, tokens=result.usage.output_tokens)
 
             if not result.tool_calls:
+                last_step_used_tools = False
                 if looks_done(result.text) or step == self.max_steps:
-                    totals.ok = True
-                    totals.result_text = parse_result(result.text)
-                    totals.confidence = parse_confidence(result.text)
-                    self._emit(EventType.SUBTASK_PROGRESS, "получен результат")
-                    return totals
+                    return self._finish(totals, result.text)
                 # Модель ответила текстом, но не обозначила финал — просим завершить.
                 messages.append(ChatMessage("assistant", result.text))
                 nudge = ("Если подзадача выполнена — выдай итог после строки RESULT: "
@@ -325,6 +381,7 @@ class AgentRunner:
                 continue
 
             # --- есть вызовы инструментов ---
+            last_step_used_tools = True
             messages.append(ChatMessage("assistant", result.text,
                                         tool_calls=result.tool_calls))
             for call in result.tool_calls:
@@ -335,13 +392,54 @@ class AgentRunner:
                                         self.subtask.id, tool_name=call.name,
                                         tool_call_id=call.id)
 
-        # Шаги кончились — отдаём то, что есть.
+        if last_step_used_tools:
+            # Последний шаг ушёл на инструменты, итога модель не дала. Выдать
+            # промежуточное «сейчас посчитаю» за результат нельзя — просим
+            # подвести итог одним дополнительным вызовом без инструментов.
+            finalized = await self._finalize(messages, totals)
+            if finalized is not None:
+                return finalized
+
         totals.ok = bool(last_text)
         totals.result_text = parse_result(last_text)
         totals.confidence = parse_confidence(last_text)
         if not totals.ok:
             totals.error = "Агент не выдал результат за отведённое число шагов"
         return totals
+
+    def _add_usage(self, totals: RunResult, result: CompletionResult) -> None:
+        totals.tokens_in += result.usage.input_tokens
+        totals.tokens_out += result.usage.output_tokens
+        totals.cost_usd += self._account(result)
+
+    def _finish(self, totals: RunResult, text: str) -> RunResult:
+        totals.ok = True
+        totals.result_text = parse_result(text)
+        totals.confidence = parse_confidence(text)
+        self._emit(EventType.SUBTASK_PROGRESS, "получен результат")
+        return totals
+
+    async def _finalize(self, messages: list[ChatMessage],
+                        totals: RunResult) -> RunResult | None:
+        """Дополнительный вызов для итога, когда шаги кончились на инструментах."""
+        if await self._check_budget():
+            return None
+        messages.append(ChatMessage("user", FINALIZE_PROMPT))
+        step = totals.steps + 1
+        self._emit(EventType.AGENT_THINKING, "подведение итога", step=step)
+        try:
+            result = await self._call_model(messages, step, None)
+        except asyncio.CancelledError:
+            raise
+        except Exception:  # noqa: BLE001 — итог не получился, вернём что было
+            log.exception("Не удалось получить итог после исчерпания шагов")
+            return None
+        self._add_usage(totals, result)
+        if not result.text:
+            return None
+        self.repos.messages.add(self.agent.id, "assistant", result.text,
+                                self.subtask.id, tokens=result.usage.output_tokens)
+        return self._finish(totals, result.text)
 
     async def _invoke_tool(self, call: ToolCall, ctx: ToolContext,
                            totals: RunResult) -> str:

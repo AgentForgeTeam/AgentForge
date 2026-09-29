@@ -14,13 +14,22 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from dataclasses import dataclass, field
+from typing import Awaitable, Callable
 
 from core.events import Event, EventBus, EventType
 from storage.repositories import Repos
 
 log = logging.getLogger("aiorc.budget")
+
+#: во сколько раз поднимается лимит по решению пользователя
+EXTEND_FACTOR = 1.5
+
+
+class BudgetBlocked(RuntimeError):
+    """Вызов модели не выполнен: исчерпан лимит бюджета."""
 
 SCOPE_TITLES = {
     "workspace": "воркспейс",
@@ -66,6 +75,7 @@ class ScopeState:
     tokens: int = 0
     cost: float = 0.0
     alerted: bool = False
+    exceeded_reported: bool = False
 
     def ratio(self) -> float:
         """Доля израсходованного — максимум из токенов и денег."""
@@ -107,6 +117,12 @@ class BudgetGuard:
         self.workspace_id = workspace_id
         self.task_id = task_id
         self._scopes: dict[tuple[str, int], ScopeState] = {}
+        #: лимит на уровне задачи взят из формы задачи, а не из таблицы budgets
+        self._task_limit_from_form = False
+        #: кто решает, что делать при исчерпании лимита; ``None`` — блокировать
+        self.on_blocked: Callable[[ScopeState], Awaitable[bool]] | None = None
+        #: один вопрос на уровень: параллельные агенты ждут общего ответа
+        self._pending: dict[tuple[str, int], asyncio.Future] = {}
         self._load(task_token_limit)
 
     # -- загрузка ------------------------------------------------------------
@@ -127,6 +143,8 @@ class BudgetGuard:
             # если отдельной записи в budgets нет, берём его оттуда.
             if limit.token_limit is None and task_token_limit:
                 limit.token_limit = task_token_limit
+                self._task_limit_from_form = self.repos.budgets.get(
+                    "task", self.task_id) is None
             self._scopes[("task", self.task_id)] = ScopeState(
                 "task", self.task_id, task.title if task else "задача",
                 limit, used_tokens, used_cost,
@@ -173,6 +191,70 @@ class BudgetGuard:
         """Совместимость со старым интерфейсом ``TokenBudget``."""
         return self.blocking_scope(agent_id) is not None
 
+    async def ensure_allowed(self, agent_id: int | None = None) -> ScopeState | None:
+        """Проверка перед вызовом модели с возможностью продлить лимит.
+
+        Возвращает ``None``, если вызов разрешён, иначе уровень, который
+        его блокирует. Когда назначен ``on_blocked`` (включён
+        human-in-the-loop), исчерпанный лимит не обрывает работу сразу:
+        пользователя спрашивают, поднять ли лимит. Параллельные агенты,
+        упёршиеся в тот же уровень, ждут одного общего ответа, а не
+        заваливают человека одинаковыми вопросами.
+        """
+        while True:
+            blocked = self.blocking_scope(agent_id)
+            if blocked is None or self.on_blocked is None:
+                return blocked
+            key = (blocked.scope, blocked.scope_id)
+            future = self._pending.get(key)
+            if future is None:
+                future = asyncio.ensure_future(self._ask_extension(blocked))
+                self._pending[key] = future
+                future.add_done_callback(lambda _f, k=key: self._pending.pop(k, None))
+            if not await asyncio.shield(future):
+                return blocked
+            # лимит поднят — проверяем все уровни заново: мог упереться другой
+
+    async def _ask_extension(self, state: ScopeState) -> bool:
+        assert self.on_blocked is not None
+        if not await self.on_blocked(state):
+            return False
+        self.extend(state)
+        return True
+
+    def extend(self, state: ScopeState, factor: float = EXTEND_FACTOR) -> None:
+        """Поднимает исчерпанный лимит и сохраняет новое значение."""
+        limit = state.limit
+        if limit.token_limit:
+            limit.token_limit = int(max(limit.token_limit, state.tokens) * factor)
+        if limit.cost_limit:
+            limit.cost_limit = round(max(limit.cost_limit, state.cost) * factor, 6)
+        state.alerted = False
+        if state.scope == "task" and self._task_limit_from_form:
+            # Лимит задан в форме задачи — там его и обновляем.
+            self.repos.tasks.update(state.scope_id, token_limit=limit.token_limit)
+        else:
+            self.repos.budgets.upsert(state.scope, state.scope_id, limit.token_limit,
+                                      limit.cost_limit, limit.alert_threshold)
+            self.repos.budgets.sync_used(state.scope, state.scope_id,
+                                         state.tokens, state.cost)
+        self.bus.emit(Event(
+            EventType.BUDGET_EXTENDED, workspace_id=self.workspace_id,
+            task_id=self.task_id,
+            message=(f"лимит поднят: {SCOPE_TITLES.get(state.scope, state.scope)} "
+                     f"«{state.name}» — {self.describe_limit(state)}"),
+            payload={"scope": state.scope, "scope_id": state.scope_id},
+        ))
+
+    @staticmethod
+    def describe_limit(state: ScopeState) -> str:
+        parts = []
+        if state.limit.token_limit:
+            parts.append(f"{state.limit.token_limit} токенов")
+        if state.limit.cost_limit:
+            parts.append(money(state.limit.cost_limit))
+        return ", ".join(parts) or "без лимита"
+
     # -- учёт ----------------------------------------------------------------
     def add(self, tokens: int, cost: float, agent_id: int | None = None) -> None:
         """Записывает расход и при необходимости поднимает алерты."""
@@ -194,10 +276,17 @@ class BudgetGuard:
                 self._maybe_alert(state)
 
     def _maybe_alert(self, state: ScopeState) -> None:
-        """Алерт срабатывает один раз на уровень — иначе он превратится в шум."""
+        """Каждый алерт срабатывает один раз на уровень — иначе это шум.
+
+        «Подходим к порогу» и «лимит исчерпан» — разные события, поэтому у
+        них отдельные флаги: предупреждение о пороге не должно глушить
+        сообщение о превышении, и наоборот.
+        """
         if state.exceeded():
-            if not state.alerted:
-                state.alerted = True
+            if state.exceeded_reported:
+                return
+            state.exceeded_reported = True
+            state.alerted = True
             self.bus.emit(Event(
                 EventType.BUDGET_EXCEEDED, workspace_id=self.workspace_id,
                 task_id=self.task_id,
@@ -207,6 +296,7 @@ class BudgetGuard:
             ))
             return
 
+        state.exceeded_reported = False     # после продления лимита снова следим
         if not state.alerted and state.ratio() >= state.limit.alert_threshold:
             state.alerted = True
             percent = state.ratio() * 100

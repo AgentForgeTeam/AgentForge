@@ -9,9 +9,10 @@ from __future__ import annotations
 
 import sqlite3
 import threading
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable, Sequence
+from typing import Any, Iterable, Iterator, Sequence
 
 from app.config import PATHS, SCHEMA_VERSION
 
@@ -71,6 +72,22 @@ class Database:
             self.conn.commit()
 
     # -- базовые операции ----------------------------------------------------
+    @contextmanager
+    def transaction(self) -> Iterator[sqlite3.Connection]:
+        """Несколько изменений одним коммитом: либо применяются все, либо ни одно.
+
+        Внутри блока писать нужно через возвращённое соединение, а не через
+        ``execute``: тот коммитит каждую команду по отдельности.
+        """
+        with self._lock:
+            try:
+                self.conn.execute("BEGIN")
+                yield self.conn
+                self.conn.commit()
+            except BaseException:
+                self.conn.rollback()
+                raise
+
     def execute(self, sql: str, params: Sequence[Any] = ()) -> sqlite3.Cursor:
         with self._lock:
             cur = self.conn.execute(sql, params)

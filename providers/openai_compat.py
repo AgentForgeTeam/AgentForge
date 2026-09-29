@@ -14,11 +14,13 @@ import httpx
 from providers.base import (
     ChatMessage,
     CompletionResult,
+    DeltaHandler,
     LLMProvider,
     ProviderError,
     ToolCall,
     ToolSpec,
     Usage,
+    estimate_tokens,
 )
 
 
@@ -126,6 +128,113 @@ class OpenAICompatProvider(LLMProvider):
             model=data.get("model", model),
             raw=data,
         )
+
+    async def stream_complete(self, model: str, messages: list[ChatMessage], *,
+                              temperature: float = 0.7, max_tokens: int = 2048,
+                              tools: list[ToolSpec] | None = None,
+                              on_delta: DeltaHandler | None = None) -> CompletionResult:
+        """Потоковый ``/chat/completions`` с разбором вызовов инструментов.
+
+        Аргументы вызова инструмента приходят кусками JSON в нескольких
+        чанках, поэтому они склеиваются по ``index`` и разбираются в конце.
+        Расход токенов сервер присылает последним чанком, если попросить
+        ``stream_options.include_usage``; часть совместимых серверов этот
+        параметр не знает — тогда запрос повторяется без него.
+        """
+        payload: dict[str, Any] = {
+            "model": model,
+            "messages": self._to_wire(messages),
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "stream": True,
+            "stream_options": {"include_usage": True},
+        }
+        tool_payload = self._tools_payload(tools)
+        if tool_payload:
+            payload["tools"] = tool_payload
+            payload["tool_choice"] = "auto"
+        try:
+            return await self._stream_once(payload, model, messages, on_delta)
+        except ProviderError as exc:
+            if exc.status == 400 and "stream_options" in str(exc):
+                payload.pop("stream_options", None)
+                return await self._stream_once(payload, model, messages, on_delta)
+            raise
+
+    async def _stream_once(self, payload: dict[str, Any], model: str,
+                           messages: list[ChatMessage],
+                           on_delta: DeltaHandler | None) -> CompletionResult:
+        text_parts: list[str] = []
+        reasoning_parts: list[str] = []
+        calls: dict[int, dict[str, str]] = {}
+        usage: dict[str, Any] = {}
+        finish_reason = ""
+        model_name = model
+        try:
+            async with self._http().stream(
+                "POST", f"{self.base_url}/chat/completions",
+                headers=self._headers(), json=payload,
+            ) as resp:
+                if resp.status_code >= 400:
+                    await resp.aread()
+                    raise ProviderError(_error_text(resp), resp.status_code)
+                async for line in resp.aiter_lines():
+                    if not line.startswith("data:"):
+                        continue
+                    raw = line[5:].strip()
+                    if not raw or raw == "[DONE]":
+                        continue
+                    try:
+                        chunk = json.loads(raw)
+                    except ValueError:
+                        continue
+                    if chunk.get("error"):
+                        err = chunk["error"]
+                        raise ProviderError(err.get("message", str(err))
+                                            if isinstance(err, dict) else str(err))
+                    model_name = chunk.get("model") or model_name
+                    usage = (chunk.get("usage")
+                             or (chunk.get("x_groq") or {}).get("usage")
+                             or usage)
+                    for choice in chunk.get("choices") or []:
+                        delta = choice.get("delta") or {}
+                        piece = delta.get("content")
+                        if piece:
+                            text_parts.append(piece)
+                            if on_delta:
+                                on_delta(piece, "text")
+                        thought = delta.get("reasoning_content") or delta.get("reasoning")
+                        if isinstance(thought, str) and thought:
+                            reasoning_parts.append(thought)
+                            if on_delta:
+                                on_delta(thought, "reasoning")
+                        for tc in delta.get("tool_calls") or []:
+                            slot = calls.setdefault(int(tc.get("index", len(calls))),
+                                                    {"id": "", "name": "", "args": ""})
+                            slot["id"] = tc.get("id") or slot["id"]
+                            fn = tc.get("function") or {}
+                            slot["name"] = fn.get("name") or slot["name"]
+                            slot["args"] += fn.get("arguments") or ""
+                        finish_reason = choice.get("finish_reason") or finish_reason
+        except httpx.HTTPError as exc:
+            raise ProviderError(f"Сетевая ошибка: {exc}") from exc
+
+        text = "".join(text_parts)
+        tool_calls = [
+            ToolCall(id=slot["id"] or f"call_{index}", name=slot["name"],
+                     arguments=ToolCall.parse_args(slot["args"]))
+            for index, slot in sorted(calls.items()) if slot["name"]
+        ]
+        if usage:
+            result_usage = Usage(int(usage.get("prompt_tokens", 0)),
+                                 int(usage.get("completion_tokens", 0)))
+        else:
+            prompt = sum(len(m.content or "") for m in messages)
+            output = text + "".join(reasoning_parts) + "".join(
+                c["args"] for c in calls.values())
+            result_usage = Usage(prompt // 4, estimate_tokens(output))
+        return CompletionResult(text=text, tool_calls=tool_calls, usage=result_usage,
+                                finish_reason=finish_reason, model=model_name)
 
     async def stream(self, model: str, messages: list[ChatMessage], *,
                      temperature: float = 0.7,

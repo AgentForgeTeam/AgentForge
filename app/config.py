@@ -14,7 +14,7 @@ from pathlib import Path
 
 APP_NAME = "AI Orchestrator"
 APP_SLUG = "ai-orchestrator"
-APP_VERSION = "1.0.0"          # версия растёт вместе с этапами MVP
+APP_VERSION = "1.1.0"          # 1.1: новый интерфейс на Qt Quick, стриминг агентов
 SCHEMA_VERSION = 1             # версия схемы SQLite (для миграций)
 
 
@@ -77,7 +77,8 @@ class AppSettings:
     """Настройки уровня приложения (не привязаны к пользователю)."""
 
     language: str = "ru"           # "ru" | "en"
-    theme: str = "dark"            # "dark" | "light"
+    #: насколько активны анимации интерфейса: "full" | "reduced" | "off"
+    motion: str = "full"
     last_username: str = ""
     remember_master_password: bool = False
 
@@ -118,11 +119,13 @@ DEFAULT_WORKSPACE_SETTINGS: dict = {
     "anonymize_summaries": True,        # пересказ без указания авторов
     "task_token_limit": None,           # None = без лимита (вопрос 7)
     "agent_max_steps": 10,              # шагов ReAct-цикла на подзадачу
+    "max_parallel_agents": 6,           # сколько агентов работают одновременно
     "tools_enabled": ["web_search", "files", "code_exec"],
     "extra_allowed_paths": [],          # доп. каталоги для файлового инструмента
     "sandbox_backend": "auto",          # "auto" | "subprocess" | "docker"
     "sandbox_timeout_sec": 30,
     "sandbox_memory_mb": 512,
     "search_backend": "duckduckgo",     # "duckduckgo" | "tavily" | "brave"
+    "search_api_key": "",               # ключ Tavily/Brave, хранится зашифрованным
     "fetch_pages": True,                # скачивать и парсить страницы из выдачи
 }

@@ -10,7 +10,21 @@ from __future__ import annotations
 import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator
+from typing import Any, AsyncIterator, Callable
+
+#: получатель фрагментов при потоковой генерации: (текст, вид). Вид —
+#: ``"text"`` для ответа модели или ``"reasoning"`` для рассуждения
+#: моделей, которые отдают его отдельно (DeepSeek-R1, Claude thinking и т.п.)
+DeltaHandler = Callable[[str, str], None]
+
+
+def estimate_tokens(text: str) -> int:
+    """Грубая оценка числа токенов, если провайдер не прислал расход.
+
+    Лучше посчитать приблизительно, чем записать ноль: нулевой расход
+    незаметно обходил бы лимиты бюджета.
+    """
+    return max(1, len(text or "") // 4) if text else 0
 
 
 @dataclass
@@ -109,6 +123,30 @@ class LLMProvider(ABC):
         tools: list[ToolSpec] | None = None,
     ) -> CompletionResult:
         """Однократный вызов модели."""
+
+    async def stream_complete(
+        self,
+        model: str,
+        messages: list[ChatMessage],
+        *,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+        tools: list[ToolSpec] | None = None,
+        on_delta: DeltaHandler | None = None,
+    ) -> CompletionResult:
+        """Вызов модели с потоковой выдачей текста.
+
+        Результат тот же, что у ``complete`` (текст, вызовы инструментов,
+        расход), но по ходу генерации каждый фрагмент текста передаётся в
+        ``on_delta`` — так интерфейс показывает рассуждение агента вживую.
+        Реализация по умолчанию делает обычный вызов и отдаёт текст целиком:
+        провайдер без стриминга просто покажет ответ разом.
+        """
+        result = await self.complete(model, messages, temperature=temperature,
+                                     max_tokens=max_tokens, tools=tools)
+        if on_delta and result.text:
+            on_delta(result.text, "text")
+        return result
 
     @abstractmethod
     async def list_models(self) -> list[str]:
