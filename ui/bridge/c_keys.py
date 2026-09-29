@@ -118,16 +118,20 @@ class KeysController(Controller):
                 await provider.aclose()
 
         def done(models: list[str]) -> None:
+            if not self.ready:          # за время проверки вышли из профиля
+                return
             message = tr("keys.test_ok", n=len(models))
             self._tests[key_id] = ("ok", message)
-            meta = dict(key.meta)
-            meta["models"] = models[:300]    # кэш для выпадающего списка моделей
-            self.repos.keys.update(key.id, key.label, key.base_url, None, meta)
+            # Кэш для выпадающего списка моделей. Пишем только его: подпись и
+            # адрес ключа могли поправить, пока шёл запрос.
+            self.repos.keys.update_meta(key.id, models=models[:300])
             self._model.update_row(key_id, testState="ok", testMessage=message,
                                    models=len(models))
             self.backend.agents.refresh()
 
         def failed(exc: Exception) -> None:
+            if not self.ready:
+                return
             message = tr("keys.test_fail", err=error_text(exc))
             self._tests[key_id] = ("fail", message)
             self._model.update_row(key_id, testState="fail", testMessage=message)

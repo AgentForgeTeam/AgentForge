@@ -17,7 +17,7 @@ APP_NAME = "Agent Forge"
 APP_SLUG = "agent-forge"
 #: каталог данных до переименования проекта (AI Orchestrator → Agent Forge)
 LEGACY_SLUG = "ai-orchestrator"
-APP_VERSION = "1.1.0"          # 1.1: новый интерфейс на Qt Quick, стриминг агентов
+APP_VERSION = "1.1.1"          # 1.1.1: исправления после полного прохода по коду
 SCHEMA_VERSION = 1             # версия схемы SQLite (для миграций)
 
 

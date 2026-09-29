@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import shutil
 import zipfile
 from dataclasses import dataclass
@@ -84,7 +85,7 @@ def export_docx(bundle: ResultBundle, options: ExportOptions,
             "pip install python-docx"
         ) from exc
 
-    blocks = build_document(bundle, options)
+    blocks = [_clean_block(b) for b in build_document(bundle, options)]
     document = Document()
 
     # Моноширинный стиль для кода — в стандартном шаблоне его нет.
@@ -225,7 +226,7 @@ def export_pdf(bundle: ResultBundle, options: ExportOptions,
     }
 
     story: list = []
-    for block in build_document(bundle, options):
+    for block in (_clean_block(b) for b in build_document(bundle, options)):
         if block.kind == "heading":
             story.append(Paragraph(_escape(block.text),
                                    headings.get(min(block.level, 4), body)))
@@ -267,6 +268,27 @@ def export_pdf(bundle: ResultBundle, options: ExportOptions,
 def _escape(raw: str) -> str:
     """Экранирует спецсимволы разметки reportlab."""
     return (raw or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+#: управляющие символы, недопустимые в XML (DOCX их не принимает вовсе):
+#: всё ниже пробела, кроме табуляции и переводов строки
+_CONTROL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+#: ANSI-последовательности цвета из вывода терминала: «\x1b[31m»
+_ANSI = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
+
+
+def _clean(text: str) -> str:
+    """Убирает то, что сломало бы DOCX/PDF: цвета терминала и управляющие символы.
+
+    Агенты вставляют в результат вывод программ как есть, а python-docx
+    на первом же таком символе бросает исключение и экспорт целиком падает.
+    """
+    return _CONTROL.sub("", _ANSI.sub("", text or ""))
+
+
+def _clean_block(block: Block) -> Block:
+    return Block(block.kind, text=_clean(block.text), level=block.level,
+                 items=[_clean(i) for i in block.items], language=block.language)
 
 
 # ---------------------------------------------------------------------------

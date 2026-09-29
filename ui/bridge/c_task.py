@@ -6,7 +6,15 @@ from PySide6.QtCore import Property, QObject, Signal, Slot
 
 from app.i18n import tr
 from core.planner import match_agent_by_role, plan_subtasks
-from ui.bridge.core import Controller, elide, error_text, fmt_money, fmt_tokens, status_title
+from ui.bridge.core import (
+    Controller,
+    as_int,
+    elide,
+    error_text,
+    fmt_money,
+    fmt_tokens,
+    status_title,
+)
 from ui.bridge.listmodel import DictListModel
 from utils.asyncutils import run_async
 
@@ -135,6 +143,10 @@ class TaskController(Controller):
         else:
             self.repos.tasks.update(task.id, title=title, description=body,
                                     result_format=fmt, token_limit=token_limit)
+            # Лимит задачи поменяли посреди прогона — он действует сразу.
+            orch = self.backend.orchestrator
+            if orch is not None and orch.state.running and orch.budget is not None:
+                orch.budget.reload_limits()
         self.refresh()
         self.backend.dashboard.schedule()
         return ""
@@ -160,12 +172,21 @@ class TaskController(Controller):
         task_id = self._ensure_task()
         if task_id is None:
             return tr("task.save_first")
+        sid = as_int(data.get("id"))
+        if sid >= 0 and self.backend.running:
+            # Правка подзадачи, которую сейчас выполняет агент, разошлась бы
+            # с тем, что он делает, и с тем, что потом проверит супервайзер.
+            return tr("toast.run_active_text")
         title = str(data.get("title") or "").strip()
         if not title:
             return tr("task.need_subtask_title")
-        agent_id = int(data.get("agentId", -1))
-        deps = [int(d) for d in (data.get("deps") or []) if int(d) != int(data.get("id", -2))]
-        sid = int(data.get("id", -1))
+        agent_id = as_int(data.get("agentId"))
+        known = {s.id for s in self.repos.tasks.subtasks(task_id)}
+        deps = []
+        for raw in data.get("deps") or []:
+            dep = as_int(raw)
+            if dep in known and dep != sid and dep not in deps:
+                deps.append(dep)
         if sid >= 0 and self._creates_cycle(task_id, sid, deps):
             return tr("task.dep_cycle")
         description = str(data.get("description") or "").strip()
@@ -200,6 +221,11 @@ class TaskController(Controller):
 
     @Slot(int)
     def removeSubtask(self, sid: int) -> None:  # noqa: N802
+        if self.backend.running:
+            # Удаление подзадачи посреди прогона рвёт связи в базе, и агент,
+            # который её выполняет, падает на записи отчёта.
+            self.toast("warning", tr("toast.run_active"), tr("toast.run_active_text"))
+            return
         task_id = self._ensure_task()
         self.repos.tasks.delete_subtask(sid)
         # Ссылки на удалённую подзадачу из зависимостей других тоже убираем.
@@ -212,6 +238,8 @@ class TaskController(Controller):
 
     @Slot(int, int)
     def move(self, sid: int, delta: int) -> None:
+        if self.backend.running:
+            return
         task_id = self._ensure_task()
         if task_id is None:
             return
@@ -246,6 +274,9 @@ class TaskController(Controller):
 
         def done(planned) -> None:
             self._set(planning=False)
+            # Пока модель думала, пользователь мог выйти из профиля.
+            if not self.ready:
+                return
             for item in planned:
                 agent_id = match_agent_by_role(self.repos, ws_id, item.assignee_role)
                 self.repos.tasks.add_subtask(task_id, item.title, item.description, agent_id)

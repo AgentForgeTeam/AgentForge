@@ -3,7 +3,7 @@
 Единый файл для продолжения работы над проектом: цель, принятые решения,
 полный код всех файлов, команды запуска и список незакрытых задач.
 
-**Версия:** 1.1.0 · **Python:** 3.11+ · **Интерфейс:** PySide6 6.11, Qt Quick
+**Версия:** 1.1.1 · **Python:** 3.11+ · **Интерфейс:** PySide6 6.11, Qt Quick
 **Состояние:** все девять этапов MVP реализованы. Версия 1.1: новый интерфейс
 на Qt Quick, стриминг рассуждений агентов, исправления ядра по итогам ревью.
 Ядро покрыто смоук-тестами (37 проверок) и регрессионными pytest-тестами,
@@ -179,6 +179,8 @@ AI Orchestrator.
 - `tests/fakes.py`
 - `tests/smoke.py`
 - `tests/test_core_fixes.py`
+- `tests/test_audit_fixes.py`
+- `tests/qml_controls_check.py`
 - `tests/test_ui.py`
 - `tests/ui_tour.py`
 - `pytest.ini`
@@ -599,7 +601,7 @@ APP_NAME = "Agent Forge"
 APP_SLUG = "agent-forge"
 #: каталог данных до переименования проекта (AI Orchestrator → Agent Forge)
 LEGACY_SLUG = "ai-orchestrator"
-APP_VERSION = "1.1.0"          # 1.1: новый интерфейс на Qt Quick, стриминг агентов
+APP_VERSION = "1.1.1"          # 1.1.1: исправления после полного прохода по коду
 SCHEMA_VERSION = 1             # версия схемы SQLite (для миграций)
 
 
@@ -1512,7 +1514,7 @@ CREATE INDEX IF NOT EXISTS idx_usage_ws ON usage_log(workspace_id, created_at);
 
 ### `storage/db.py`
 
-*116 строк*
+*126 строк*
 
 ````python
 """Подключение к локальной SQLite-БД и применение схемы.
@@ -1607,14 +1609,24 @@ class Database:
 
     def execute(self, sql: str, params: Sequence[Any] = ()) -> sqlite3.Cursor:
         with self._lock:
-            cur = self.conn.execute(sql, params)
-            self.conn.commit()
+            try:
+                cur = self.conn.execute(sql, params)
+                self.conn.commit()
+            except BaseException:
+                # Упавшая команда оставляет открытой неявную транзакцию, и
+                # следующий ``transaction()`` споткнулся бы на её ``BEGIN``.
+                self.conn.rollback()
+                raise
             return cur
 
     def executemany(self, sql: str, seq: Iterable[Sequence[Any]]) -> None:
         with self._lock:
-            self.conn.executemany(sql, seq)
-            self.conn.commit()
+            try:
+                self.conn.executemany(sql, seq)
+                self.conn.commit()
+            except BaseException:
+                self.conn.rollback()
+                raise
 
     def query(self, sql: str, params: Sequence[Any] = ()) -> list[sqlite3.Row]:
         with self._lock:
@@ -1635,7 +1647,7 @@ class Database:
 
 ### `storage/models.py`
 
-*261 строк*
+*270 строк*
 
 ````python
 """Датаклассы предметной области — типизированное представление строк БД."""
@@ -1735,17 +1747,26 @@ class Agent:
             bool(r["enabled"]), r["status"], bool(r["is_supervisor"]), r["created_at"],
         )
 
+    # Параметры лежат в JSON и могли быть поправлены руками или старой
+    # версией: битое значение не должно ронять запуск агента.
     @property
     def temperature(self) -> float:
-        return float(self.params.get("temperature", 0.7))
+        try:
+            return float(self.params.get("temperature", 0.7))
+        except (TypeError, ValueError):
+            return 0.7
 
     @property
     def max_tokens(self) -> int:
-        return int(self.params.get("max_tokens", 2048))
+        try:
+            return max(1, int(self.params.get("max_tokens", 2048)))
+        except (TypeError, ValueError):
+            return 2048
 
     @property
     def tools(self) -> list[str]:
-        return list(self.params.get("tools", []))
+        raw = self.params.get("tools")
+        return [str(t) for t in raw] if isinstance(raw, list) else []
 
 
 @dataclass
@@ -1903,7 +1924,7 @@ def dumps(obj: Any) -> str:
 
 ### `storage/repositories.py`
 
-*721 строк*
+*759 строк*
 
 ````python
 """Репозитории — единственная точка доступа к БД.
@@ -1914,6 +1935,8 @@ UI и ядро никогда не пишут SQL напрямую: это уп�
 
 from __future__ import annotations
 
+import base64
+import json
 from typing import Any
 
 from core.security.crypto import (
@@ -1938,6 +1961,14 @@ from storage.models import (
     Workspace,
     dumps,
 )
+
+
+def _loads(raw: str | None) -> dict:
+    try:
+        data = json.loads(raw or "{}")
+    except ValueError:
+        return {}
+    return data if isinstance(data, dict) else {}
 
 
 class UserRepo:
@@ -1995,9 +2026,26 @@ class UserRepo:
         reencrypted = [
             (new_box.encrypt(old_box.decrypt(r["secret_blob"])), r["id"]) for r in rows
         ]
+        # Ключ поискового API лежит в настройках воркспейсов, зашифрованный
+        # тем же мастер-ключом. Без перешифровки он молча пропал бы после
+        # смены пароля: расшифровать его новым ключом уже нельзя.
+        resealed_ws = []
+        for ws in self.db.query(
+            "SELECT id, settings_json FROM workspaces WHERE user_id = ?", (session.user_id,)
+        ):
+            settings = _loads(ws["settings_json"])
+            token = settings.get("search_api_key") or ""
+            if isinstance(token, str) and token.startswith(SecretCodec.PREFIX):
+                plain = SecretCodec(session).open(token)
+                settings["search_api_key"] = (
+                    SecretCodec.PREFIX + base64.b64encode(new_box.encrypt(plain)).decode("ascii")
+                    if plain else ""
+                )
+                resealed_ws.append((dumps(settings), ws["id"]))
         new_hash = hash_password(new_password, new_verify_salt)
         with self.db.transaction() as conn:
             conn.executemany("UPDATE api_keys SET secret_blob = ? WHERE id = ?", reencrypted)
+            conn.executemany("UPDATE workspaces SET settings_json = ? WHERE id = ?", resealed_ws)
             conn.execute(
                 "UPDATE users SET password_hash = ?, verify_salt = ?, kdf_salt = ? WHERE id = ?",
                 (new_hash, new_verify_salt, new_kdf_salt, session.user_id),
@@ -2116,6 +2164,21 @@ class ApiKeyRepo:
         params.extend([key_id, self.session.user_id])
         self.db.execute(
             f"UPDATE api_keys SET {', '.join(sets)} WHERE id = ? AND user_id = ?", params
+        )
+
+    def update_meta(self, key_id: int, **changes: Any) -> None:
+        """Правит только метаданные (кэш моделей и т.п.), не трогая подпись и адрес.
+
+        Фоновая проверка ключа пишет результат сюда: запись целиком затёрла
+        бы правку, которую пользователь успел сделать, пока шёл запрос.
+        """
+        key = self.get(key_id)
+        if key is None:
+            return
+        meta = {**key.meta, **changes}
+        self.db.execute(
+            "UPDATE api_keys SET meta_json = ? WHERE id = ? AND user_id = ?",
+            (dumps(meta), key_id, self.session.user_id),
         )
 
     def delete(self, key_id: int) -> None:
@@ -2445,9 +2508,9 @@ class BudgetRepo:
         """
         rows = self.db.query(
             "SELECT created_at, tokens_in + tokens_out AS tokens, cost_usd FROM ("
-            "  SELECT created_at, tokens_in, tokens_out, cost_usd FROM usage_log "
+            "  SELECT id, created_at, tokens_in, tokens_out, cost_usd FROM usage_log "
             "  WHERE workspace_id = ? ORDER BY id DESC LIMIT ?"
-            ") ORDER BY created_at",
+            ") ORDER BY id",
             (ws_id, limit),
         )
         return [(r["created_at"], int(r["tokens"]), float(r["cost_usd"])) for r in rows]
@@ -2565,8 +2628,6 @@ class SecretCodec:
     def seal(self, text: str) -> str:
         if not text:
             return ""
-        import base64
-
         return self.PREFIX + base64.b64encode(self.session.box.encrypt(text)).decode("ascii")
 
     def open(self, token: str) -> str:
@@ -2574,8 +2635,6 @@ class SecretCodec:
             return ""
         if not token.startswith(self.PREFIX):
             return token          # старое значение, сохранённое открытым текстом
-        import base64
-
         try:
             return self.session.box.decrypt(base64.b64decode(token[len(self.PREFIX):]))
         except Exception:  # noqa: BLE001 — повреждённый секрет равен отсутствующему
@@ -2767,10 +2826,10 @@ _KEYRING_SERVICE = "agent-forge"
 
 
 def keyring_available() -> bool:
-    try:
-        import keyring  # noqa: F401
+    import importlib.util
 
-        return True
+    try:
+        return importlib.util.find_spec("keyring") is not None
     except Exception:  # noqa: BLE001
         return False
 
@@ -2808,7 +2867,7 @@ def keyring_delete_password(username: str) -> None:
 
 ### `providers/base.py`
 
-*174 строк*
+*179 строк*
 
 ````python
 """Единый интерфейс LLM-провайдера.
@@ -2847,15 +2906,20 @@ class ToolCall:
     id: str
     name: str
     arguments: dict[str, Any] = field(default_factory=dict)
+    #: служебная подпись вызова, которую провайдер просит вернуть вместе с
+    #: ним в следующем запросе (``thoughtSignature`` у Gemini)
+    signature: str = ""
 
     @staticmethod
     def parse_args(raw: Any) -> dict[str, Any]:
+        """Аргументы вызова всегда словарь: инструменты получают их как ``**kwargs``."""
         if isinstance(raw, dict):
             return raw
         try:
-            return json.loads(raw or "{}")
+            data = json.loads(raw or "{}")
         except (TypeError, ValueError):
             return {"_raw": str(raw)}
+        return data if isinstance(data, dict) else {"_raw": str(raw)}
 
 
 @dataclass
@@ -3118,7 +3182,7 @@ def preset_list() -> list[ProviderPreset]:
 
 ### `providers/openai_compat.py`
 
-*298 строк*
+*339 строк*
 
 ````python
 """Провайдер для всех OpenAI-совместимых API.
@@ -3197,6 +3261,29 @@ class OpenAICompatProvider(LLMProvider):
             out.append(item)
         return out
 
+    def _payload(self, model: str, messages: list[ChatMessage], temperature: float,
+                 max_tokens: int, tools: list[ToolSpec] | None) -> dict[str, Any]:
+        """Тело запроса с поправками под особенности конкретного API.
+
+        Официальный OpenAI API для новых моделей не принимает ``max_tokens``
+        (нужен ``max_completion_tokens``), а «рассуждающие» модели (o1, o3,
+        o4, gpt-5) отвергают любую температуру, кроме стандартной. Совместимые
+        серверы (Groq, Ollama, vLLM…) знают только ``max_tokens``.
+        """
+        payload: dict[str, Any] = {"model": model, "messages": self._to_wire(messages)}
+        if self.key == "openai":
+            payload["max_completion_tokens"] = max_tokens
+            if not _is_reasoning_model(model):
+                payload["temperature"] = temperature
+        else:
+            payload["max_tokens"] = max_tokens
+            payload["temperature"] = temperature
+        tool_payload = self._tools_payload(tools)
+        if tool_payload:
+            payload["tools"] = tool_payload
+            payload["tool_choice"] = "auto"
+        return payload
+
     @staticmethod
     def _tools_payload(tools: list[ToolSpec] | None) -> list[dict] | None:
         if not tools:
@@ -3212,16 +3299,7 @@ class OpenAICompatProvider(LLMProvider):
     async def complete(self, model: str, messages: list[ChatMessage], *,
                        temperature: float = 0.7, max_tokens: int = 2048,
                        tools: list[ToolSpec] | None = None) -> CompletionResult:
-        payload: dict[str, Any] = {
-            "model": model,
-            "messages": self._to_wire(messages),
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-        }
-        tool_payload = self._tools_payload(tools)
-        if tool_payload:
-            payload["tools"] = tool_payload
-            payload["tool_choice"] = "auto"
+        payload = self._payload(model, messages, temperature, max_tokens, tools)
 
         try:
             resp = await self._http().post(
@@ -3233,7 +3311,7 @@ class OpenAICompatProvider(LLMProvider):
         if resp.status_code >= 400:
             raise ProviderError(_error_text(resp), resp.status_code)
 
-        data = resp.json()
+        data = _json_body(resp)
         choice = (data.get("choices") or [{}])[0]
         msg = choice.get("message") or {}
         calls = [
@@ -3242,12 +3320,20 @@ class OpenAICompatProvider(LLMProvider):
                      arguments=ToolCall.parse_args((c.get("function") or {}).get("arguments")))
             for c in (msg.get("tool_calls") or [])
         ]
+        text = msg.get("content") or ""
         u = data.get("usage") or {}
+        if u:
+            usage = Usage(_int(u.get("prompt_tokens")), _int(u.get("completion_tokens")))
+        else:
+            # Сервер не прислал расход — оценка лучше нуля, иначе вызов
+            # незаметно обходил бы лимиты бюджета.
+            usage = Usage(sum(len(m.content or "") for m in messages) // 4,
+                          estimate_tokens(text))
         return CompletionResult(
-            text=msg.get("content") or "",
+            text=text,
             tool_calls=calls,
-            usage=Usage(int(u.get("prompt_tokens", 0)), int(u.get("completion_tokens", 0))),
-            finish_reason=choice.get("finish_reason", ""),
+            usage=usage,
+            finish_reason=choice.get("finish_reason") or "",
             model=data.get("model", model),
             raw=data,
         )
@@ -3264,18 +3350,9 @@ class OpenAICompatProvider(LLMProvider):
         ``stream_options.include_usage``; часть совместимых серверов этот
         параметр не знает — тогда запрос повторяется без него.
         """
-        payload: dict[str, Any] = {
-            "model": model,
-            "messages": self._to_wire(messages),
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-            "stream": True,
-            "stream_options": {"include_usage": True},
-        }
-        tool_payload = self._tools_payload(tools)
-        if tool_payload:
-            payload["tools"] = tool_payload
-            payload["tool_choice"] = "auto"
+        payload = self._payload(model, messages, temperature, max_tokens, tools)
+        payload["stream"] = True
+        payload["stream_options"] = {"include_usage": True}
         try:
             return await self._stream_once(payload, model, messages, on_delta)
         except ProviderError as exc:
@@ -3310,6 +3387,8 @@ class OpenAICompatProvider(LLMProvider):
                     try:
                         chunk = json.loads(raw)
                     except ValueError:
+                        continue
+                    if not isinstance(chunk, dict):
                         continue
                     if chunk.get("error"):
                         err = chunk["error"]
@@ -3349,8 +3428,8 @@ class OpenAICompatProvider(LLMProvider):
             for index, slot in sorted(calls.items()) if slot["name"]
         ]
         if usage:
-            result_usage = Usage(int(usage.get("prompt_tokens", 0)),
-                                 int(usage.get("completion_tokens", 0)))
+            result_usage = Usage(_int(usage.get("prompt_tokens")),
+                                 _int(usage.get("completion_tokens")))
         else:
             prompt = sum(len(m.content or "") for m in messages)
             output = text + "".join(reasoning_parts) + "".join(
@@ -3362,13 +3441,8 @@ class OpenAICompatProvider(LLMProvider):
     async def stream(self, model: str, messages: list[ChatMessage], *,
                      temperature: float = 0.7,
                      max_tokens: int = 2048) -> AsyncIterator[str]:
-        payload = {
-            "model": model,
-            "messages": self._to_wire(messages),
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-            "stream": True,
-        }
+        payload = self._payload(model, messages, temperature, max_tokens, None)
+        payload["stream"] = True
         try:
             async with self._http().stream(
                 "POST", f"{self.base_url}/chat/completions",
@@ -3399,10 +3473,41 @@ class OpenAICompatProvider(LLMProvider):
             raise ProviderError(f"Сетевая ошибка: {exc}") from exc
         if resp.status_code >= 400:
             raise ProviderError(_error_text(resp), resp.status_code)
-        data = resp.json()
-        items = data.get("data", data if isinstance(data, list) else [])
+        try:
+            data = resp.json()
+        except ValueError as exc:
+            raise ProviderError(f"Сервер вернул не JSON: {resp.text[:200]}") from exc
+        # Обычно {"data": [...]}, но часть серверов отдаёт голый список.
+        items = data if isinstance(data, list) else (data.get("data") or data.get("models") or [])
         names = [it.get("id") or it.get("name", "") for it in items if isinstance(it, dict)]
         return sorted(n for n in names if n)
+
+
+#: модели OpenAI, которые принимают только стандартную температуру
+_REASONING_PREFIXES = ("o1", "o3", "o4", "gpt-5")
+
+
+def _is_reasoning_model(model: str) -> bool:
+    name = (model or "").lower().rsplit("/", 1)[-1]
+    return name.startswith(_REASONING_PREFIXES) and not name.startswith("gpt-5-chat")
+
+
+def _int(value: Any) -> int:
+    try:
+        return int(value or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _json_body(resp: httpx.Response) -> dict[str, Any]:
+    """Тело ответа как словарь; прокси и заглушки иногда отдают HTML."""
+    try:
+        data = resp.json()
+    except ValueError as exc:
+        raise ProviderError(f"Сервер вернул не JSON: {resp.text[:200]}", resp.status_code) from exc
+    if not isinstance(data, dict):
+        raise ProviderError("Неожиданный формат ответа сервера", resp.status_code)
+    return data
 
 
 def _error_text(resp: httpx.Response) -> str:
@@ -3423,7 +3528,7 @@ def _error_text(resp: httpx.Response) -> str:
 
 ### `providers/anthropic_provider.py`
 
-*260 строк*
+*261 строк*
 
 ````python
 """Провайдер Anthropic Messages API.
@@ -3597,8 +3702,7 @@ class AnthropicProvider(LLMProvider):
             if block.get("type") == "text":
                 text_parts.append(block.get("text", ""))
             elif block.get("type") == "tool_use":
-                args = ToolCall.parse_args(block["_json"]) if block["_json"] \
-                    else (block.get("input") or {})
+                args = ToolCall.parse_args(block["_json"] or block.get("input") or {})
                 calls.append(ToolCall(id=block.get("id", ""), name=block.get("name", ""),
                                       arguments=args))
         return CompletionResult(text="".join(text_parts), tool_calls=calls,
@@ -3626,7 +3730,7 @@ class AnthropicProvider(LLMProvider):
                 text_parts.append(block.get("text", ""))
             elif block.get("type") == "tool_use":
                 calls.append(ToolCall(id=block.get("id", ""), name=block.get("name", ""),
-                                      arguments=block.get("input") or {}))
+                                      arguments=ToolCall.parse_args(block.get("input") or {})))
         u = data.get("usage") or {}
         return CompletionResult(
             text="".join(text_parts),
@@ -3672,7 +3776,9 @@ class AnthropicProvider(LLMProvider):
 
     async def list_models(self) -> list[str]:
         try:
-            resp = await self._http().get(f"{self.base_url}/models", headers=self._headers())
+            # Список постраничный (по умолчанию 20 штук) — просим сразу все.
+            resp = await self._http().get(f"{self.base_url}/models", headers=self._headers(),
+                                          params={"limit": 1000})
         except httpx.HTTPError as exc:
             raise ProviderError(f"Сетевая ошибка: {exc}") from exc
         if resp.status_code >= 400:
@@ -3690,7 +3796,7 @@ def _error_text(resp: httpx.Response) -> str:
 
 ### `providers/gemini_provider.py`
 
-*207 строк*
+*245 строк*
 
 ````python
 """Провайдер Google Gemini (generativeLanguage API).
@@ -3747,24 +3853,36 @@ class GeminiProvider(LLMProvider):
     def _split(messages: list[ChatMessage]) -> tuple[str, list[dict[str, Any]]]:
         system_parts: list[str] = []
         contents: list[dict[str, Any]] = []
+        previous_tool = False
         for m in messages:
             if m.role == "system":
                 system_parts.append(m.content)
-            elif m.role == "tool":
-                contents.append({
-                    "role": "user",
-                    "parts": [{"functionResponse": {"name": m.name or "tool",
-                                                    "response": {"result": m.content}}}],
-                })
-            elif m.role == "assistant":
+                continue
+            if m.role == "tool":
+                part = {"functionResponse": {"name": m.name or "tool",
+                                             "response": {"result": m.content}}}
+                # Ответы на несколько вызовов одного хода Gemini ждёт одним
+                # сообщением: число частей должно совпасть с числом вызовов.
+                if previous_tool:
+                    contents[-1]["parts"].append(part)
+                else:
+                    contents.append({"role": "user", "parts": [part]})
+                previous_tool = True
+                continue
+            previous_tool = False
+            if m.role == "assistant":
                 parts: list[dict[str, Any]] = []
                 if m.content:
                     parts.append({"text": m.content})
-                parts += [{"functionCall": {"name": tc.name, "args": tc.arguments}}
-                          for tc in m.tool_calls]
-                contents.append({"role": "model", "parts": parts or [{"text": ""}]})
+                for tc in m.tool_calls:
+                    call: dict[str, Any] = {"functionCall": {"name": tc.name, "args": tc.arguments}}
+                    if tc.signature:
+                        # Новые модели требуют вернуть подпись вместе с вызовом.
+                        call["thoughtSignature"] = tc.signature
+                    parts.append(call)
+                contents.append({"role": "model", "parts": parts or [{"text": " "}]})
             else:
-                contents.append({"role": "user", "parts": [{"text": m.content}]})
+                contents.append({"role": "user", "parts": [{"text": m.content or " "}]})
         return "\n\n".join(p for p in system_parts if p), contents
 
     def _payload(self, messages: list[ChatMessage], temperature: float, max_tokens: int,
@@ -3780,11 +3898,19 @@ class GeminiProvider(LLMProvider):
         if tools:
             payload["tools"] = [{
                 "functionDeclarations": [
-                    {"name": t.name, "description": t.description, "parameters": t.parameters}
+                    {"name": t.name, "description": t.description,
+                     "parameters": _schema(t.parameters)}
                     for t in tools
                 ]
             }]
         return payload
+
+    @staticmethod
+    def _call(part: dict[str, Any]) -> ToolCall:
+        fc = part.get("functionCall") or {}
+        return ToolCall(id=uuid.uuid4().hex[:12], name=fc.get("name", ""),
+                        arguments=ToolCall.parse_args(fc.get("args") or {}),
+                        signature=part.get("thoughtSignature") or "")
 
     async def stream_complete(self, model: str, messages: list[ChatMessage], *,
                               temperature: float = 0.7, max_tokens: int = 2048,
@@ -3822,10 +3948,7 @@ class GeminiProvider(LLMProvider):
                         finish_reason = candidate.get("finishReason") or finish_reason
                         for part in (candidate.get("content") or {}).get("parts", []):
                             if "functionCall" in part:
-                                fc = part["functionCall"]
-                                calls.append(ToolCall(id=uuid.uuid4().hex[:12],
-                                                      name=fc.get("name", ""),
-                                                      arguments=fc.get("args") or {}))
+                                calls.append(self._call(part))
                             elif part.get("text"):
                                 kind = "reasoning" if part.get("thought") else "text"
                                 if kind == "text":
@@ -3859,9 +3982,7 @@ class GeminiProvider(LLMProvider):
         text_parts, calls = [], []
         for part in (candidate.get("content") or {}).get("parts", []):
             if "functionCall" in part:
-                fc = part["functionCall"]
-                calls.append(ToolCall(id=uuid.uuid4().hex[:12], name=fc.get("name", ""),
-                                      arguments=fc.get("args") or {}))
+                calls.append(self._call(part))
             elif "text" in part and not part.get("thought"):
                 # Рассуждение «думающих» моделей в ответ не входит.
                 text_parts.append(part["text"])
@@ -3892,6 +4013,29 @@ class GeminiProvider(LLMProvider):
                                               ["generateContent"]):
                 names.append(name)
         return sorted(names)
+
+
+#: ключи JSON Schema, которые понимает ``functionDeclarations``; прочие
+#: (``default``, ``additionalProperties``, ``$schema``…) Gemini отвергает
+_SCHEMA_KEYS = {"type", "format", "description", "nullable", "enum", "properties",
+                "required", "items", "minimum", "maximum", "minItems", "maxItems"}
+
+
+def _schema(node: Any) -> Any:
+    """Приводит JSON Schema инструмента к подмножеству, которое принимает Gemini."""
+    if not isinstance(node, dict):
+        return node
+    out: dict[str, Any] = {}
+    for key, value in node.items():
+        if key not in _SCHEMA_KEYS:
+            continue
+        if key == "properties" and isinstance(value, dict):
+            out[key] = {name: _schema(sub) for name, sub in value.items()}
+        elif key == "items":
+            out[key] = _schema(value)
+        else:
+            out[key] = value
+    return out
 
 
 def _error_text(resp: httpx.Response) -> str:
@@ -4571,7 +4715,7 @@ class CodeExecTool(Tool):
 
 ### `core/tools/files.py`
 
-*109 строк*
+*118 строк*
 
 ````python
 """Файловые инструменты агента.
@@ -4612,8 +4756,14 @@ class FileReadTool(Tool):
         path = ctx.resolve(str(kwargs.get("path", "")), must_exist=True)
         if path.is_dir():
             raise ToolError(f"«{path.name}» — каталог, используй list_dir")
-        limit = min(int(kwargs.get("max_bytes") or MAX_READ_BYTES), MAX_READ_BYTES)
-        data = path.read_bytes()[:limit]
+        try:
+            limit = min(max(1, int(kwargs.get("max_bytes") or MAX_READ_BYTES)), MAX_READ_BYTES)
+        except (TypeError, ValueError):
+            limit = MAX_READ_BYTES
+        # Читаем только нужный кусок: файл на гигабайт не должен целиком
+        # попадать в память ради первых 200 КБ.
+        with path.open("rb") as fh:
+            data = fh.read(limit)
         text = data.decode("utf-8", "replace")
         suffix = "\n\n(файл обрезан)" if path.stat().st_size > limit else ""
         return f"Файл: {path}\n\n{text}{suffix}"
@@ -4677,7 +4827,10 @@ class ListDirTool(Tool):
 
 
 def _human(path: Path) -> str:
-    size = path.stat().st_size
+    try:
+        size = path.stat().st_size
+    except OSError:          # битая ссылка или файл исчез между листингом и stat
+        return "?"
     for unit in ("Б", "КБ", "МБ", "ГБ"):
         if size < 1024:
             return f"{size:.0f} {unit}"
@@ -4687,7 +4840,7 @@ def _human(path: Path) -> str:
 
 ### `core/tools/web_search.py`
 
-*175 строк*
+*199 строк*
 
 ````python
 """Веб-поиск и чтение страниц.
@@ -4709,6 +4862,8 @@ from core.tools.base import Tool, ToolContext, ToolError
 
 MAX_RESULTS = 8
 MAX_PAGE_CHARS = 20_000
+#: сколько байт страницы скачивать не больше
+MAX_DOWNLOAD_BYTES = 5_000_000
 
 
 class WebSearchTool(Tool):
@@ -4732,7 +4887,10 @@ class WebSearchTool(Tool):
         query = (kwargs.get("query") or "").strip()
         if not query:
             raise ToolError("Пустой поисковый запрос")
-        n = max(1, min(int(kwargs.get("max_results") or 5), MAX_RESULTS))
+        try:
+            n = max(1, min(int(kwargs.get("max_results") or 5), MAX_RESULTS))
+        except (TypeError, ValueError):
+            n = 5
 
         backend = ctx.search_backend
         if backend == "tavily" and ctx.search_api_key:
@@ -4775,13 +4933,32 @@ class WebFetchTool(Tool):
                 timeout=30, follow_redirects=True,
                 headers={"User-Agent": "Mozilla/5.0 (compatible; AgentForge/1.1)"},
             ) as client:
-                resp = await client.get(url)
+                async with client.stream("GET", url) as resp:
+                    if resp.status_code >= 400:
+                        raise ToolError(f"HTTP {resp.status_code} при загрузке {url}")
+                    kind = resp.headers.get("content-type", "").split(";")[0].strip().lower()
+                    if kind and not (kind.startswith("text/") or "html" in kind
+                                     or "xml" in kind or "json" in kind):
+                        raise ToolError(f"По ссылке не страница, а файл ({kind}) — "
+                                        "его текст этим инструментом не прочитать")
+                    # Ограничение объёма: ссылка на гигабайтный файл не должна
+                    # выкачиваться в память целиком.
+                    body = bytearray()
+                    async for chunk in resp.aiter_bytes():
+                        body += chunk
+                        if len(body) >= MAX_DOWNLOAD_BYTES:
+                            break
+                    encoding = resp.encoding or "utf-8"
+        except ToolError:
+            raise
         except Exception as exc:  # noqa: BLE001
             raise ToolError(f"Не удалось загрузить страницу: {exc}") from exc
-        if resp.status_code >= 400:
-            raise ToolError(f"HTTP {resp.status_code} при загрузке {url}")
 
-        text = await asyncio.to_thread(_extract_text, resp.text)
+        try:
+            html = bytes(body).decode(encoding, "replace")
+        except LookupError:          # сервер назвал несуществующую кодировку
+            html = bytes(body).decode("utf-8", "replace")
+        text = await asyncio.to_thread(_extract_text, html)
         clipped = text[:MAX_PAGE_CHARS]
         tail = "\n\n(текст обрезан)" if len(text) > MAX_PAGE_CHARS else ""
         return f"Источник: {url}\n\n{clipped}{tail}"
@@ -5131,7 +5308,7 @@ def title(template: RoleTemplate, lang: str) -> str:
 
 ### `core/agents/runner.py`
 
-*496 строк*
+*499 строк*
 
 ````python
 """Этап 4 — исполнитель одного агента над одной подзадачей.
@@ -5479,11 +5656,12 @@ class AgentRunner:
         last_text = ""
         last_step_used_tools = False
 
+        # Об ошибке подзадачи сообщает оркестратор по ``RunResult.error``:
+        # если сообщать и здесь, в ленте и уведомлениях всё удваивается.
         for step in range(1, self.max_steps + 1):
             blocked = await self._check_budget()
             if blocked:
                 totals.error = blocked
-                self._emit(EventType.SUBTASK_FAILED, totals.error)
                 return totals
 
             totals.steps = step
@@ -5495,12 +5673,10 @@ class AgentRunner:
                 raise
             except ProviderError as exc:
                 totals.error = f"Провайдер: {exc}"
-                self._emit(EventType.SUBTASK_FAILED, totals.error)
                 return totals
             except Exception as exc:  # noqa: BLE001
                 log.exception("Сбой вызова модели")
                 totals.error = f"{type(exc).__name__}: {exc}"
-                self._emit(EventType.SUBTASK_FAILED, totals.error)
                 return totals
 
             self._add_usage(totals, result)
@@ -5513,10 +5689,14 @@ class AgentRunner:
 
             if not result.tool_calls:
                 last_step_used_tools = False
-                if looks_done(result.text) or step == self.max_steps:
-                    return self._finish(totals, result.text)
-                # Модель ответила текстом, но не обозначила финал — просим завершить.
-                messages.append(ChatMessage("assistant", result.text))
+                if looks_done(result.text) or (step == self.max_steps and last_text):
+                    # Пустой последний ответ не затирает то, что модель
+                    # сказала шагом раньше.
+                    return self._finish(totals, result.text or last_text)
+                if result.text:
+                    # Пустое сообщение ассистента часть провайдеров отвергает.
+                    messages.append(ChatMessage("assistant", result.text))
+                # Модель не обозначила финал — просим завершить.
                 nudge = ("Если подзадача выполнена — выдай итог после строки RESULT: "
                          "и строку CONFIDENCE. Если нет — продолжай работу.")
                 messages.append(ChatMessage("user", nudge))
@@ -5634,7 +5814,7 @@ class TokenBudget:
 
 ### `core/orchestrator.py`
 
-*824 строк*
+*850 строк*
 
 ````python
 """Этап 4 — оркестратор выполнения задачи.
@@ -5717,6 +5897,8 @@ class Orchestrator:
         self._confidence_threshold: float = 0.0
         self._semaphore: asyncio.Semaphore | None = None
         self._workspace_id: int | None = None
+        #: id подзадач текущей задачи — зависимости на прочие id игнорируются
+        self._known_ids: set[int] | None = None
 
     # -- управление ----------------------------------------------------------
     def pause(self) -> None:
@@ -5798,9 +5980,18 @@ class Orchestrator:
             await self._schedule(workspace_id, settings, task, subtasks)
             if self._supervisor is not None and not self._stop.is_set():
                 # Финальный разбор: ищем расхождения между результатами
-                # и подводим общий итог для команды.
-                await self._supervisor.find_conflicts(task)
-                await self._supervisor.make_summary(task, trigger="final")
+                # и подводим общий итог для команды. Сбой здесь не должен
+                # перечеркнуть уже сделанную работу.
+                try:
+                    await self._supervisor.find_conflicts(task)
+                    await self._supervisor.make_summary(task, trigger="final")
+                except asyncio.CancelledError:
+                    raise
+                except Exception:  # noqa: BLE001
+                    log.exception("Сбой финального разбора супервайзера")
+                    self.bus.error("финальный разбор супервайзера не выполнен",
+                                   workspace_id=workspace_id, task_id=task_id,
+                                   agent_name="Супервайзер")
         except asyncio.CancelledError:
             log.info("Прогон отменён")
         finally:
@@ -5845,10 +6036,12 @@ class Orchestrator:
                         subtasks: list[Subtask]) -> None:
         """Волнами запускает подзадачи, у которых выполнены зависимости."""
         pending = {s.id: s for s in subtasks}
-        done_ids: set[int] = {
-            s.id for s in self.repos.tasks.subtasks(task.id) if s.status == "done"
-        }
-        titles = {s.id: s.title for s in self.repos.tasks.subtasks(task.id)}
+        all_subtasks = self.repos.tasks.subtasks(task.id)
+        done_ids: set[int] = {s.id for s in all_subtasks if s.status == "done"}
+        titles = {s.id: s.title for s in all_subtasks}
+        # Ссылка на подзадачу, которой в задаче больше нет (удалена, осталась
+        # от старой версии), не должна навсегда блокировать зависимую.
+        self._known_ids = set(titles)
 
         while pending and not self._stop.is_set():
             ready = [s for s in pending.values() if self._deps_met(s, done_ids)]
@@ -5934,14 +6127,14 @@ class Orchestrator:
         lines.append(f"Израсходовано по задаче: {tokens} токенов, ~${cost:.4f}")
         return "\n".join(lines)
 
-    @staticmethod
-    def _deps(subtask: Subtask) -> list[int]:
+    def _deps(self, subtask: Subtask) -> list[int]:
         raw = (subtask.depends_on or "").strip()
-        return [int(t) for t in (tok.strip() for tok in raw.split(",")) if t.isdigit()]
+        deps = [int(t) for t in (tok.strip() for tok in raw.split(",")) if t.isdigit()]
+        known = self._known_ids
+        return [d for d in deps if known is None or d in known]
 
-    @classmethod
-    def _deps_met(cls, subtask: Subtask, done_ids: set[int]) -> bool:
-        return all(dep in done_ids for dep in cls._deps(subtask))
+    def _deps_met(self, subtask: Subtask, done_ids: set[int]) -> bool:
+        return all(dep in done_ids for dep in self._deps(subtask))
 
     # -- выполнение одной подзадачи -----------------------------------------
     async def _run_subtask(self, workspace_id: int, settings: dict, task: Task,
@@ -6023,9 +6216,11 @@ class Orchestrator:
                 if self._stop.is_set():
                     return False
 
-            self.bus.log(f"исчерпан лимит доработок по «{subtask.title}»",
-                         workspace_id=workspace_id, subtask_id=subtask.id,
-                         agent_name=agent.name)
+            # Сюда попадаем, когда человек снова вернул работу, а его круги
+            # доработки уже исчерпаны. Подзадача не должна остаться висеть
+            # «на доработке»: прогон считал бы её не ошибкой, а ничем.
+            self._fail(subtask, agent, f"исчерпан лимит доработок по «{subtask.title}»")
+            self.repos.agents.set_status(agent.id, "idle")
             return False
 
     async def _ask_human(self, reason: Reason, question: str, **kwargs) -> Answer:
@@ -6076,17 +6271,20 @@ class Orchestrator:
         if verdict.accepted:
             self.repos.tasks.update_subtask(subtask.id, status="done")
             self.state.finished += 1
-            # Замечания, из-за которых подзадача уходила на доработку,
-            # закрываем: они больше не актуальны, а открытый инцидент
-            # без причины только зашумляет историю.
-            if subtask.rework_count or attempt > 0:
-                closed = self.repos.incidents.resolve_for_subtask(
-                    subtask.id, "Исправлено при доработке, результат принят"
-                )
-                if closed:
-                    self.bus.log(f"закрыто замечаний после доработки: {closed}",
-                                 workspace_id=workspace_id, subtask_id=subtask.id,
-                                 agent_name="Супервайзер")
+            # Замечания по подзадаче закрываем: результат принят, и открытый
+            # инцидент без причины висел бы на дашборде как «ждёт решения».
+            # Это и замечания, из-за которых работа уходила на доработку, и
+            # мелкие пометки, которые супервайзер оставил, принимая отчёт.
+            reworked = bool(subtask.rework_count or attempt > 0)
+            closed = self.repos.incidents.resolve_for_subtask(
+                subtask.id,
+                "Исправлено при доработке, результат принят" if reworked
+                else "Результат принят супервайзером, замечание некритично",
+            )
+            if closed and reworked:
+                self.bus.log(f"закрыто замечаний после доработки: {closed}",
+                             workspace_id=workspace_id, subtask_id=subtask.id,
+                             agent_name="Супервайзер")
             # Супервайзер доволен, но сам исполнитель — нет. Это как раз тот
             # случай, когда дешевле спросить человека, чем нести сомнительный
             # результат дальше по цепочке подзадач.
@@ -6449,6 +6647,14 @@ class Orchestrator:
         if self._gate is not None:
             self._gate.cancel_all()
             self._gate = None
+        # Прогон окончен: агенты, остановленные посреди работы или
+        # ожидавшие решения, больше не «работают» и не «на паузе».
+        # Статус подзадачи (paused) сохраняется — по нему видно, что
+        # её можно продолжить следующим запуском.
+        if self._workspace_id is not None:
+            for agent in self.repos.agents.list(self._workspace_id):
+                if agent.status in ("running", "paused"):
+                    self.repos.agents.set_status(agent.id, "idle")
         if self._budget is not None:
             self._budget.on_blocked = None
         if self._supervisor is not None:
@@ -6465,7 +6671,7 @@ class Orchestrator:
 
 ### `core/planner.py`
 
-*156 строк*
+*163 строк*
 
 ````python
 """Автоматическое разбиение задачи на подзадачи через ИИ (этап 3).
@@ -6598,7 +6804,12 @@ async def plan_subtasks(repos: Repos, workspace_id: int,
                            "Попробуйте ещё раз или выберите другую модель.") from exc
 
     # Некоторые модели отвечают голым списком вместо объекта — принимаем и так.
-    items = data if isinstance(data, list) else (data.get("subtasks") or [])
+    if isinstance(data, list):
+        items = data
+    elif isinstance(data, dict) and isinstance(data.get("subtasks"), list):
+        items = data["subtasks"]
+    else:
+        items = []
     out: list[PlannedSubtask] = []
     for item in items:
         if not isinstance(item, dict):
@@ -6609,7 +6820,7 @@ async def plan_subtasks(repos: Repos, workspace_id: int,
         out.append(PlannedSubtask(
             title=title,
             description=str(item.get("description", "")).strip(),
-            assignee_role=(item.get("assignee_role") or None),
+            assignee_role=(str(item.get("assignee_role") or "").strip() or None),
         ))
     if not out:
         raise RuntimeError("Модель не вернула ни одной подзадачи.")
@@ -6618,17 +6829,19 @@ async def plan_subtasks(repos: Repos, workspace_id: int,
 
 def match_agent_by_role(repos: Repos, workspace_id: int, role: str | None) -> int | None:
     """Подбирает агента под предложенную планировщиком роль."""
-    if not role:
+    wanted = str(role or "").strip().lower()
+    if not wanted:
         return None
+    # Модель пишет роль как вздумается: «Analyst», « analyst».
     for a in repos.agents.list(workspace_id):
-        if a.enabled and not a.is_supervisor and a.role == role:
+        if a.enabled and not a.is_supervisor and (a.role or "").strip().lower() == wanted:
             return a.id
     return None
 ````
 
 ### `core/supervisor/checklist.py`
 
-*308 строк*
+*316 строк*
 
 ````python
 """Этап 5 — промпты супервайзера и разбор его ответов.
@@ -6844,12 +7057,19 @@ def parse_verdict(text: str) -> Verdict:
             raw=text,
         )
 
-    verdict = str(data.get("verdict", "ok")).lower().strip()
+    # Ответ без вердикта (пустой объект, список вместо объекта) — это не
+    # «принято»: по той же логике, что и нечитаемый ответ, отправляем на
+    # доработку, а не пропускаем непроверенным.
+    verdict = str(data.get("verdict") or "").lower().strip()
     if verdict not in _VALID_VERDICTS:
+        if not data.get("notes"):
+            data = {**data, "notes": "Супервайзер не вынес вердикт. "
+                                     "Переформулируй отчёт короче и по пунктам."}
         verdict = "rework"
 
     issues: list[Issue] = []
-    for item in data.get("issues") or []:
+    raw_issues = data.get("issues")
+    for item in raw_issues if isinstance(raw_issues, list) else []:
         if not isinstance(item, dict):
             continue
         kind = str(item.get("kind", "contradiction")).lower()
@@ -6882,7 +7102,8 @@ def parse_conflicts(text: str) -> list[Conflict]:
     except ValueError:
         return []
     out: list[Conflict] = []
-    for item in data.get("conflicts") or []:
+    raw_conflicts = data.get("conflicts")
+    for item in raw_conflicts if isinstance(raw_conflicts, list) else []:
         if not isinstance(item, dict):
             continue
         description = str(item.get("description", "")).strip()
@@ -6892,7 +7113,7 @@ def parse_conflicts(text: str) -> list[Conflict]:
         out.append(Conflict(
             description=description,
             severity=severity if severity in _VALID_SEVERITY else "medium",
-            labels=[str(x) for x in (item.get("labels") or [])],
+            labels=[str(x) for x in item["labels"]] if isinstance(item.get("labels"), list) else [],
             auto_resolvable=bool(item.get("auto_resolvable")),
             resolution=str(item.get("resolution", "")).strip(),
         ))
@@ -6943,7 +7164,7 @@ class Anonymizer:
 
 ### `core/supervisor/supervisor.py`
 
-*376 строк*
+*399 строк*
 
 ````python
 """Этап 5 — служба супервайзера.
@@ -6982,7 +7203,7 @@ from core.supervisor.checklist import (
     parse_conflicts,
     parse_verdict,
 )
-from providers.base import ChatMessage, LLMProvider, ProviderError
+from providers.base import ChatMessage, LLMProvider
 from providers.factory import build_provider, estimate_cost
 from storage.models import Report, Subtask, Task
 from storage.repositories import Repos
@@ -7026,6 +7247,11 @@ class Supervisor:
         self._model: SupervisorModel | None = None
         self._summary_task: asyncio.Task | None = None
         self._stop = asyncio.Event()
+        #: текст последней ошибки сводки — чтобы интерфейс не выдавал её за
+        #: «нечего пересказывать»
+        self.last_error = ""
+        #: задача текущего прогона — для привязки событий к нему
+        self._task_id: int | None = None
 
     def _label(self, agent_id: int | None) -> str:
         """Как подписать автора: анонимной меткой или по имени (если выключено)."""
@@ -7058,7 +7284,12 @@ class Supervisor:
             return self._model
 
         agent_id = self.settings.get("supervisor_agent_id")
-        agent = self.repos.agents.get(int(agent_id)) if agent_id else None
+        try:
+            agent = self.repos.agents.get(int(agent_id)) if agent_id else None
+        except (TypeError, ValueError):
+            agent = None
+        if agent is not None and agent.workspace_id != self.workspace_id:
+            agent = None        # агент из другого воркспейса здесь не судья
         if agent is None:
             # Запасной вариант: агент, помеченный звёздочкой в списке.
             agent = next((a for a in self.repos.agents.list(self.workspace_id)
@@ -7127,7 +7358,8 @@ class Supervisor:
         return result.text
 
     def _emit(self, kind: EventType, message: str, **payload) -> None:
-        self.bus.emit(Event(kind, workspace_id=self.workspace_id,
+        self.bus.emit(Event(kind, workspace_id=self.workspace_id, task_id=self._task_id,
+                            subtask_id=payload.get("subtask_id"),
                             agent_name="Супервайзер", message=message,
                             payload=payload))
 
@@ -7139,6 +7371,7 @@ class Supervisor:
         вердикт — ``unverified``: такой результат не считается принятым и
         не уходит дальше по конвейеру, пока его не посмотрит человек.
         """
+        self._task_id = task.id
         label = self._label(report.agent_id)
         context = self._accepted_context(task.id, exclude_subtask=subtask.id)
 
@@ -7194,7 +7427,9 @@ class Supervisor:
         for st in self.repos.tasks.subtasks(task_id):
             if st.id == exclude_subtask or not st.result:
                 continue
-            if st.status not in ("done", "review"):
+            # Только принятое: статус review — это отчёт, который ещё
+            # проверяется или ждёт человека, мерить им другие рано.
+            if st.status != "done":
                 continue
             chunks.append(f"[{self._label(st.agent_id)}] {st.title}:\n"
                           f"{st.result[:1200]}")
@@ -7208,6 +7443,8 @@ class Supervisor:
         подхватывает последнюю сводку при следующем запуске, не зная,
         кто из коллег что написал.
         """
+        self._task_id = task.id
+        self.last_error = ""
         materials = self._summary_materials(task.id)
         if not materials:
             return ""
@@ -7221,8 +7458,11 @@ class Supervisor:
                 task.id,
                 max_tokens=1200,
             )
-        except (ProviderError, RuntimeError) as exc:
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:  # noqa: BLE001 — сводка не повод ронять прогон
             self._emit(EventType.ERROR, f"сводка не составлена: {exc}")
+            self.last_error = str(exc)
             return ""
 
         # Страховка: вычищаем имена агентов, если модель их всё-таки назвала.
@@ -7245,7 +7485,8 @@ class Supervisor:
         """Обезличенные материалы для сводки."""
         chunks: list[str] = []
         for st in self.repos.tasks.subtasks(task_id):
-            if not st.result:
+            # У упавшей подзадачи в поле результата текст ошибки, а не работа.
+            if not st.result or st.status == "error":
                 continue
             chunks.append(f"[{self._label(st.agent_id)}] {st.title}:\n"
                           f"{st.result[:2500]}")
@@ -7280,6 +7521,7 @@ class Supervisor:
         готовом результате вызов модели пропускается — это экономит токены,
         а не срезает проверку.
         """
+        self._task_id = task.id
         with_results = [s for s in self.repos.tasks.subtasks(task.id) if s.result.strip()]
         if len(with_results) < 2:
             return []
@@ -7295,7 +7537,9 @@ class Supervisor:
                 task.id,
                 max_tokens=1200,
             )
-        except (ProviderError, RuntimeError) as exc:
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:  # noqa: BLE001
             self._emit(EventType.ERROR, f"поиск конфликтов пропущен: {exc}")
             return []
 
@@ -7558,7 +7802,7 @@ def parse_payload(raw: str) -> dict:
 
 ### `core/budget.py`
 
-*341 строк*
+*362 строк*
 
 ````python
 """Этап 9 — бюджеты, лимиты и алерты.
@@ -7725,6 +7969,27 @@ class BudgetGuard:
                 if row else Limit(),
                 used[0], used[1],
             )
+
+    def reload_limits(self) -> None:
+        """Перечитывает лимиты из базы, сохраняя накопленный расход.
+
+        Нужно, когда пользователь правит лимиты на странице бюджетов прямо
+        во время прогона: иначе новое значение вступило бы в силу только со
+        следующим запуском, а до тех пор агенты работали бы по старому.
+        """
+        for (scope, scope_id), state in self._scopes.items():
+            limit = self._limit_of(scope, scope_id)
+            if scope == "task" and limit.token_limit is None:
+                task = self.repos.tasks.get(scope_id)
+                if task is not None and task.token_limit:
+                    limit.token_limit = task.token_limit
+                    self._task_limit_from_form = self.repos.budgets.get(
+                        "task", scope_id) is None
+            state.limit = limit
+            if not state.exceeded():
+                state.exceeded_reported = False
+            if state.ratio() < limit.alert_threshold:
+                state.alerted = False
 
     def _limit_of(self, scope: str, scope_id: int) -> Limit:
         row = self.repos.budgets.get(scope, scope_id)
@@ -7909,7 +8174,7 @@ def load_states(repos: Repos, workspace_id: int) -> list[ScopeState]:
 
 ### `core/export/bundle.py`
 
-*383 строк*
+*394 строк*
 
 ````python
 """Этап 8 — сборка результата проекта.
@@ -7926,12 +8191,14 @@ def load_states(repos: Repos, workspace_id: int) -> list[ScopeState]:
 from __future__ import annotations
 
 import logging
+import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
 from app.config import PATHS
 from core.hitl import parse_payload
+from storage.db import local_time
 from storage.models import Incident, Report, Subtask, Summary, Task, Workspace
 from storage.repositories import Repos
 
@@ -8062,6 +8329,9 @@ def collect(repos: Repos, workspace_id: int) -> ResultBundle:
     def of_task(items):
         return [i for i in items if task is None or i.task_id in (task.id, None)]
 
+    decisions = [row for row in repos.approvals.history(workspace_id, limit=200)
+                 if task is None or row.get("task_id") in (task.id, None)]
+
     bundle = ResultBundle(
         workspace=workspace,
         task=task,
@@ -8069,7 +8339,7 @@ def collect(repos: Repos, workspace_id: int) -> ResultBundle:
         reports=of_task(repos.reports.list_reports(workspace_id, limit=500)),
         summaries=of_task(repos.reports.list_summaries(workspace_id, limit=100)),
         incidents=of_task(repos.incidents.list(workspace_id, limit=500)),
-        decisions=repos.approvals.history(workspace_id, limit=200),
+        decisions=decisions,
         agent_names={a.id: a.name for a in repos.agents.list(workspace_id)},
         files=scan_files(PATHS.workspace_dir(workspace_id)),
         tokens=tokens,
@@ -8132,9 +8402,14 @@ def detect_format(bundle: ResultBundle) -> tuple[str, str]:
         bundle.task.description if bundle.task else "",
     ])).lower()
 
-    if any(word in haystack for word in CODE_HINTS):
+    # Совпадение с начала слова: иначе «api» находится в «capital», а «код»
+    # в «эпизоде», и задача про историю уходит в ZIP как «код».
+    def mentions(words: tuple[str, ...]) -> bool:
+        return any(re.search(rf"(?<!\w){re.escape(w)}", haystack) for w in words)
+
+    if mentions(CODE_HINTS):
         return "zip", "Формулировка задачи говорит о коде — собираем архив."
-    if any(word in haystack for word in DOC_HINTS):
+    if mentions(DOC_HINTS):
         return "docx", "Формулировка задачи говорит о документе."
 
     total = sum(len(s.result) for s in bundle.subtasks)
@@ -8282,7 +8557,8 @@ def _status_title(status: str) -> str:
 
 
 def _when(raw: str) -> str:
-    return (raw or "")[:19].replace("T", " ")
+    # В базе время в UTC; в документе — местное, как и «Сформировано».
+    return local_time(raw, "%d.%m.%Y %H:%M") if raw else ""
 
 
 def _human_size(path: Path) -> str:
@@ -8299,7 +8575,7 @@ def _human_size(path: Path) -> str:
 
 ### `core/export/exporters.py`
 
-*386 строк*
+*408 строк*
 
 ````python
 """Рендеринг результата в конкретные форматы (этап 8).
@@ -8316,6 +8592,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import shutil
 import zipfile
 from dataclasses import dataclass
@@ -8388,7 +8665,7 @@ def export_docx(bundle: ResultBundle, options: ExportOptions,
             "pip install python-docx"
         ) from exc
 
-    blocks = build_document(bundle, options)
+    blocks = [_clean_block(b) for b in build_document(bundle, options)]
     document = Document()
 
     # Моноширинный стиль для кода — в стандартном шаблоне его нет.
@@ -8529,7 +8806,7 @@ def export_pdf(bundle: ResultBundle, options: ExportOptions,
     }
 
     story: list = []
-    for block in build_document(bundle, options):
+    for block in (_clean_block(b) for b in build_document(bundle, options)):
         if block.kind == "heading":
             story.append(Paragraph(_escape(block.text),
                                    headings.get(min(block.level, 4), body)))
@@ -8571,6 +8848,27 @@ def export_pdf(bundle: ResultBundle, options: ExportOptions,
 def _escape(raw: str) -> str:
     """Экранирует спецсимволы разметки reportlab."""
     return (raw or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+#: управляющие символы, недопустимые в XML (DOCX их не принимает вовсе):
+#: всё ниже пробела, кроме табуляции и переводов строки
+_CONTROL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+#: ANSI-последовательности цвета из вывода терминала: «\x1b[31m»
+_ANSI = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
+
+
+def _clean(text: str) -> str:
+    """Убирает то, что сломало бы DOCX/PDF: цвета терминала и управляющие символы.
+
+    Агенты вставляют в результат вывод программ как есть, а python-docx
+    на первом же таком символе бросает исключение и экспорт целиком падает.
+    """
+    return _CONTROL.sub("", _ANSI.sub("", text or ""))
+
+
+def _clean_block(block: Block) -> Block:
+    return Block(block.kind, text=_clean(block.text), level=block.level,
+                 items=[_clean(i) for i in block.items], language=block.language)
 
 
 # ---------------------------------------------------------------------------
@@ -8854,7 +9152,7 @@ class UiApp:
 
 ### `ui/bridge/core.py`
 
-*143 строк*
+*158 строк*
 
 ````python
 """Общие кирпичики моста: объект состояния, контроллер страницы, форматтеры."""
@@ -8983,6 +9281,21 @@ def fmt_money(value: float) -> str:
 
 def when(iso: str | None, fmt: str = "%d.%m %H:%M") -> str:
     return local_time(iso or "", fmt) if iso else ""
+
+
+def as_int(value: Any, default: int = -1) -> int:
+    """Число из QML: там вместо него легко приходит ``undefined``, строка или 3.0."""
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def as_float(value: Any, default: float) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
 
 
 def elide(text: str, limit: int) -> str:
@@ -9245,7 +9558,7 @@ class I18n(QObject):
 
 ### `ui/bridge/backend.py`
 
-*435 строк*
+*441 строк*
 
 ````python
 """Корневой объект моста: профиль, воркспейс, события ядра, уведомления.
@@ -9266,7 +9579,7 @@ from PySide6.QtCore import Property, QObject, QTimer, QUrl, Signal, Slot
 from PySide6.QtGui import QDesktopServices
 
 from app.config import APP_NAME, APP_VERSION, PATHS, AppSettings
-from app.i18n import set_language, tr
+from app.i18n import available_languages, set_language, tr
 from core.events import Event, EventBus, EventType
 from core.orchestrator import Orchestrator
 from core.security.crypto import (
@@ -9498,6 +9811,10 @@ class Backend(StateObject):
         if self.orchestrator and self.orchestrator.state.running:
             self.orchestrator.stop()
         self._state_timer.stop()
+        # Остановленный прогон ещё досылает события о завершении; экраны
+        # вышедшего профиля их получать не должны.
+        if self.bus is not None:
+            self.bus.unsubscribe(self._on_event)
         if self.session:
             self.session.wipe()
         self.session = None
@@ -9566,6 +9883,8 @@ class Backend(StateObject):
     # -- настройки приложения ---------------------------------------------------
     @Slot(str)
     def setLanguage(self, code: str) -> None:  # noqa: N802
+        if code not in {c for c, _ in available_languages()}:
+            return
         set_language(code)
         self.settings.language = code
         self.settings.save()
@@ -9725,7 +10044,7 @@ def build_controllers(backend) -> dict:
 
 ### `ui/bridge/c_workspaces.py`
 
-*90 строк*
+*93 строк*
 
 ````python
 """Воркспейсы: параллельные проекты со своими агентами, задачей и настройками."""
@@ -9786,6 +10105,9 @@ class WorkspacesController(Controller):
                                           dict(DEFAULT_WORKSPACE_SETTINGS))
         PATHS.workspace_dir(ws.id).mkdir(parents=True, exist_ok=True)
         self.backend.select_workspace(ws.id)
+        # Во время прогона переключение не состоится, но новый воркспейс
+        # всё равно должен появиться в списке.
+        self.refresh()
         self.toast("success", tr("toast.ws_created"), name)
         return ""
 
@@ -9822,7 +10144,7 @@ class WorkspacesController(Controller):
 
 ### `ui/bridge/c_keys.py`
 
-*135 строк*
+*139 строк*
 
 ````python
 """API-ключи провайдеров: общие для всех воркспейсов профиля."""
@@ -9945,16 +10267,20 @@ class KeysController(Controller):
                 await provider.aclose()
 
         def done(models: list[str]) -> None:
+            if not self.ready:          # за время проверки вышли из профиля
+                return
             message = tr("keys.test_ok", n=len(models))
             self._tests[key_id] = ("ok", message)
-            meta = dict(key.meta)
-            meta["models"] = models[:300]    # кэш для выпадающего списка моделей
-            self.repos.keys.update(key.id, key.label, key.base_url, None, meta)
+            # Кэш для выпадающего списка моделей. Пишем только его: подпись и
+            # адрес ключа могли поправить, пока шёл запрос.
+            self.repos.keys.update_meta(key.id, models=models[:300])
             self._model.update_row(key_id, testState="ok", testMessage=message,
                                    models=len(models))
             self.backend.agents.refresh()
 
         def failed(exc: Exception) -> None:
+            if not self.ready:
+                return
             message = tr("keys.test_fail", err=error_text(exc))
             self._tests[key_id] = ("fail", message)
             self._model.update_row(key_id, testState="fail", testMessage=message)
@@ -9964,7 +10290,7 @@ class KeysController(Controller):
 
 ### `ui/bridge/c_agents.py`
 
-*219 строк*
+*225 строк*
 
 ````python
 """Агенты воркспейса: роли, модели, инструменты, системные промпты."""
@@ -9978,7 +10304,7 @@ from core.agents.roles import COMMON_RULES, TEMPLATES, by_key, title as role_tit
 from core.tools.base import default_registry, expand_tool_names
 from providers.factory import build_provider, model_price
 from providers.presets import preset
-from ui.bridge.core import Controller, elide, error_text, status_title
+from ui.bridge.core import Controller, as_float, as_int, elide, error_text, status_title
 from ui.bridge.listmodel import DictListModel
 from utils.asyncutils import run_async
 
@@ -10116,9 +10442,10 @@ class AgentsController(Controller):
                 await provider.aclose()
 
         def done(models: list[str]) -> None:
-            meta = dict(key.meta)
-            meta["models"] = models[:300]
-            self.repos.keys.update(key.id, key.label, key.base_url, None, meta)
+            if self.ready:
+                # Только кэш моделей: подпись и адрес за время запроса могли
+                # поменять, и старые значения их бы затёрли.
+                self.repos.keys.update_meta(key.id, models=models[:300])
             self.modelsLoaded.emit(key_id, models[:300], "")
 
         def failed(exc: Exception) -> None:
@@ -10133,7 +10460,7 @@ class AgentsController(Controller):
             return tr("ws.empty")
         name = str(data.get("name") or "").strip()
         model = str(data.get("model") or "").strip()
-        key_id = int(data.get("keyId", -1))
+        key_id = as_int(data.get("keyId"))
         key = self.repos.keys.get(key_id) if key_id >= 0 else None
         if not name:
             return tr("agents.need_name")
@@ -10146,11 +10473,11 @@ class AgentsController(Controller):
             name=name, role=str(data.get("role") or "custom"),
             system_prompt=str(data.get("prompt") or "").strip(),
             api_key_id=key.id, provider=key.provider, model=model,
-            params={"temperature": round(float(data.get("temperature", 0.7)), 2),
-                    "max_tokens": int(data.get("maxTokens", 2048)), "tools": tools},
+            params={"temperature": round(min(max(as_float(data.get("temperature"), 0.7), 0.0), 2.0), 2),
+                    "max_tokens": max(1, as_int(data.get("maxTokens"), 2048)), "tools": tools},
             is_supervisor=bool(data.get("isSupervisor", False)),
         )
-        agent_id = int(data.get("id", -1))
+        agent_id = as_int(data.get("id"))
         if agent_id >= 0:
             self.repos.agents.update(agent_id, **fields)
             self.toast("success", tr("toast.agent_saved"), name)
@@ -10162,6 +10489,11 @@ class AgentsController(Controller):
 
     @Slot(int)
     def remove(self, agent_id: int) -> None:
+        if self.backend.running:
+            # Агент мог быть занят подзадачей: его история и отчёт ссылаются
+            # на запись, которой больше нет, и прогон падает на сохранении.
+            self.toast("warning", tr("toast.run_active"), tr("toast.run_active_text"))
+            return
         agent = self.repos.agents.get(agent_id)
         self.repos.agents.delete(agent_id)
         self._after_change()
@@ -10190,7 +10522,7 @@ class AgentsController(Controller):
 
 ### `ui/bridge/c_task.py`
 
-*259 строк*
+*290 строк*
 
 ````python
 """Постановка задачи и подзадачи: вручную или разбиением через ИИ."""
@@ -10201,7 +10533,15 @@ from PySide6.QtCore import Property, QObject, Signal, Slot
 
 from app.i18n import tr
 from core.planner import match_agent_by_role, plan_subtasks
-from ui.bridge.core import Controller, elide, error_text, fmt_money, fmt_tokens, status_title
+from ui.bridge.core import (
+    Controller,
+    as_int,
+    elide,
+    error_text,
+    fmt_money,
+    fmt_tokens,
+    status_title,
+)
 from ui.bridge.listmodel import DictListModel
 from utils.asyncutils import run_async
 
@@ -10330,6 +10670,10 @@ class TaskController(Controller):
         else:
             self.repos.tasks.update(task.id, title=title, description=body,
                                     result_format=fmt, token_limit=token_limit)
+            # Лимит задачи поменяли посреди прогона — он действует сразу.
+            orch = self.backend.orchestrator
+            if orch is not None and orch.state.running and orch.budget is not None:
+                orch.budget.reload_limits()
         self.refresh()
         self.backend.dashboard.schedule()
         return ""
@@ -10355,12 +10699,21 @@ class TaskController(Controller):
         task_id = self._ensure_task()
         if task_id is None:
             return tr("task.save_first")
+        sid = as_int(data.get("id"))
+        if sid >= 0 and self.backend.running:
+            # Правка подзадачи, которую сейчас выполняет агент, разошлась бы
+            # с тем, что он делает, и с тем, что потом проверит супервайзер.
+            return tr("toast.run_active_text")
         title = str(data.get("title") or "").strip()
         if not title:
             return tr("task.need_subtask_title")
-        agent_id = int(data.get("agentId", -1))
-        deps = [int(d) for d in (data.get("deps") or []) if int(d) != int(data.get("id", -2))]
-        sid = int(data.get("id", -1))
+        agent_id = as_int(data.get("agentId"))
+        known = {s.id for s in self.repos.tasks.subtasks(task_id)}
+        deps = []
+        for raw in data.get("deps") or []:
+            dep = as_int(raw)
+            if dep in known and dep != sid and dep not in deps:
+                deps.append(dep)
         if sid >= 0 and self._creates_cycle(task_id, sid, deps):
             return tr("task.dep_cycle")
         description = str(data.get("description") or "").strip()
@@ -10395,6 +10748,11 @@ class TaskController(Controller):
 
     @Slot(int)
     def removeSubtask(self, sid: int) -> None:  # noqa: N802
+        if self.backend.running:
+            # Удаление подзадачи посреди прогона рвёт связи в базе, и агент,
+            # который её выполняет, падает на записи отчёта.
+            self.toast("warning", tr("toast.run_active"), tr("toast.run_active_text"))
+            return
         task_id = self._ensure_task()
         self.repos.tasks.delete_subtask(sid)
         # Ссылки на удалённую подзадачу из зависимостей других тоже убираем.
@@ -10407,6 +10765,8 @@ class TaskController(Controller):
 
     @Slot(int, int)
     def move(self, sid: int, delta: int) -> None:
+        if self.backend.running:
+            return
         task_id = self._ensure_task()
         if task_id is None:
             return
@@ -10441,6 +10801,9 @@ class TaskController(Controller):
 
         def done(planned) -> None:
             self._set(planning=False)
+            # Пока модель думала, пользователь мог выйти из профиля.
+            if not self.ready:
+                return
             for item in planned:
                 agent_id = match_agent_by_role(self.repos, ws_id, item.assignee_role)
                 self.repos.tasks.add_subtask(task_id, item.title, item.description, agent_id)
@@ -10456,7 +10819,7 @@ class TaskController(Controller):
 
 ### `ui/bridge/c_run.py`
 
-*465 строк*
+*470 строк*
 
 ````python
 """Выполнение: запуск прогона, живые рассуждения агентов, граф, лента, решения.
@@ -10488,6 +10851,8 @@ STREAM_FLUSH_MS = 60
 STREAM_KEEP_CHARS = 9000
 FEED_LIMIT = 600
 SUPERVISOR_CARD = -1
+#: так подписывает свои события служба супервайзера (core/supervisor)
+SUPERVISOR_NAME = "Супервайзер"
 
 #: как окрашивать события в ленте
 FEED_TONES = {
@@ -10800,6 +11165,9 @@ class RunController(Controller):
                                   verdict=event.payload.get("verdict", ""))
         elif kind is EventType.SUMMARY_CREATED:
             self._supervisor_line(event.message, phase="idle")
+        elif kind is EventType.ERROR and not event.agent_id and event.agent_name == SUPERVISOR_NAME:
+            # Проверка или сводка сорвалась: карточка не должна «проверять» вечно.
+            self._supervisor_line(event.message, phase="idle", verdict="unverified")
         elif kind is EventType.AGENT_STATUS and event.agent_id:
             status = event.payload.get("status", event.message)
             self._streams_model.update_row(event.agent_id, status=status,
@@ -10928,7 +11296,7 @@ class RunController(Controller):
 
 ### `ui/bridge/c_supervisor.py`
 
-*176 строк*
+*187 строк*
 
 ````python
 """Супервайзер: сводки, инциденты и история решений человека."""
@@ -10941,7 +11309,7 @@ from app.config import DEFAULT_WORKSPACE_SETTINGS
 from app.i18n import tr
 from core.events import EventType
 from core.hitl import parse_payload
-from ui.bridge.core import Controller, error_text, when
+from ui.bridge.core import Controller, as_int, error_text, when
 from ui.bridge.listmodel import DictListModel
 from utils.asyncutils import run_async
 
@@ -11042,7 +11410,7 @@ class SupervisorController(Controller):
             return
         agent = None
         if s.get("supervisor_agent_id"):
-            agent = self.repos.agents.get(int(s["supervisor_agent_id"]))
+            agent = self.repos.agents.get(as_int(s["supervisor_agent_id"]))
         if agent is None:
             agent = next((a for a in self.repos.agents.list(self.ws_id) if a.is_supervisor), None)
         if agent is None:
@@ -11072,10 +11440,17 @@ class SupervisorController(Controller):
         if task is None:
             self.toast("warning", tr("task.no_task"), "")
             return
+        from core.budget import BudgetGuard
         from core.supervisor.supervisor import Supervisor
 
         bus = self.backend.bus
-        supervisor = Supervisor(self.repos, bus, self.ws_id, self._settings())
+        # Ручная сводка тоже тратит деньги и подчиняется тем же лимитам.
+        budget = BudgetGuard(self.repos, bus, self.ws_id, task.id, task.token_limit)
+        blocked = budget.blocking_scope(None)
+        if blocked is not None:
+            self.toast("warning", tr("toast.summary_failed"), blocked.reason())
+            return
+        supervisor = Supervisor(self.repos, bus, self.ws_id, self._settings(), budget=budget)
         if not supervisor.available():
             self.toast("warning", tr("sup.not_configured"), "")
             return
@@ -11091,9 +11466,13 @@ class SupervisorController(Controller):
             self._set(summarizing=False)
             if content:
                 self.toast("success", tr("toast.summary_done"), "")
+            elif supervisor.last_error:
+                # Ошибка — это не «нечего пересказывать».
+                self.toast("error", tr("toast.summary_failed"), supervisor.last_error)
             else:
                 self.toast("info", tr("sup.nothing_to_summarize"), "")
-            self.refresh()
+            if self.ready:
+                self.refresh()
 
         def failed(exc: Exception) -> None:
             self._set(summarizing=False)
@@ -11306,7 +11685,7 @@ class DashboardController(Controller):
 
 ### `ui/bridge/c_budget.py`
 
-*117 строк*
+*121 строк*
 
 ````python
 """Бюджеты: лимиты по токенам и деньгам на проект, задачу и каждого агента."""
@@ -11419,6 +11798,10 @@ class BudgetController(Controller):
             self.repos.budgets.delete_limit(scope, scope_id)
         else:
             self.repos.budgets.upsert(scope, scope_id, tokens, cost, round(threshold, 2))
+        # Идёт прогон — новый лимит действует сразу, а не со следующего запуска.
+        orch = self.backend.orchestrator
+        if orch is not None and orch.state.running and orch.budget is not None:
+            orch.budget.reload_limits()
         self.refresh()
         self.backend.task.refresh()
         return ""
@@ -11430,13 +11813,14 @@ class BudgetController(Controller):
 
 ### `ui/bridge/c_export.py`
 
-*162 строк*
+*172 строк*
 
 ````python
 """Экспорт результата: формат с объяснением выбора, состав, путь сохранения."""
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 
 from PySide6.QtCore import Property, Signal, Slot
@@ -11446,6 +11830,7 @@ from app.i18n import tr
 from core.export.bundle import ExportOptions, collect, detect_format
 from core.export.exporters import ExportError, export, suggest_filename
 from ui.bridge.core import Controller, error_text
+from utils.asyncutils import run_async
 
 FORMATS = [("markdown", "file-text"), ("docx", "file-type"), ("pdf", "book-open"),
            ("zip", "file-archive")]
@@ -11559,7 +11944,7 @@ class ExportController(Controller):
 
     @Slot()
     def exportNow(self) -> None:  # noqa: N802
-        if self._bundle is None:
+        if self._bundle is None or self._s.get("exporting") or self.ws_id is None:
             return
         raw = (self._s.get("path") or "").strip()
         if not raw:
@@ -11574,22 +11959,30 @@ class ExportController(Controller):
             include_decisions=o.get("decisions", False),
             include_files=o.get("files", True) and fmt == "zip",
             include_stats=o.get("stats", True), anonymize=o.get("anon", False))
+        repos, ws_id, target = self.repos, self.ws_id, Path(raw).expanduser()
         self._set(exporting=True)
-        try:
-            result = export(self._bundle, options, fmt, Path(raw).expanduser())
-        except ExportError as exc:
-            self.toast("error", tr("toast.export_failed"), str(exc))
-            return
-        except Exception as exc:  # noqa: BLE001
-            self.toast("error", tr("toast.export_failed"), error_text(exc))
-            return
-        finally:
+
+        def job():
+            # Данные собираются заново: с момента открытия экрана агенты
+            # могли дописать результаты. Сборка DOCX/PDF занимает секунды —
+            # в отдельном потоке, чтобы окно не замирало.
+            bundle = collect(repos, ws_id)
+            return export(bundle, options, fmt, target)
+
+        def done(result) -> None:
             self._set(exporting=False)
-        info = f"{result.path.name} · {human_size(result.size)}"
-        if result.note:
-            info += f" · {result.note}"
-        self._set(lastPath=str(result.path), lastInfo=info)
-        self.toast("success", tr("toast.exported"), info)
+            info = f"{result.path.name} · {human_size(result.size)}"
+            if result.note:
+                info += f" · {result.note}"
+            self._set(lastPath=str(result.path), lastInfo=info)
+            self.toast("success", tr("toast.exported"), info)
+
+        def failed(exc: Exception) -> None:
+            self._set(exporting=False)
+            text = str(exc) if isinstance(exc, ExportError) else error_text(exc)
+            self.toast("error", tr("toast.export_failed"), text)
+
+        run_async(asyncio.to_thread(job), done, failed)
 
     @Slot()
     def openFolder(self) -> None:  # noqa: N802
@@ -13734,7 +14127,7 @@ Page {
 
 ### `ui/qml/pages/Agents.qml`
 
-*390 строк*
+*392 строк*
 
 ````qml
 import QtQuick
@@ -13849,7 +14242,7 @@ Page {
                             AText { text: model.roleTitle + " · " + model.statusTitle; mute: true; size: Theme.fsSmall }
                         }
                         Toggle {
-                            checked: model.enabled
+                            isOn: model.enabled
                             onToggled: page.ctl.setEnabled(model.id, checked)
                         }
                     }
@@ -14003,6 +14396,8 @@ Page {
         Connections {
             target: page.ctl
             function onModelsLoaded(keyId, list, err) {
+                // Пока шёл запрос, могли выбрать другой ключ: чужой список не нужен.
+                if (keyId !== keySelect.value) return
                 editor.loadingModels = false
                 if (err !== "") { editor.error = err; return }
                 var current = modelSelect.combo.editText
@@ -14021,7 +14416,7 @@ Page {
                     required property var modelData
                     text: modelData.title
                     iconName: modelData.icon
-                    checked: editor.role === modelData.key
+                    isOn: editor.role === modelData.key
                     onClicked: editor.applyTemplate(modelData.key)
                 }
             }
@@ -14037,7 +14432,7 @@ Page {
                 label: i18n.t["agents.provider_key"]
                 icon: "key-round"
                 options: page.ctl.keyOptions.map(function(k) { return { value: k.id, title: k.title } })
-                onPicked: function(v) { keySelect.value = v; editor.refreshModels() }
+                onPicked: function(v) { keySelect.value = v; editor.loadingModels = false; editor.refreshModels() }
             }
         }
 
@@ -14090,7 +14485,7 @@ Page {
                 delegate: Chip {
                     required property var modelData
                     text: modelData.title
-                    checked: editor.tools.indexOf(modelData.name) >= 0
+                    isOn: editor.tools.indexOf(modelData.name) >= 0
                     onClicked: editor.toggleTool(modelData.name, checked)
                 }
             }
@@ -14522,7 +14917,7 @@ Page {
                 delegate: Chip {
                     visible: model.id !== subEditor.subId
                     text: model.index + ". " + model.title
-                    checked: subEditor.deps.indexOf(model.id) >= 0
+                    isOn: subEditor.deps.indexOf(model.id) >= 0
                     onClicked: subEditor.toggleDep(model.id, checked)
                 }
             }
@@ -14545,7 +14940,7 @@ Page {
 
 ### `ui/qml/pages/Run.qml`
 
-*580 строк*
+*581 строк*
 
 ````qml
 import QtQuick
@@ -14815,7 +15210,8 @@ Page {
                             Rectangle { width: 6; height: 6; radius: 3; color: Theme.tone(model.tone); Layout.alignment: Qt.AlignTop; Layout.topMargin: 6 }
                             AText {
                                 Layout.fillWidth: true
-                                text: "<b>" + model.agent + "</b>  " + model.message.replace(/&/g, "&amp;").replace(/</g, "&lt;")
+                                text: "<b>" + model.agent.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</b>  "
+                                      + model.message.replace(/&/g, "&amp;").replace(/</g, "&lt;")
                                 textFormat: Text.StyledText
                                 size: Theme.fsSmall
                                 color: model.tone === "muted" ? Theme.textMute : Theme.textDim
@@ -16020,7 +16416,7 @@ Page {
                             hint: modelData.key === "files" && page.ctl.format !== "zip" ? i18n.t["exp.files_zip_only"]
                                 : modelData.key === "anon" ? i18n.t["exp.opt_anon_hint"] : ""
                             enabled: modelData.key !== "files" || page.ctl.format === "zip"
-                            checked: !!page.ctl.options[modelData.key]
+                            isOn: !!page.ctl.options[modelData.key]
                             onToggled: page.ctl.setOption(modelData.key, checked)
                         }
                     }
@@ -16159,7 +16555,7 @@ Page {
                 Layout.fillWidth: true
                 label: i18n.t["settings.hitl"]
                 hint: i18n.t["settings.hitl_hint"]
-                checked: !!page.ws.human_in_the_loop
+                isOn: !!page.ws.human_in_the_loop
                 onToggled: page.set("human_in_the_loop", checked)
             }
             RangeSlider {
@@ -16178,7 +16574,7 @@ Page {
                 enabled: !!page.ws.human_in_the_loop
                 label: i18n.t["settings.hitl_milestone"]
                 hint: i18n.t["settings.hitl_milestone_hint"]
-                checked: !!page.ws.hitl_pause_on_milestone
+                isOn: !!page.ws.hitl_pause_on_milestone
                 onToggled: page.set("hitl_pause_on_milestone", checked)
             }
         }
@@ -16241,14 +16637,14 @@ Page {
                 Layout.fillWidth: true
                 label: i18n.t["settings.summary_on_event"]
                 hint: i18n.t["settings.summary_cost_hint"]
-                checked: !!page.ws.summary_on_event
+                isOn: !!page.ws.summary_on_event
                 onToggled: page.set("summary_on_event", checked)
             }
             Toggle {
                 Layout.fillWidth: true
                 label: i18n.t["settings.anonymize"]
                 hint: i18n.t["settings.anonymize_hint"]
-                checked: page.ws.anonymize_summaries !== false
+                isOn: page.ws.anonymize_summaries !== false
                 onToggled: page.set("anonymize_summaries", checked)
             }
         }
@@ -16297,7 +16693,7 @@ Page {
                     delegate: Chip {
                         required property var modelData
                         text: modelData.title
-                        checked: (page.ws.tools_enabled || []).indexOf(modelData.key) >= 0
+                        isOn: (page.ws.tools_enabled || []).indexOf(modelData.key) >= 0
                         onClicked: page.ctl.setTool(modelData.key, checked)
                     }
                 }
@@ -16332,7 +16728,7 @@ Page {
             Toggle {
                 Layout.fillWidth: true
                 label: i18n.t["settings.fetch_pages"]
-                checked: page.ws.fetch_pages !== false
+                isOn: page.ws.fetch_pages !== false
                 onToggled: page.set("fetch_pages", checked)
             }
         }
@@ -17592,7 +17988,7 @@ ColumnLayout {
 
 ### `ui/qml/Ao/Toggle.qml`
 
-*60 строк*
+*77 строк*
 
 ````qml
 import QtQuick
@@ -17600,12 +17996,29 @@ import QtQuick.Controls.Basic as T
 import QtQuick.Layouts
 
 // Переключатель с «пружинящим» бегунком и подписью слева.
+//
+// Состояние из данных задаётся через isOn, а не через checked. Щелчок
+// переключает checked (обработчики onToggled видят новое значение), а затем
+// переключатель снова показывает isOn — то, что реально сохранено. Кнопка,
+// которой задали checked напрямую, после щелчка, не изменившего данные
+// (сохранение не прошло, щелчок по уже выбранному пункту), показывала бы
+// состояние, которого на самом деле нет.
 T.AbstractButton {
     id: control
     property string label: ""
     property string hint: ""
+    property var isOn: undefined
     checkable: true
+    checked: isOn === undefined ? false : !!isOn
     hoverEnabled: true
+
+    function resync() {
+        control.checked = Qt.binding(function() { return !!control.isOn })
+    }
+    Connections {
+        target: control
+        function onToggled() { if (control.isOn !== undefined) Qt.callLater(control.resync) }
+    }
     implicitWidth: row.implicitWidth
     implicitHeight: Math.max(28, row.implicitHeight)
     opacity: enabled ? 1 : 0.45
@@ -17659,19 +18072,30 @@ T.AbstractButton {
 
 ### `ui/qml/Ao/Chip.qml`
 
-*46 строк*
+*57 строк*
 
 ````qml
 import QtQuick
 import QtQuick.Controls.Basic as T
 
 // Переключаемая «таблетка»: для инструментов, опций, фильтров.
+// Состояние из данных — через isOn (подробности в Toggle.qml).
 T.AbstractButton {
     id: control
     property string iconName: ""
     property color accent: Theme.violet
+    property var isOn: undefined
     checkable: true
+    checked: isOn === undefined ? false : !!isOn
     hoverEnabled: true
+
+    function resync() {
+        control.checked = Qt.binding(function() { return !!control.isOn })
+    }
+    Connections {
+        target: control
+        function onToggled() { if (control.isOn !== undefined) Qt.callLater(control.resync) }
+    }
     implicitHeight: 32
     implicitWidth: row.implicitWidth + 26
     scale: pressed ? 0.95 : 1
@@ -17810,7 +18234,7 @@ Rectangle {
 
 ### `ui/qml/Ao/RangeSlider.qml`
 
-*75 строк*
+*77 строк*
 
 ````qml
 import QtQuick
@@ -17853,6 +18277,8 @@ ColumnLayout {
         snapMode: T.Slider.SnapAlways
         hoverEnabled: true
         onPressedChanged: if (!pressed) root.committed(value)
+        // Стрелки и колёсико двигают ползунок без нажатия — применяем сразу.
+        onMoved: if (!pressed) root.committed(value)
 
         background: Rectangle {
             x: slider.leftPadding
@@ -19610,9 +20036,9 @@ async def test_hitl() -> None:
     worker = Worker("Агент", confidence="0.4")
     orch._provider_for = lambda agent: worker
 
-    state = await drive(orch, workspace.id, task.id,
-                        answers=[(Decision.REWORK, "Добавь источники"),
-                                 (Decision.APPROVE, "теперь годится")])
+    await drive(orch, workspace.id, task.id,
+               answers=[(Decision.REWORK, "Добавь источники"),
+                        (Decision.APPROVE, "теперь годится")])
     subtask = repos.tasks.subtasks(task.id)[0]
     check("пауза по низкой уверенности сработала", worker.calls == 2,
           f"вызовов модели: {worker.calls}")
@@ -19670,7 +20096,7 @@ async def test_budget() -> None:
     worker = Worker("Агент", tokens=(300, 100))
     orch._provider_for = lambda agent: worker
 
-    state = await drive(orch, workspace.id, task.id)
+    await drive(orch, workspace.id, task.id)
     statuses = [s.status for s in repos.tasks.subtasks(task.id)]
 
     check("лимит остановил работу", worker.calls == 1,
@@ -20213,9 +20639,348 @@ async def test_gemini_stream_skips_thoughts_in_text():
     assert result.usage.output_tokens == 7
 ````
 
+### `tests/test_audit_fixes.py`
+
+*227 строк*
+
+````python
+"""Регрессионные тесты на ошибки, найденные при полном проходе по коду.
+
+Как и в ``test_core_fixes.py``, каждый тест назван по ошибке: если она
+вернётся, по названию упавшего теста сразу понятно, что сломалось.
+"""
+
+from __future__ import annotations
+
+import asyncio
+
+from core.budget import BudgetGuard
+from core.events import EventBus, EventType
+from core.export.bundle import ExportOptions, ResultBundle, detect_format
+from core.export.exporters import export_docx
+from core.hitl import Decision
+from core.orchestrator import Orchestrator
+from core.supervisor.checklist import parse_verdict
+from providers.base import ChatMessage, LLMProvider, ProviderError, ToolCall, ToolSpec
+from providers.gemini_provider import GeminiProvider
+from providers.openai_compat import OpenAICompatProvider
+from storage.models import Subtask, Task, Workspace
+from tests.fakes import SupervisorProvider, Worker, build_project, drive, patch_supervisor
+
+
+def _events(bus: EventBus, *types: EventType) -> list:
+    seen: list = []
+    bus.subscribe(lambda e: seen.append(e) if e.type in types else None)
+    return seen
+
+
+# --- хранилище ------------------------------------------------------------------
+
+
+def test_change_password_keeps_search_api_key():
+    repos, workspace, _, _, _ = build_project()
+    ws = repos.workspaces.get(workspace.id)
+    repos.workspaces.update(workspace.id, settings={
+        **ws.settings, "search_api_key": repos.secrets.seal("tvly-secret")})
+
+    assert repos.users.change_password(repos.session, "password123", "newpassword456")
+
+    token = repos.workspaces.get(workspace.id).settings["search_api_key"]
+    assert repos.secrets.open(token) == "tvly-secret"
+
+
+def test_failed_statement_does_not_leave_open_transaction():
+    repos, *_ = build_project()
+    try:
+        repos.db.execute("INSERT INTO agents(workspace_id, name, created_at) VALUES (?,?,?)",
+                         (999_999, "призрак", "2026-01-01"))
+    except Exception:  # noqa: BLE001 — нарушение внешнего ключа ожидаемо
+        pass
+    with repos.db.transaction() as conn:          # раньше: «transaction within a transaction»
+        conn.execute("SELECT 1")
+
+
+# --- супервайзер ------------------------------------------------------------------
+
+
+def test_verdict_without_field_is_not_accepted():
+    for raw in ("{}", '{"notes": "что-то"}', "[]", '{"verdict": "maybe"}'):
+        verdict = parse_verdict(raw)
+        assert verdict.verdict == "rework", raw
+        assert not verdict.accepted
+        assert verdict.notes
+
+
+async def test_accepted_result_closes_supervisor_notes():
+    repos, workspace, task, _, _ = build_project(subtask_count=1)
+    patch_supervisor(SupervisorProvider(verdicts=[
+        '{"verdict": "ok", "notes": "", "issues": '
+        '[{"kind": "factual_error", "severity": "low", "description": "мелочь"}]}']))
+    orch = Orchestrator(repos, EventBus())
+    orch._provider_for = lambda agent: Worker()
+    await drive(orch, workspace.id, task.id)
+
+    statuses = {i.status for i in repos.incidents.list(workspace.id)}
+    assert statuses == {"resolved"}          # не висит «ждёт решения» на дашборде
+
+
+# --- оркестратор и исполнитель ------------------------------------------------------
+
+
+class _Broken(LLMProvider):
+    async def complete(self, model, messages, **kwargs):
+        raise ProviderError("500: модель недоступна", 500)
+
+    async def list_models(self):
+        return []
+
+
+async def test_failed_subtask_is_reported_once():
+    repos, workspace, task, _, _ = build_project(subtask_count=1)
+    patch_supervisor(SupervisorProvider())
+    bus = EventBus()
+    failed = _events(bus, EventType.SUBTASK_FAILED)
+    orch = Orchestrator(repos, bus)
+    orch._provider_for = lambda agent: _Broken()
+    await drive(orch, workspace.id, task.id)
+
+    assert len(failed) == 1                  # раньше приходило два одинаковых
+    assert "модель недоступна" in failed[0].message
+
+
+async def test_exhausted_user_reworks_mark_subtask_as_error():
+    repos, workspace, task, _, _ = build_project(
+        subtask_count=1, settings={"human_in_the_loop": True, "max_rework_rounds": 0,
+                                   "hitl_confidence_threshold": 0})
+    rework = '{"verdict": "rework", "notes": "ещё раз", "issues": []}'
+    patch_supervisor(SupervisorProvider(verdicts=[rework] * 10))
+    orch = Orchestrator(repos, EventBus())
+    orch._provider_for = lambda agent: Worker()
+    state = await drive(orch, workspace.id, task.id, fallback=Decision.REWORK)
+
+    subtask = repos.tasks.subtasks(task.id)[0]
+    assert subtask.status == "error"         # не «на доработке» навсегда
+    assert state.failed == 1
+
+
+async def test_dependency_on_missing_subtask_does_not_block():
+    repos, workspace, task, _, _ = build_project(subtask_count=1)
+    subtask = repos.tasks.subtasks(task.id)[0]
+    repos.tasks.update_subtask(subtask.id, depends_on="999999")
+    patch_supervisor(SupervisorProvider())
+    orch = Orchestrator(repos, EventBus())
+    orch._provider_for = lambda agent: Worker()
+    await drive(orch, workspace.id, task.id)
+
+    assert repos.tasks.subtasks(task.id)[0].status == "done"
+
+
+async def test_agents_are_idle_after_stop():
+    repos, workspace, task, agents, _ = build_project(subtask_count=2)
+    patch_supervisor(SupervisorProvider())
+    orch = Orchestrator(repos, EventBus())
+    orch._provider_for = lambda agent: Worker(delay=0.5)
+    run = asyncio.ensure_future(orch.run_task(workspace.id, task.id))
+    await asyncio.sleep(0.2)
+    orch.stop()
+    await run
+
+    assert {repos.agents.get(a.id).status for a in agents} == {"idle"}
+
+
+# --- бюджет -------------------------------------------------------------------------
+
+
+def test_budget_limit_change_applies_to_running_guard():
+    repos, workspace, task, agents, _ = build_project()
+    guard = BudgetGuard(repos, EventBus(), workspace.id, task.id)
+    guard.add(500, 0.0, agents[0].id)
+    assert guard.blocking_scope(agents[0].id) is None
+
+    repos.budgets.upsert("agent", agents[0].id, 400, None)
+    guard.reload_limits()
+    blocked = guard.blocking_scope(agents[0].id)
+    assert blocked is not None and blocked.scope == "agent"
+
+
+# --- провайдеры ---------------------------------------------------------------------
+
+
+def test_openai_payload_matches_api_family():
+    messages = [ChatMessage("user", "привет")]
+    official = OpenAICompatProvider("k")
+    official.key = "openai"
+    reasoning = official._payload("o4-mini", messages, 0.7, 500, None)
+    assert reasoning["max_completion_tokens"] == 500
+    assert "max_tokens" not in reasoning and "temperature" not in reasoning
+    chat = official._payload("gpt-4o-mini", messages, 0.7, 500, None)
+    assert chat["temperature"] == 0.7 and "max_tokens" not in chat
+
+    compatible = OpenAICompatProvider("k", "https://api.groq.com/openai/v1")
+    compatible.key = "groq"
+    other = compatible._payload("llama-3.3-70b-versatile", messages, 0.7, 500, None)
+    assert other["max_tokens"] == 500 and other["temperature"] == 0.7
+
+
+def test_tool_arguments_are_always_a_dict():
+    assert ToolCall.parse_args('["a", "b"]') == {"_raw": '["a", "b"]'}
+    assert ToolCall.parse_args("42") == {"_raw": "42"}
+    assert ToolCall.parse_args('{"path": "a.txt"}') == {"path": "a.txt"}
+
+
+def test_gemini_groups_tool_responses_and_returns_signature():
+    calls = [ToolCall("1", "read_file", {"path": "a"}, signature="sig-1"),
+             ToolCall("2", "list_dir", {})]
+    _, contents = GeminiProvider._split([
+        ChatMessage("user", "задача"),
+        ChatMessage("assistant", "", tool_calls=calls),
+        ChatMessage("tool", "текст файла", tool_call_id="1", name="read_file"),
+        ChatMessage("tool", "список", tool_call_id="2", name="list_dir"),
+    ])
+    assert [c["role"] for c in contents] == ["user", "model", "user"]
+    assert len(contents[2]["parts"]) == 2            # оба ответа одним сообщением
+    assert contents[1]["parts"][0]["thoughtSignature"] == "sig-1"
+
+
+def test_gemini_schema_drops_unsupported_keys():
+    spec = ToolSpec("t", "d", {"type": "object", "additionalProperties": False,
+                               "properties": {"n": {"type": "integer", "default": 5}}})
+    payload = GeminiProvider("k")._payload([ChatMessage("user", "x")], 0.5, 100, [spec])
+    params = payload["tools"][0]["functionDeclarations"][0]["parameters"]
+    assert params == {"type": "object", "properties": {"n": {"type": "integer"}}}
+
+
+# --- экспорт --------------------------------------------------------------------------
+
+
+def _bundle(result: str, title: str = "T", description: str = "d") -> ResultBundle:
+    ws = Workspace(1, 1, "WS", "", {}, False, "", "")
+    task = Task(1, 1, title, description, "done", "auto", None, "", "")
+    sub = Subtask(1, 1, None, "A", "", "done", 0, "", result, 0, 0, 0, 0.0, "", "")
+    return ResultBundle(workspace=ws, task=task, subtasks=[sub])
+
+
+def test_docx_export_survives_terminal_output(tmp_path):
+    bundle = _bundle("вывод: \x1b[31mкрасный\x1b[0m \x00 и \x07 сигнал")
+    result = export_docx(bundle, ExportOptions(), tmp_path / "r.docx")
+    assert result.size > 0
+
+
+def test_format_detection_ignores_word_fragments():
+    # «api» внутри «capital» и «app» внутри «happy» — не про код.
+    fmt, _ = detect_format(_bundle("коротко", "Столица Франции",
+                                   "Назови capital и один happy fact"))
+    assert fmt != "zip"
+````
+
+### `tests/qml_controls_check.py`
+
+*98 строк*
+
+````python
+"""Переключатели Ao (Toggle, Chip) держатся за данные и после щелчка.
+
+Отдельный процесс, как и тур: Qt нужен собственный цикл событий. Код
+возврата 0 — всё в порядке, иначе в stdout описание расхождения.
+
+Ошибка, которую ловит проверка: checkable-кнопка сама переключает
+``checked``, и если щелчок не изменил данные (сохранение не прошло, щелчок
+по уже выбранной роли агента), она показывала состояние, которого нет.
+"""
+
+from __future__ import annotations
+
+import os
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+QML = b"""
+import QtQuick
+import Ao
+
+Item {
+    id: root
+    property bool store: false
+    property bool saves: false
+    Toggle {
+        objectName: "toggle"
+        isOn: root.store
+        onToggled: if (root.saves) root.store = checked
+    }
+    Chip {
+        objectName: "chip"
+        isOn: root.store
+        onClicked: if (root.saves) root.store = checked
+    }
+}
+"""
+
+
+def main() -> int:
+    from PySide6.QtCore import QUrl
+    from PySide6.QtGui import QGuiApplication
+    from PySide6.QtQml import QQmlComponent, QQmlEngine
+    from PySide6.QtQuickControls2 import QQuickStyle
+
+    from ui.app import QML_DIR, ensure_qt_dll_path
+
+    ensure_qt_dll_path()
+    QQuickStyle.setStyle("Basic")
+    app = QGuiApplication(sys.argv)
+    engine = QQmlEngine()
+    engine.addImportPath(str(QML_DIR))
+    component = QQmlComponent(engine)
+    component.setData(QML, QUrl.fromLocalFile(str(ROOT / "tests" / "controls.qml")))
+    root = component.create()
+    if root is None:
+        print("QML не загрузился:", [e.toString() for e in component.errors()])
+        return 1
+
+    def settle() -> None:
+        for _ in range(5):
+            app.processEvents()
+
+    problems: list[str] = []
+    for name in ("toggle", "chip"):
+        control = root.findChild(object, name)
+
+        def expect(state: bool, when: str) -> None:
+            settle()
+            if bool(control.property("checked")) != state:
+                problems.append(f"{name}: {when}: checked={control.property('checked')}, "
+                                f"ожидалось {state}")
+
+        root.setProperty("saves", False)
+        root.setProperty("store", False)
+        control.click()
+        expect(False, "владелец не сохранил щелчок — показываем сохранённое")
+        root.setProperty("store", True)
+        expect(True, "данные изменились извне — переключатель следует за ними")
+
+        root.setProperty("saves", True)
+        control.click()
+        expect(False, "щелчок сохранён владельцем")
+        root.setProperty("store", True)
+        expect(True, "после щелчка привязка к данным не потеряна")
+
+    if problems:
+        print("\n".join(problems))
+        return 1
+    print("OK")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+````
+
 ### `tests/test_ui.py`
 
-*65 строк*
+*73 строк*
 
 ````python
 """Интерфейс на Qt Quick: загрузка всех экранов и живой прогон без сети.
@@ -20271,6 +21036,14 @@ def test_translation_keys_exist_in_both_languages():
     missing_en = sorted(k for k in i18n.RU if k not in i18n.EN)
     assert not missing_ru, missing_ru
     assert not missing_en, missing_en
+
+
+def test_toggles_show_saved_state_after_click():
+    env = dict(os.environ, QT_QPA_PLATFORM="offscreen")
+    proc = subprocess.run([sys.executable, str(ROOT / "tests" / "qml_controls_check.py")],
+                          cwd=ROOT, env=env, capture_output=True, text=True,
+                          encoding="utf-8", errors="replace", timeout=120)
+    assert proc.returncode == 0, proc.stdout[-3000:] + proc.stderr[-3000:]
 
 
 def test_ui_tour_runs_without_qml_errors(tmp_path):
@@ -20993,6 +21766,33 @@ shots/
   пароля, итог при исчерпании шагов, дерево процессов в песочнице.
 - **Проект переименован** из AI Orchestrator в Agent Forge; старый каталог
   данных подхватывается автоматически.
+
+## Сделано в версии 1.1.1
+
+Полный проход по коду; каждое исправление закреплено тестом в
+`tests/test_audit_fixes.py` или `tests/qml_controls_check.py`.
+
+- **Ядро**: подзадача, у которой кончились круги доработки, получает статус
+  ошибки, а не висит «на доработке»; зависимость на удалённую подзадачу не
+  блокирует прогон; принятый результат закрывает замечания супервайзера;
+  агенты после остановки возвращаются в статус «свободен»; ошибка подзадачи
+  приходит одним событием, а не двумя; пустой последний ответ модели не
+  засчитывается как результат.
+- **Супервайзер**: ответ без поля verdict больше не считается «принято»;
+  в контекст проверки идут только принятые результаты; сбой финального
+  разбора не роняет прогон.
+- **Провайдеры**: для OpenAI `max_completion_tokens` и без температуры у
+  моделей o1/o3/o4/gpt-5; Gemini получает ответы нескольких инструментов
+  одним сообщением, подпись вызова и схему без неподдерживаемых ключей.
+- **Данные**: смена пароля перешифровывает и ключ поискового API; упавшая
+  команда SQLite не оставляет открытую транзакцию; лимит, изменённый во
+  время прогона, действует сразу.
+- **Экспорт**: DOCX не падает на цветном выводе терминала; решения и время
+  в документе относятся к текущей задаче и показаны по местному времени;
+  экспорт идёт в фоне и берёт свежие данные.
+- **Интерфейс**: переключатели показывают сохранённое состояние после
+  щелчка; во время прогона нельзя удалить агента или подзадачу, на которой
+  он работает; ползунки применяются и с клавиатуры.
 
 ## Функциональные доработки
 

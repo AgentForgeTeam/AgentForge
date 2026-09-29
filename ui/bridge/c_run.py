@@ -27,6 +27,8 @@ STREAM_FLUSH_MS = 60
 STREAM_KEEP_CHARS = 9000
 FEED_LIMIT = 600
 SUPERVISOR_CARD = -1
+#: так подписывает свои события служба супервайзера (core/supervisor)
+SUPERVISOR_NAME = "Супервайзер"
 
 #: как окрашивать события в ленте
 FEED_TONES = {
@@ -339,6 +341,9 @@ class RunController(Controller):
                                   verdict=event.payload.get("verdict", ""))
         elif kind is EventType.SUMMARY_CREATED:
             self._supervisor_line(event.message, phase="idle")
+        elif kind is EventType.ERROR and not event.agent_id and event.agent_name == SUPERVISOR_NAME:
+            # Проверка или сводка сорвалась: карточка не должна «проверять» вечно.
+            self._supervisor_line(event.message, phase="idle", verdict="unverified")
         elif kind is EventType.AGENT_STATUS and event.agent_id:
             status = event.payload.get("status", event.message)
             self._streams_model.update_row(event.agent_id, status=status,

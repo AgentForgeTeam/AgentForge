@@ -8,7 +8,7 @@ from app.config import DEFAULT_WORKSPACE_SETTINGS
 from app.i18n import tr
 from core.events import EventType
 from core.hitl import parse_payload
-from ui.bridge.core import Controller, error_text, when
+from ui.bridge.core import Controller, as_int, error_text, when
 from ui.bridge.listmodel import DictListModel
 from utils.asyncutils import run_async
 
@@ -109,7 +109,7 @@ class SupervisorController(Controller):
             return
         agent = None
         if s.get("supervisor_agent_id"):
-            agent = self.repos.agents.get(int(s["supervisor_agent_id"]))
+            agent = self.repos.agents.get(as_int(s["supervisor_agent_id"]))
         if agent is None:
             agent = next((a for a in self.repos.agents.list(self.ws_id) if a.is_supervisor), None)
         if agent is None:
@@ -139,10 +139,17 @@ class SupervisorController(Controller):
         if task is None:
             self.toast("warning", tr("task.no_task"), "")
             return
+        from core.budget import BudgetGuard
         from core.supervisor.supervisor import Supervisor
 
         bus = self.backend.bus
-        supervisor = Supervisor(self.repos, bus, self.ws_id, self._settings())
+        # Ручная сводка тоже тратит деньги и подчиняется тем же лимитам.
+        budget = BudgetGuard(self.repos, bus, self.ws_id, task.id, task.token_limit)
+        blocked = budget.blocking_scope(None)
+        if blocked is not None:
+            self.toast("warning", tr("toast.summary_failed"), blocked.reason())
+            return
+        supervisor = Supervisor(self.repos, bus, self.ws_id, self._settings(), budget=budget)
         if not supervisor.available():
             self.toast("warning", tr("sup.not_configured"), "")
             return
@@ -158,9 +165,13 @@ class SupervisorController(Controller):
             self._set(summarizing=False)
             if content:
                 self.toast("success", tr("toast.summary_done"), "")
+            elif supervisor.last_error:
+                # Ошибка — это не «нечего пересказывать».
+                self.toast("error", tr("toast.summary_failed"), supervisor.last_error)
             else:
                 self.toast("info", tr("sup.nothing_to_summarize"), "")
-            self.refresh()
+            if self.ready:
+                self.refresh()
 
         def failed(exc: Exception) -> None:
             self._set(summarizing=False)

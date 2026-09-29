@@ -265,7 +265,8 @@ Page {
                             Rectangle { width: 6; height: 6; radius: 3; color: Theme.tone(model.tone); Layout.alignment: Qt.AlignTop; Layout.topMargin: 6 }
                             AText {
                                 Layout.fillWidth: true
-                                text: "<b>" + model.agent + "</b>  " + model.message.replace(/&/g, "&amp;").replace(/</g, "&lt;")
+                                text: "<b>" + model.agent.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</b>  "
+                                      + model.message.replace(/&/g, "&amp;").replace(/</g, "&lt;")
                                 textFormat: Text.StyledText
                                 size: Theme.fsSmall
                                 color: model.tone === "muted" ? Theme.textMute : Theme.textDim

@@ -16,7 +16,7 @@ from PySide6.QtCore import Property, QObject, QTimer, QUrl, Signal, Slot
 from PySide6.QtGui import QDesktopServices
 
 from app.config import APP_NAME, APP_VERSION, PATHS, AppSettings
-from app.i18n import set_language, tr
+from app.i18n import available_languages, set_language, tr
 from core.events import Event, EventBus, EventType
 from core.orchestrator import Orchestrator
 from core.security.crypto import (
@@ -248,6 +248,10 @@ class Backend(StateObject):
         if self.orchestrator and self.orchestrator.state.running:
             self.orchestrator.stop()
         self._state_timer.stop()
+        # Остановленный прогон ещё досылает события о завершении; экраны
+        # вышедшего профиля их получать не должны.
+        if self.bus is not None:
+            self.bus.unsubscribe(self._on_event)
         if self.session:
             self.session.wipe()
         self.session = None
@@ -316,6 +320,8 @@ class Backend(StateObject):
     # -- настройки приложения ---------------------------------------------------
     @Slot(str)
     def setLanguage(self, code: str) -> None:  # noqa: N802
+        if code not in {c for c, _ in available_languages()}:
+            return
         set_language(code)
         self.settings.language = code
         self.settings.save()

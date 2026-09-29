@@ -56,6 +56,9 @@ class WorkspacesController(Controller):
                                           dict(DEFAULT_WORKSPACE_SETTINGS))
         PATHS.workspace_dir(ws.id).mkdir(parents=True, exist_ok=True)
         self.backend.select_workspace(ws.id)
+        # Во время прогона переключение не состоится, но новый воркспейс
+        # всё равно должен появиться в списке.
+        self.refresh()
         self.toast("success", tr("toast.ws_created"), name)
         return ""
 

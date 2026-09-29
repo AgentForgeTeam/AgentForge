@@ -3,12 +3,29 @@ import QtQuick.Controls.Basic as T
 import QtQuick.Layouts
 
 // Переключатель с «пружинящим» бегунком и подписью слева.
+//
+// Состояние из данных задаётся через isOn, а не через checked. Щелчок
+// переключает checked (обработчики onToggled видят новое значение), а затем
+// переключатель снова показывает isOn — то, что реально сохранено. Кнопка,
+// которой задали checked напрямую, после щелчка, не изменившего данные
+// (сохранение не прошло, щелчок по уже выбранному пункту), показывала бы
+// состояние, которого на самом деле нет.
 T.AbstractButton {
     id: control
     property string label: ""
     property string hint: ""
+    property var isOn: undefined
     checkable: true
+    checked: isOn === undefined ? false : !!isOn
     hoverEnabled: true
+
+    function resync() {
+        control.checked = Qt.binding(function() { return !!control.isOn })
+    }
+    Connections {
+        target: control
+        function onToggled() { if (control.isOn !== undefined) Qt.callLater(control.resync) }
+    }
     implicitWidth: row.implicitWidth
     implicitHeight: Math.max(28, row.implicitHeight)
     opacity: enabled ? 1 : 0.45

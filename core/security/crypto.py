@@ -128,10 +128,10 @@ _KEYRING_SERVICE = "agent-forge"
 
 
 def keyring_available() -> bool:
-    try:
-        import keyring  # noqa: F401
+    import importlib.util
 
-        return True
+    try:
+        return importlib.util.find_spec("keyring") is not None
     except Exception:  # noqa: BLE001
         return False
 

@@ -52,24 +52,36 @@ class GeminiProvider(LLMProvider):
     def _split(messages: list[ChatMessage]) -> tuple[str, list[dict[str, Any]]]:
         system_parts: list[str] = []
         contents: list[dict[str, Any]] = []
+        previous_tool = False
         for m in messages:
             if m.role == "system":
                 system_parts.append(m.content)
-            elif m.role == "tool":
-                contents.append({
-                    "role": "user",
-                    "parts": [{"functionResponse": {"name": m.name or "tool",
-                                                    "response": {"result": m.content}}}],
-                })
-            elif m.role == "assistant":
+                continue
+            if m.role == "tool":
+                part = {"functionResponse": {"name": m.name or "tool",
+                                             "response": {"result": m.content}}}
+                # Ответы на несколько вызовов одного хода Gemini ждёт одним
+                # сообщением: число частей должно совпасть с числом вызовов.
+                if previous_tool:
+                    contents[-1]["parts"].append(part)
+                else:
+                    contents.append({"role": "user", "parts": [part]})
+                previous_tool = True
+                continue
+            previous_tool = False
+            if m.role == "assistant":
                 parts: list[dict[str, Any]] = []
                 if m.content:
                     parts.append({"text": m.content})
-                parts += [{"functionCall": {"name": tc.name, "args": tc.arguments}}
-                          for tc in m.tool_calls]
-                contents.append({"role": "model", "parts": parts or [{"text": ""}]})
+                for tc in m.tool_calls:
+                    call: dict[str, Any] = {"functionCall": {"name": tc.name, "args": tc.arguments}}
+                    if tc.signature:
+                        # Новые модели требуют вернуть подпись вместе с вызовом.
+                        call["thoughtSignature"] = tc.signature
+                    parts.append(call)
+                contents.append({"role": "model", "parts": parts or [{"text": " "}]})
             else:
-                contents.append({"role": "user", "parts": [{"text": m.content}]})
+                contents.append({"role": "user", "parts": [{"text": m.content or " "}]})
         return "\n\n".join(p for p in system_parts if p), contents
 
     def _payload(self, messages: list[ChatMessage], temperature: float, max_tokens: int,
@@ -85,11 +97,19 @@ class GeminiProvider(LLMProvider):
         if tools:
             payload["tools"] = [{
                 "functionDeclarations": [
-                    {"name": t.name, "description": t.description, "parameters": t.parameters}
+                    {"name": t.name, "description": t.description,
+                     "parameters": _schema(t.parameters)}
                     for t in tools
                 ]
             }]
         return payload
+
+    @staticmethod
+    def _call(part: dict[str, Any]) -> ToolCall:
+        fc = part.get("functionCall") or {}
+        return ToolCall(id=uuid.uuid4().hex[:12], name=fc.get("name", ""),
+                        arguments=ToolCall.parse_args(fc.get("args") or {}),
+                        signature=part.get("thoughtSignature") or "")
 
     async def stream_complete(self, model: str, messages: list[ChatMessage], *,
                               temperature: float = 0.7, max_tokens: int = 2048,
@@ -127,10 +147,7 @@ class GeminiProvider(LLMProvider):
                         finish_reason = candidate.get("finishReason") or finish_reason
                         for part in (candidate.get("content") or {}).get("parts", []):
                             if "functionCall" in part:
-                                fc = part["functionCall"]
-                                calls.append(ToolCall(id=uuid.uuid4().hex[:12],
-                                                      name=fc.get("name", ""),
-                                                      arguments=fc.get("args") or {}))
+                                calls.append(self._call(part))
                             elif part.get("text"):
                                 kind = "reasoning" if part.get("thought") else "text"
                                 if kind == "text":
@@ -164,9 +181,7 @@ class GeminiProvider(LLMProvider):
         text_parts, calls = [], []
         for part in (candidate.get("content") or {}).get("parts", []):
             if "functionCall" in part:
-                fc = part["functionCall"]
-                calls.append(ToolCall(id=uuid.uuid4().hex[:12], name=fc.get("name", ""),
-                                      arguments=fc.get("args") or {}))
+                calls.append(self._call(part))
             elif "text" in part and not part.get("thought"):
                 # Рассуждение «думающих» моделей в ответ не входит.
                 text_parts.append(part["text"])
@@ -197,6 +212,29 @@ class GeminiProvider(LLMProvider):
                                               ["generateContent"]):
                 names.append(name)
         return sorted(names)
+
+
+#: ключи JSON Schema, которые понимает ``functionDeclarations``; прочие
+#: (``default``, ``additionalProperties``, ``$schema``…) Gemini отвергает
+_SCHEMA_KEYS = {"type", "format", "description", "nullable", "enum", "properties",
+                "required", "items", "minimum", "maximum", "minItems", "maxItems"}
+
+
+def _schema(node: Any) -> Any:
+    """Приводит JSON Schema инструмента к подмножеству, которое принимает Gemini."""
+    if not isinstance(node, dict):
+        return node
+    out: dict[str, Any] = {}
+    for key, value in node.items():
+        if key not in _SCHEMA_KEYS:
+            continue
+        if key == "properties" and isinstance(value, dict):
+            out[key] = {name: _schema(sub) for name, sub in value.items()}
+        elif key == "items":
+            out[key] = _schema(value)
+        else:
+            out[key] = value
+    return out
 
 
 def _error_text(resp: httpx.Response) -> str:

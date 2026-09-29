@@ -36,8 +36,14 @@ class FileReadTool(Tool):
         path = ctx.resolve(str(kwargs.get("path", "")), must_exist=True)
         if path.is_dir():
             raise ToolError(f"«{path.name}» — каталог, используй list_dir")
-        limit = min(int(kwargs.get("max_bytes") or MAX_READ_BYTES), MAX_READ_BYTES)
-        data = path.read_bytes()[:limit]
+        try:
+            limit = min(max(1, int(kwargs.get("max_bytes") or MAX_READ_BYTES)), MAX_READ_BYTES)
+        except (TypeError, ValueError):
+            limit = MAX_READ_BYTES
+        # Читаем только нужный кусок: файл на гигабайт не должен целиком
+        # попадать в память ради первых 200 КБ.
+        with path.open("rb") as fh:
+            data = fh.read(limit)
         text = data.decode("utf-8", "replace")
         suffix = "\n\n(файл обрезан)" if path.stat().st_size > limit else ""
         return f"Файл: {path}\n\n{text}{suffix}"
@@ -101,7 +107,10 @@ class ListDirTool(Tool):
 
 
 def _human(path: Path) -> str:
-    size = path.stat().st_size
+    try:
+        size = path.stat().st_size
+    except OSError:          # битая ссылка или файл исчез между листингом и stat
+        return "?"
     for unit in ("Б", "КБ", "МБ", "ГБ"):
         if size < 1024:
             return f"{size:.0f} {unit}"

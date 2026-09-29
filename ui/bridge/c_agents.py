@@ -9,7 +9,7 @@ from core.agents.roles import COMMON_RULES, TEMPLATES, by_key, title as role_tit
 from core.tools.base import default_registry, expand_tool_names
 from providers.factory import build_provider, model_price
 from providers.presets import preset
-from ui.bridge.core import Controller, elide, error_text, status_title
+from ui.bridge.core import Controller, as_float, as_int, elide, error_text, status_title
 from ui.bridge.listmodel import DictListModel
 from utils.asyncutils import run_async
 
@@ -147,9 +147,10 @@ class AgentsController(Controller):
                 await provider.aclose()
 
         def done(models: list[str]) -> None:
-            meta = dict(key.meta)
-            meta["models"] = models[:300]
-            self.repos.keys.update(key.id, key.label, key.base_url, None, meta)
+            if self.ready:
+                # Только кэш моделей: подпись и адрес за время запроса могли
+                # поменять, и старые значения их бы затёрли.
+                self.repos.keys.update_meta(key.id, models=models[:300])
             self.modelsLoaded.emit(key_id, models[:300], "")
 
         def failed(exc: Exception) -> None:
@@ -164,7 +165,7 @@ class AgentsController(Controller):
             return tr("ws.empty")
         name = str(data.get("name") or "").strip()
         model = str(data.get("model") or "").strip()
-        key_id = int(data.get("keyId", -1))
+        key_id = as_int(data.get("keyId"))
         key = self.repos.keys.get(key_id) if key_id >= 0 else None
         if not name:
             return tr("agents.need_name")
@@ -177,11 +178,11 @@ class AgentsController(Controller):
             name=name, role=str(data.get("role") or "custom"),
             system_prompt=str(data.get("prompt") or "").strip(),
             api_key_id=key.id, provider=key.provider, model=model,
-            params={"temperature": round(float(data.get("temperature", 0.7)), 2),
-                    "max_tokens": int(data.get("maxTokens", 2048)), "tools": tools},
+            params={"temperature": round(min(max(as_float(data.get("temperature"), 0.7), 0.0), 2.0), 2),
+                    "max_tokens": max(1, as_int(data.get("maxTokens"), 2048)), "tools": tools},
             is_supervisor=bool(data.get("isSupervisor", False)),
         )
-        agent_id = int(data.get("id", -1))
+        agent_id = as_int(data.get("id"))
         if agent_id >= 0:
             self.repos.agents.update(agent_id, **fields)
             self.toast("success", tr("toast.agent_saved"), name)
@@ -193,6 +194,11 @@ class AgentsController(Controller):
 
     @Slot(int)
     def remove(self, agent_id: int) -> None:
+        if self.backend.running:
+            # Агент мог быть занят подзадачей: его история и отчёт ссылаются
+            # на запись, которой больше нет, и прогон падает на сохранении.
+            self.toast("warning", tr("toast.run_active"), tr("toast.run_active_text"))
+            return
         agent = self.repos.agents.get(agent_id)
         self.repos.agents.delete(agent_id)
         self._after_change()

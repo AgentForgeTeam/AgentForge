@@ -78,6 +78,8 @@ class Orchestrator:
         self._confidence_threshold: float = 0.0
         self._semaphore: asyncio.Semaphore | None = None
         self._workspace_id: int | None = None
+        #: id подзадач текущей задачи — зависимости на прочие id игнорируются
+        self._known_ids: set[int] | None = None
 
     # -- управление ----------------------------------------------------------
     def pause(self) -> None:
@@ -159,9 +161,18 @@ class Orchestrator:
             await self._schedule(workspace_id, settings, task, subtasks)
             if self._supervisor is not None and not self._stop.is_set():
                 # Финальный разбор: ищем расхождения между результатами
-                # и подводим общий итог для команды.
-                await self._supervisor.find_conflicts(task)
-                await self._supervisor.make_summary(task, trigger="final")
+                # и подводим общий итог для команды. Сбой здесь не должен
+                # перечеркнуть уже сделанную работу.
+                try:
+                    await self._supervisor.find_conflicts(task)
+                    await self._supervisor.make_summary(task, trigger="final")
+                except asyncio.CancelledError:
+                    raise
+                except Exception:  # noqa: BLE001
+                    log.exception("Сбой финального разбора супервайзера")
+                    self.bus.error("финальный разбор супервайзера не выполнен",
+                                   workspace_id=workspace_id, task_id=task_id,
+                                   agent_name="Супервайзер")
         except asyncio.CancelledError:
             log.info("Прогон отменён")
         finally:
@@ -206,10 +217,12 @@ class Orchestrator:
                         subtasks: list[Subtask]) -> None:
         """Волнами запускает подзадачи, у которых выполнены зависимости."""
         pending = {s.id: s for s in subtasks}
-        done_ids: set[int] = {
-            s.id for s in self.repos.tasks.subtasks(task.id) if s.status == "done"
-        }
-        titles = {s.id: s.title for s in self.repos.tasks.subtasks(task.id)}
+        all_subtasks = self.repos.tasks.subtasks(task.id)
+        done_ids: set[int] = {s.id for s in all_subtasks if s.status == "done"}
+        titles = {s.id: s.title for s in all_subtasks}
+        # Ссылка на подзадачу, которой в задаче больше нет (удалена, осталась
+        # от старой версии), не должна навсегда блокировать зависимую.
+        self._known_ids = set(titles)
 
         while pending and not self._stop.is_set():
             ready = [s for s in pending.values() if self._deps_met(s, done_ids)]
@@ -295,14 +308,14 @@ class Orchestrator:
         lines.append(f"Израсходовано по задаче: {tokens} токенов, ~${cost:.4f}")
         return "\n".join(lines)
 
-    @staticmethod
-    def _deps(subtask: Subtask) -> list[int]:
+    def _deps(self, subtask: Subtask) -> list[int]:
         raw = (subtask.depends_on or "").strip()
-        return [int(t) for t in (tok.strip() for tok in raw.split(",")) if t.isdigit()]
+        deps = [int(t) for t in (tok.strip() for tok in raw.split(",")) if t.isdigit()]
+        known = self._known_ids
+        return [d for d in deps if known is None or d in known]
 
-    @classmethod
-    def _deps_met(cls, subtask: Subtask, done_ids: set[int]) -> bool:
-        return all(dep in done_ids for dep in cls._deps(subtask))
+    def _deps_met(self, subtask: Subtask, done_ids: set[int]) -> bool:
+        return all(dep in done_ids for dep in self._deps(subtask))
 
     # -- выполнение одной подзадачи -----------------------------------------
     async def _run_subtask(self, workspace_id: int, settings: dict, task: Task,
@@ -384,9 +397,11 @@ class Orchestrator:
                 if self._stop.is_set():
                     return False
 
-            self.bus.log(f"исчерпан лимит доработок по «{subtask.title}»",
-                         workspace_id=workspace_id, subtask_id=subtask.id,
-                         agent_name=agent.name)
+            # Сюда попадаем, когда человек снова вернул работу, а его круги
+            # доработки уже исчерпаны. Подзадача не должна остаться висеть
+            # «на доработке»: прогон считал бы её не ошибкой, а ничем.
+            self._fail(subtask, agent, f"исчерпан лимит доработок по «{subtask.title}»")
+            self.repos.agents.set_status(agent.id, "idle")
             return False
 
     async def _ask_human(self, reason: Reason, question: str, **kwargs) -> Answer:
@@ -437,17 +452,20 @@ class Orchestrator:
         if verdict.accepted:
             self.repos.tasks.update_subtask(subtask.id, status="done")
             self.state.finished += 1
-            # Замечания, из-за которых подзадача уходила на доработку,
-            # закрываем: они больше не актуальны, а открытый инцидент
-            # без причины только зашумляет историю.
-            if subtask.rework_count or attempt > 0:
-                closed = self.repos.incidents.resolve_for_subtask(
-                    subtask.id, "Исправлено при доработке, результат принят"
-                )
-                if closed:
-                    self.bus.log(f"закрыто замечаний после доработки: {closed}",
-                                 workspace_id=workspace_id, subtask_id=subtask.id,
-                                 agent_name="Супервайзер")
+            # Замечания по подзадаче закрываем: результат принят, и открытый
+            # инцидент без причины висел бы на дашборде как «ждёт решения».
+            # Это и замечания, из-за которых работа уходила на доработку, и
+            # мелкие пометки, которые супервайзер оставил, принимая отчёт.
+            reworked = bool(subtask.rework_count or attempt > 0)
+            closed = self.repos.incidents.resolve_for_subtask(
+                subtask.id,
+                "Исправлено при доработке, результат принят" if reworked
+                else "Результат принят супервайзером, замечание некритично",
+            )
+            if closed and reworked:
+                self.bus.log(f"закрыто замечаний после доработки: {closed}",
+                             workspace_id=workspace_id, subtask_id=subtask.id,
+                             agent_name="Супервайзер")
             # Супервайзер доволен, но сам исполнитель — нет. Это как раз тот
             # случай, когда дешевле спросить человека, чем нести сомнительный
             # результат дальше по цепочке подзадач.
@@ -810,6 +828,14 @@ class Orchestrator:
         if self._gate is not None:
             self._gate.cancel_all()
             self._gate = None
+        # Прогон окончен: агенты, остановленные посреди работы или
+        # ожидавшие решения, больше не «работают» и не «на паузе».
+        # Статус подзадачи (paused) сохраняется — по нему видно, что
+        # её можно продолжить следующим запуском.
+        if self._workspace_id is not None:
+            for agent in self.repos.agents.list(self._workspace_id):
+                if agent.status in ("running", "paused"):
+                    self.repos.agents.set_status(agent.id, "idle")
         if self._budget is not None:
             self._budget.on_blocked = None
         if self._supervisor is not None:
