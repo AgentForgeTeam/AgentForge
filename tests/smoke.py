@@ -7,7 +7,7 @@
 Модели подменяются фейковыми провайдерами, поэтому тесты не ходят в интернет,
 не тратят токены и выполняются за секунды. Проверяется именно логика ядра:
 шифрование, изоляция агентов, конвейер выполнения, супервайзер, паузы,
-экспорт и бюджеты. Интерфейс сюда не входит — его надо смотреть глазами.
+экспорт и бюджеты. Интерфейс сюда не входит - его надо смотреть глазами.
 """
 
 from __future__ import annotations
@@ -41,7 +41,7 @@ _failed: list[str] = []
 def check(name: str, condition: bool, detail: str = "") -> None:
     """Печатает результат одной проверки и копит статистику."""
     mark = "OK  " if condition else "FAIL"
-    print(f"  [{mark}] {name}" + (f" — {detail}" if detail else ""))
+    print(f"  [{mark}] {name}" + (f" - {detail}" if detail else ""))
     (_passed if condition else _failed).append(name)
 
 
@@ -279,7 +279,7 @@ async def test_export() -> None:
         try:
             __import__(module)
         except ImportError:
-            print(f"  [SKIP] {optional} — пакет {module} не установлен")
+            print(f"  [SKIP] {optional} - пакет {module} не установлен")
             continue
         result = export(bundle, options, optional,
                         out / suggest_filename(bundle, optional))

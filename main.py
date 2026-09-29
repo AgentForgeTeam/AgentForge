@@ -4,7 +4,7 @@
 
     python main.py
 
-Цикл событий Qt и asyncio объединяются через qasync — это даёт один общий
+Цикл событий Qt и asyncio объединяются через qasync - это даёт один общий
 луп, в котором живут и интерфейс, и параллельно работающие агенты.
 """
 
@@ -23,7 +23,7 @@ from app.config import APP_NAME, PATHS, AppSettings  # noqa: E402
 from app.i18n import set_language  # noqa: E402
 
 # Шрифты и геометрия Qt Quick лучше выглядят без принудительного округления
-# масштаба на дисплеях 125–175 %.
+# масштаба на дисплеях 125-175 %.
 os.environ.setdefault("QT_ENABLE_HIGHDPI_SCALING", "1")
 from utils.logging_setup import setup_logging  # noqa: E402
 

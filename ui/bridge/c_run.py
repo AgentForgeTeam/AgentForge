@@ -466,6 +466,6 @@ class RunController(Controller):
 
     @Slot(int, result=str)
     def fullText(self, agent_id: int) -> str:  # noqa: N802
-        """Текст рассуждения без разметки — для копирования в буфер."""
+        """Текст рассуждения без разметки - для копирования в буфер."""
         return "".join(t for _, t in self._streams[agent_id].segments)
 

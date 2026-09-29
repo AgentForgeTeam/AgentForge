@@ -1,4 +1,4 @@
-"""Репозитории — единственная точка доступа к БД.
+"""Репозитории - единственная точка доступа к БД.
 
 UI и ядро никогда не пишут SQL напрямую: это упрощает будущую замену
 хранилища и гарантирует, что секреты шифруются в одном месте.
@@ -89,7 +89,7 @@ class UserRepo:
         # Сначала расшифровываем всё старым ключом (если что-то не читается,
         # исключение вылетит до первой записи), затем пишем одной транзакцией:
         # сбой посередине не должен оставить часть ключей на новом мастер-ключе
-        # при старом пароле — такие ключи было бы уже не расшифровать.
+        # при старом пароле - такие ключи было бы уже не расшифровать.
         rows = self.db.query(
             "SELECT id, secret_blob FROM api_keys WHERE user_id = ? AND secret_blob IS NOT NULL",
             (session.user_id,),
@@ -469,7 +469,7 @@ class IncidentRepo:
         return [Incident.from_row(r) for r in rows]
 
     def resolve_for_subtask(self, subtask_id: int, resolution: str) -> int:
-        """Закрывает открытые инциденты подзадачи — например, после доработки.
+        """Закрывает открытые инциденты подзадачи - например, после доработки.
 
         Возвращает количество закрытых записей.
         """
@@ -508,7 +508,7 @@ class ApprovalRepo:
         )
 
     def history(self, ws_id: int, limit: int = 100) -> list[dict]:
-        """История решений, новые сверху — для вкладки супервайзера."""
+        """История решений, новые сверху - для вкладки супервайзера."""
         rows = self.db.query(
             "SELECT * FROM approvals WHERE workspace_id = ? ORDER BY id DESC LIMIT ?",
             (ws_id, limit),
@@ -574,7 +574,7 @@ class BudgetRepo:
     def usage_series(self, ws_id: int, limit: int = 300) -> list[tuple[str, int, float]]:
         """Хронология вызовов: (время, токены, стоимость).
 
-        Возвращает последние ``limit`` записей в прямом порядке — из них
+        Возвращает последние ``limit`` записей в прямом порядке - из них
         дашборд строит кумулятивные кривые расхода.
         """
         rows = self.db.query(
@@ -639,7 +639,7 @@ class BudgetRepo:
         )
 
     def incident_counts(self, ws_id: int) -> dict[str, int]:
-        """Инциденты по статусам — для плашки «требуют решения»."""
+        """Инциденты по статусам - для плашки «требуют решения»."""
         rows = self.db.query(
             "SELECT status, COUNT(*) n FROM incidents WHERE workspace_id = ? GROUP BY status",
             (ws_id,),
@@ -708,12 +708,12 @@ class SecretCodec:
             return token          # старое значение, сохранённое открытым текстом
         try:
             return self.session.box.decrypt(base64.b64decode(token[len(self.PREFIX):]))
-        except Exception:  # noqa: BLE001 — повреждённый секрет равен отсутствующему
+        except Exception:  # noqa: BLE001 - повреждённый секрет равен отсутствующему
             return ""
 
 
 class Repos:
-    """Агрегатор репозиториев — удобно передавать одним объектом в UI."""
+    """Агрегатор репозиториев - удобно передавать одним объектом в UI."""
 
     def __init__(self, db: Database, session: Session) -> None:
         self.db = db

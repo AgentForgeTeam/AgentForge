@@ -100,7 +100,7 @@ def apply_dark_titlebar(window) -> None:
         # DWMWA_CAPTION_COLOR (Windows 11): цвет заголовка = цвет фона (BGR)
         caption = ctypes.c_int(0x0F0809)
         dwm.DwmSetWindowAttribute(hwnd, 35, ctypes.byref(caption), ctypes.sizeof(caption))
-    except Exception:  # noqa: BLE001 — косметика, не повод падать
+    except Exception:  # noqa: BLE001 - косметика, не повод падать
         log.debug("Тёмный заголовок окна недоступен", exc_info=True)
 
 

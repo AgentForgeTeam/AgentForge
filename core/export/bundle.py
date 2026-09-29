@@ -1,8 +1,8 @@
-"""Этап 8 — сборка результата проекта.
+"""Этап 8 - сборка результата проекта.
 
 Формат результата зависит от задачи, поэтому экспорт устроен в два слоя:
 
-1. Из базы и рабочего каталога собирается ``ResultBundle`` — всё, что
+1. Из базы и рабочего каталога собирается ``ResultBundle`` - всё, что
    наработал проект.
 2. Из него строится **единая модель документа** (список блоков), и уже её
    рендерят четыре формата. Благодаря этому Markdown, DOCX и PDF получаются
@@ -85,7 +85,7 @@ def divider() -> Block:
 
 @dataclass
 class ExportOptions:
-    """Что включать в выгрузку. Значения по умолчанию — «полезное без шума»."""
+    """Что включать в выгрузку. Значения по умолчанию - «полезное без шума»."""
 
     include_results: bool = True       # результаты подзадач (суть работы)
     include_reports: bool = False      # полные отчёты агентов
@@ -215,7 +215,7 @@ def detect_format(bundle: ResultBundle) -> tuple[str, str]:
                        f"Архив сохранит структуру каталогов.")
 
     if len(bundle.files) > 3:
-        return "zip", (f"В рабочем каталоге {len(bundle.files)} файлов — "
+        return "zip", (f"В рабочем каталоге {len(bundle.files)} файлов - "
                        f"архив удобнее одного документа.")
 
     haystack = " ".join(filter(None, [
@@ -229,14 +229,14 @@ def detect_format(bundle: ResultBundle) -> tuple[str, str]:
         return any(re.search(rf"(?<!\w){re.escape(w)}", haystack) for w in words)
 
     if mentions(CODE_HINTS):
-        return "zip", "Формулировка задачи говорит о коде — собираем архив."
+        return "zip", "Формулировка задачи говорит о коде - собираем архив."
     if mentions(DOC_HINTS):
         return "docx", "Формулировка задачи говорит о документе."
 
     total = sum(len(s.result) for s in bundle.subtasks)
     if total > 20_000:
-        return "docx", "Результат объёмный — документ Word удобнее читать."
-    return "markdown", "Результат текстовый и компактный — подойдёт Markdown."
+        return "docx", "Результат объёмный - документ Word удобнее читать."
+    return "markdown", "Результат текстовый и компактный - подойдёт Markdown."
 
 
 # ---------------------------------------------------------------------------
@@ -311,7 +311,7 @@ def build_document(bundle: ResultBundle, options: ExportOptions) -> list[Block]:
         for row in reversed(bundle.decisions):
             payload = parse_payload(row.get("payload_json", "{}"))
             decision = row.get("decision") or "ожидает решения"
-            comment = f" — {row['comment']}" if row.get("comment") else ""
+            comment = f" - {row['comment']}" if row.get("comment") else ""
             rows.append(f"{payload.get('question', '')} → {decision}{comment}")
         blocks.append(bullets(rows))
 
@@ -342,7 +342,7 @@ def _body_blocks(raw: str) -> list[Block]:
     """Разбивает текст результата на абзацы и блоки кода.
 
     Полноценный парсер Markdown здесь не нужен: единственное, что важно
-    не испортить, — ограждённые блоки кода.
+    не испортить, - ограждённые блоки кода.
     """
     blocks: list[Block] = []
     buffer: list[str] = []
@@ -378,7 +378,7 @@ def _status_title(status: str) -> str:
 
 
 def _when(raw: str) -> str:
-    # В базе время в UTC; в документе — местное, как и «Сформировано».
+    # В базе время в UTC; в документе - местное, как и «Сформировано».
     return local_time(raw, "%d.%m.%Y %H:%M") if raw else ""
 
 

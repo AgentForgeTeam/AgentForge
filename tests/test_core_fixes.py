@@ -210,7 +210,7 @@ async def test_supervisor_spend_counts_toward_task_limit():
     state = await drive(orch, ws.id, task.id)
 
     # Без учёта супервайзера лимит 600 пропустил бы обе подзадачи
-    # (2 × 280 = 560). С учётом — вторая упирается в лимит.
+    # (2 × 280 = 560). С учётом - вторая упирается в лимит.
     assert worker.calls == 1
     assert state.tokens >= 280 + 400
     assert repos.tasks.subtasks(task.id)[1].status == "error"
@@ -256,7 +256,7 @@ async def test_steps_exhausted_on_tools_gets_a_real_summary():
     orch._provider_for = lambda agent: worker
     await drive(orch, ws.id, task.id)
     subtask = repos.tasks.subtasks(task.id)[0]
-    # Два шага ушли на инструменты, третий вызов — подведение итога.
+    # Два шага ушли на инструменты, третий вызов - подведение итога.
     assert worker.calls == 3
     assert subtask.result.startswith("Результат от A")
     assert "Посчитаю в песочнице" not in subtask.result

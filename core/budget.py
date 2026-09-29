@@ -1,4 +1,4 @@
-"""Этап 9 — бюджеты, лимиты и алерты.
+"""Этап 9 - бюджеты, лимиты и алерты.
 
 Лимит можно поставить на трёх уровнях: весь воркспейс, текущая задача и
 отдельный агент. Каждый уровень ограничивается и по токенам, и по деньгам.
@@ -6,9 +6,9 @@
 Две важные детали реализации:
 
 * Проверка идёт **перед** вызовом модели, а не после. Иначе лимит узнавался бы
-  постфактум — деньги уже потрачены, а сказать об этом нечем.
+  постфактум - деньги уже потрачены, а сказать об этом нечем.
 * Фактический расход берётся из ``usage_log``, а не из накопительных счётчиков
-  в таблице ``budgets``. Журнал вызовов — единственный источник правды, и при
+  в таблице ``budgets``. Журнал вызовов - единственный источник правды, и при
   перезапуске приложения лимит не «обнуляется» сам собой.
 """
 
@@ -78,7 +78,7 @@ class ScopeState:
     exceeded_reported: bool = False
 
     def ratio(self) -> float:
-        """Доля израсходованного — максимум из токенов и денег."""
+        """Доля израсходованного - максимум из токенов и денег."""
         parts: list[float] = []
         if self.limit.token_limit:
             parts.append(self.tokens / self.limit.token_limit)
@@ -119,7 +119,7 @@ class BudgetGuard:
         self._scopes: dict[tuple[str, int], ScopeState] = {}
         #: лимит на уровне задачи взят из формы задачи, а не из таблицы budgets
         self._task_limit_from_form = False
-        #: кто решает, что делать при исчерпании лимита; ``None`` — блокировать
+        #: кто решает, что делать при исчерпании лимита; ``None`` - блокировать
         self.on_blocked: Callable[[ScopeState], Awaitable[bool]] | None = None
         #: один вопрос на уровень: параллельные агенты ждут общего ответа
         self._pending: dict[tuple[str, int], asyncio.Future] = {}
@@ -195,7 +195,7 @@ class BudgetGuard:
         """Возвращает уровень, лимит которого исчерпан, или ``None``.
 
         Проверка идёт от общего к частному: сначала воркспейс, потом задача,
-        потом конкретный агент — так сообщение получается по самой
+        потом конкретный агент - так сообщение получается по самой
         «дорогой» причине.
         """
         for key in (("workspace", self.workspace_id),
@@ -234,7 +234,7 @@ class BudgetGuard:
                 future.add_done_callback(lambda _f, k=key: self._pending.pop(k, None))
             if not await asyncio.shield(future):
                 return blocked
-            # лимит поднят — проверяем все уровни заново: мог упереться другой
+            # лимит поднят - проверяем все уровни заново: мог упереться другой
 
     async def _ask_extension(self, state: ScopeState) -> bool:
         assert self.on_blocked is not None
@@ -252,7 +252,7 @@ class BudgetGuard:
             limit.cost_limit = round(max(limit.cost_limit, state.cost) * factor, 6)
         state.alerted = False
         if state.scope == "task" and self._task_limit_from_form:
-            # Лимит задан в форме задачи — там его и обновляем.
+            # Лимит задан в форме задачи - там его и обновляем.
             self.repos.tasks.update(state.scope_id, token_limit=limit.token_limit)
         else:
             self.repos.budgets.upsert(state.scope, state.scope_id, limit.token_limit,
@@ -263,7 +263,7 @@ class BudgetGuard:
             EventType.BUDGET_EXTENDED, workspace_id=self.workspace_id,
             task_id=self.task_id,
             message=(f"лимит поднят: {SCOPE_TITLES.get(state.scope, state.scope)} "
-                     f"«{state.name}» — {self.describe_limit(state)}"),
+                     f"«{state.name}» - {self.describe_limit(state)}"),
             payload={"scope": state.scope, "scope_id": state.scope_id},
         ))
 
@@ -297,9 +297,9 @@ class BudgetGuard:
                 self._maybe_alert(state)
 
     def _maybe_alert(self, state: ScopeState) -> None:
-        """Каждый алерт срабатывает один раз на уровень — иначе это шум.
+        """Каждый алерт срабатывает один раз на уровень - иначе это шум.
 
-        «Подходим к порогу» и «лимит исчерпан» — разные события, поэтому у
+        «Подходим к порогу» и «лимит исчерпан» - разные события, поэтому у
         них отдельные флаги: предупреждение о пороге не должно глушить
         сообщение о превышении, и наоборот.
         """
@@ -311,7 +311,7 @@ class BudgetGuard:
             self.bus.emit(Event(
                 EventType.BUDGET_EXCEEDED, workspace_id=self.workspace_id,
                 task_id=self.task_id,
-                message=f"лимит исчерпан — {state.reason()}",
+                message=f"лимит исчерпан - {state.reason()}",
                 payload={"scope": state.scope, "scope_id": state.scope_id,
                          "ratio": state.ratio()},
             ))
@@ -324,7 +324,7 @@ class BudgetGuard:
             self.bus.emit(Event(
                 EventType.BUDGET_ALERT, workspace_id=self.workspace_id,
                 task_id=self.task_id,
-                message=(f"бюджет на {percent:.0f}% — "
+                message=(f"бюджет на {percent:.0f}% - "
                          f"{SCOPE_TITLES.get(state.scope, state.scope)} "
                          f"«{state.name}»"),
                 payload={"scope": state.scope, "scope_id": state.scope_id,
@@ -333,7 +333,7 @@ class BudgetGuard:
 
     # -- отчётность ----------------------------------------------------------
     def snapshot(self) -> list[ScopeState]:
-        """Состояние всех уровней — для дашборда и страницы бюджетов."""
+        """Состояние всех уровней - для дашборда и страницы бюджетов."""
         order = {"workspace": 0, "task": 1, "agent": 2}
         return sorted(self._scopes.values(),
                       key=lambda s: (order.get(s.scope, 3), s.name))
@@ -354,7 +354,7 @@ class BudgetGuard:
 
 
 def load_states(repos: Repos, workspace_id: int) -> list[ScopeState]:
-    """Состояние бюджетов вне прогона — для страницы настройки лимитов."""
+    """Состояние бюджетов вне прогона - для страницы настройки лимитов."""
     task = repos.tasks.current(workspace_id)
     guard = BudgetGuard(repos, EventBus(), workspace_id,
                         task.id if task else None,

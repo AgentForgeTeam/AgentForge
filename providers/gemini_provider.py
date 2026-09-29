@@ -1,13 +1,14 @@
 """Провайдер Google Gemini (generativeLanguage API).
 
 Особенности, скрытые внутри класса:
-* роли называются ``user``/``model``, системный промпт — ``systemInstruction``;
+* роли называются ``user``/``model``, системный промпт - ``systemInstruction``;
 * ключ передаётся заголовком ``x-goog-api-key``;
 * инструменты описываются как ``functionDeclarations``.
 """
 
 from __future__ import annotations
 
+import re
 import uuid
 from typing import Any
 
@@ -22,7 +23,25 @@ from providers.base import (
     ToolCall,
     ToolSpec,
     Usage,
+    is_chat_model,
 )
+
+#: сколько токенов сверх лимита ответа оставить «думающим» моделям: у Gemini
+#: ``maxOutputTokens`` включает размышления, и при лимите агента в 2048
+#: модель могла потратить всё на них и вернуть пустой ответ
+THINKING_HEADROOM = 8192
+
+#: почему кандидат остался пустым (``finishReason``) и что сказать человеку
+_EMPTY_REASONS = {
+    "MAX_TOKENS": "модель израсходовала лимит токенов на размышления и не успела "
+                  "ответить. Увеличьте «Макс. токенов» у агента",
+    "SAFETY": "ответ заблокирован фильтром безопасности Google",
+    "PROHIBITED_CONTENT": "ответ заблокирован фильтром безопасности Google",
+    "BLOCKLIST": "ответ заблокирован фильтром безопасности Google",
+    "SPII": "ответ заблокирован: в нём были персональные данные",
+    "RECITATION": "ответ заблокирован: он повторял защищённый текст",
+    "MALFORMED_FUNCTION_CALL": "модель сформировала некорректный вызов инструмента",
+}
 
 
 class GeminiProvider(LLMProvider):
@@ -85,13 +104,20 @@ class GeminiProvider(LLMProvider):
         return "\n\n".join(p for p in system_parts if p), contents
 
     def _payload(self, messages: list[ChatMessage], temperature: float, max_tokens: int,
-                 tools: list[ToolSpec] | None) -> dict[str, Any]:
+                 tools: list[ToolSpec] | None, model: str = "") -> dict[str, Any]:
         system, contents = self._split(messages)
-        payload: dict[str, Any] = {
-            "contents": contents,
-            "generationConfig": {"temperature": temperature,
-                                 "maxOutputTokens": max_tokens},
-        }
+        config: dict[str, Any] = {"temperature": temperature, "maxOutputTokens": max_tokens}
+        if _thinks(model):
+            # Размышления входят в maxOutputTokens: без запаса модель может
+            # потратить весь лимит на них и не выдать ответа. Сами мысли
+            # просим присылать, чтобы экран «Выполнение» показывал их вживую.
+            config["maxOutputTokens"] = max_tokens + THINKING_HEADROOM
+            config["thinkingConfig"] = {"includeThoughts": True}
+        if _is_gemini3(model):
+            # Для Gemini 3 Google просит не трогать температуру: ниже 1.0
+            # модель склонна зацикливаться (а супервайзер ставит 0.2).
+            config.pop("temperature", None)
+        payload: dict[str, Any] = {"contents": contents, "generationConfig": config}
         if system:
             payload["systemInstruction"] = {"parts": [{"text": system}]}
         if tools:
@@ -117,18 +143,19 @@ class GeminiProvider(LLMProvider):
                               on_delta: DeltaHandler | None = None) -> CompletionResult:
         """``streamGenerateContent`` в режиме SSE.
 
-        Каждый чанк — полноценный ответ с частью ``parts``; вызовы функций
+        Каждый чанк - полноценный ответ с частью ``parts``; вызовы функций
         приходят целиком, а ``usageMetadata`` в последнем чанке содержит
         итоговый расход.
         """
         import json as _json
 
-        payload = self._payload(messages, temperature, max_tokens, tools)
-        url = f"{self.base_url}/models/{model}:streamGenerateContent?alt=sse"
+        payload = self._payload(messages, temperature, max_tokens, tools, model)
+        url = f"{self.base_url}/models/{_model_id(model)}:streamGenerateContent?alt=sse"
         text_parts: list[str] = []
         calls: list[ToolCall] = []
         usage: dict[str, Any] = {}
         finish_reason = ""
+        block_reason = ""
         try:
             async with self._http().stream("POST", url, headers=self._headers(),
                                            json=payload) as resp:
@@ -143,6 +170,8 @@ class GeminiProvider(LLMProvider):
                     except ValueError:
                         continue
                     usage = chunk.get("usageMetadata") or usage
+                    block_reason = ((chunk.get("promptFeedback") or {}).get("blockReason")
+                                    or block_reason)
                     for candidate in chunk.get("candidates") or []:
                         finish_reason = candidate.get("finishReason") or finish_reason
                         for part in (candidate.get("content") or {}).get("parts", []):
@@ -156,8 +185,10 @@ class GeminiProvider(LLMProvider):
                                     on_delta(part["text"], kind)
         except httpx.HTTPError as exc:
             raise ProviderError(f"Сетевая ошибка: {exc}") from exc
+        text = "".join(text_parts)
+        _raise_if_empty(text, calls, finish_reason, block_reason)
         return CompletionResult(
-            text="".join(text_parts), tool_calls=calls,
+            text=text, tool_calls=calls,
             usage=Usage(int(usage.get("promptTokenCount", 0)),
                         int(usage.get("candidatesTokenCount", 0))
                         + int(usage.get("thoughtsTokenCount", 0))),
@@ -167,8 +198,8 @@ class GeminiProvider(LLMProvider):
     async def complete(self, model: str, messages: list[ChatMessage], *,
                        temperature: float = 0.7, max_tokens: int = 2048,
                        tools: list[ToolSpec] | None = None) -> CompletionResult:
-        payload = self._payload(messages, temperature, max_tokens, tools)
-        url = f"{self.base_url}/models/{model}:generateContent"
+        payload = self._payload(messages, temperature, max_tokens, tools, model)
+        url = f"{self.base_url}/models/{_model_id(model)}:generateContent"
         try:
             resp = await self._http().post(url, headers=self._headers(), json=payload)
         except httpx.HTTPError as exc:
@@ -176,7 +207,10 @@ class GeminiProvider(LLMProvider):
         if resp.status_code >= 400:
             raise ProviderError(_error_text(resp), resp.status_code)
 
-        data = resp.json()
+        try:
+            data = resp.json()
+        except ValueError as exc:
+            raise ProviderError(f"Сервер вернул не JSON: {resp.text[:200]}") from exc
         candidate = (data.get("candidates") or [{}])[0]
         text_parts, calls = [], []
         for part in (candidate.get("content") or {}).get("parts", []):
@@ -185,9 +219,12 @@ class GeminiProvider(LLMProvider):
             elif "text" in part and not part.get("thought"):
                 # Рассуждение «думающих» моделей в ответ не входит.
                 text_parts.append(part["text"])
+        text = "".join(text_parts)
+        _raise_if_empty(text, calls, candidate.get("finishReason", ""),
+                        (data.get("promptFeedback") or {}).get("blockReason", ""))
         u = data.get("usageMetadata") or {}
         return CompletionResult(
-            text="".join(text_parts),
+            text=text,
             tool_calls=calls,
             # Токены рассуждения оплачиваются как выходные.
             usage=Usage(int(u.get("promptTokenCount", 0)),
@@ -208,10 +245,46 @@ class GeminiProvider(LLMProvider):
         names = []
         for m in resp.json().get("models", []):
             name = (m.get("name") or "").removeprefix("models/")
-            if name and "generateContent" in (m.get("supportedGenerationMethods") or
-                                              ["generateContent"]):
+            methods = m.get("supportedGenerationMethods") or ["generateContent"]
+            # Озвучка, картинки и эмбеддинги агенту не подходят, а список и так
+            # длинный: оставляем только модели для диалога.
+            if "generateContent" in methods and is_chat_model(name):
                 names.append(name)
         return sorted(names)
+
+
+def _model_id(model: str) -> str:
+    """Имя модели для адреса запроса: префикс «models/» уже есть в пути."""
+    return (model or "").strip().removeprefix("models/")
+
+
+def _thinks(model: str) -> bool:
+    """Модель рассуждает перед ответом: семейства 2.5 и 3.x, алиасы latest."""
+    name = _model_id(model).lower()
+    return bool(re.match(r"gemini-(2\.5|[3-9])", name)) or (
+        name.startswith("gemini-") and name.endswith("-latest"))
+
+
+def _is_gemini3(model: str) -> bool:
+    name = _model_id(model).lower()
+    return bool(re.match(r"gemini-[3-9]", name)) or (
+        name.startswith("gemini-") and name.endswith("-latest"))
+
+
+def _raise_if_empty(text: str, calls: list[ToolCall], finish_reason: str,
+                    block_reason: str) -> None:
+    """Пустой ответ без объяснения выглядел бы как «агент ничего не сделал».
+
+    Gemini в таких случаях сообщает причину отдельным полем: лимит токенов
+    ушёл на размышления, сработал фильтр безопасности и т.п. Её и отдаём.
+    """
+    if text.strip() or calls:
+        return
+    if block_reason:
+        raise ProviderError(f"Gemini отклонил запрос: {block_reason}")
+    reason = (finish_reason or "").upper()
+    if reason in _EMPTY_REASONS:
+        raise ProviderError(f"Gemini: {_EMPTY_REASONS[reason]} ({reason})")
 
 
 #: ключи JSON Schema, которые понимает ``functionDeclarations``; прочие

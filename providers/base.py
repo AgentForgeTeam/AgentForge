@@ -2,17 +2,18 @@
 
 Все провайдеры (OpenAI, Anthropic, Gemini, Groq, OpenRouter, Ollama, HF)
 приводятся к одному набору типов, чтобы ядро агентов ничего не знало
-о различиях в их HTTP-API — включая формат tool-calling.
+о различиях в их HTTP-API - включая формат tool-calling.
 """
 
 from __future__ import annotations
 
 import json
+import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, AsyncIterator, Callable
 
-#: получатель фрагментов при потоковой генерации: (текст, вид). Вид —
+#: получатель фрагментов при потоковой генерации: (текст, вид). Вид -
 #: ``"text"`` для ответа модели или ``"reasoning"`` для рассуждения
 #: моделей, которые отдают его отдельно (DeepSeek-R1, Claude thinking и т.п.)
 DeltaHandler = Callable[[str, str], None]
@@ -25,6 +26,20 @@ def estimate_tokens(text: str) -> int:
     незаметно обходил бы лимиты бюджета.
     """
     return max(1, len(text or "") // 4) if text else 0
+
+
+#: признаки моделей, которые не ведут диалог: озвучка, распознавание речи,
+#: картинки, видео, эмбеддинги, модерация. Агенту они не подходят, и в
+#: выпадающем списке только мешают выбрать рабочую модель.
+_NOT_CHAT = re.compile(
+    r"embed|whisper|tts|transcri|speech|audio|realtime|live|image|imagen|veo|"
+    r"lyria|dall-e|moderation|guard|orpheus|robotics|computer-use|deep-research|"
+    r"antigravity|omni|davinci|babbage|aqa", re.IGNORECASE)
+
+
+def is_chat_model(name: str) -> bool:
+    """Годится ли модель для агента: текст на входе, текст и вызовы на выходе."""
+    return bool(name) and not _NOT_CHAT.search(name)
 
 
 @dataclass
@@ -106,7 +121,7 @@ class LLMProvider(ABC):
     """Базовый класс провайдера.
 
     Реализации обязаны быть потокобезопасными в пределах одного asyncio-лупа
-    и не хранить состояние диалога — вся история приходит в ``messages``.
+    и не хранить состояние диалога - вся история приходит в ``messages``.
     """
 
     #: строковый идентификатор пресета (см. providers/presets.py)
@@ -143,7 +158,7 @@ class LLMProvider(ABC):
 
         Результат тот же, что у ``complete`` (текст, вызовы инструментов,
         расход), но по ходу генерации каждый фрагмент текста передаётся в
-        ``on_delta`` — так интерфейс показывает рассуждение агента вживую.
+        ``on_delta`` - так интерфейс показывает рассуждение агента вживую.
         Реализация по умолчанию делает обычный вызов и отдаёт текст целиком:
         провайдер без стриминга просто покажет ответ разом.
         """
@@ -165,7 +180,7 @@ class LLMProvider(ABC):
         temperature: float = 0.7,
         max_tokens: int = 2048,
     ) -> AsyncIterator[str]:
-        """Потоковая генерация. По умолчанию — эмуляция через ``complete``."""
+        """Потоковая генерация. По умолчанию - эмуляция через ``complete``."""
         result = await self.complete(
             model, messages, temperature=temperature, max_tokens=max_tokens
         )

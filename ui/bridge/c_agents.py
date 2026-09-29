@@ -7,6 +7,7 @@ from PySide6.QtCore import Property, QObject, Signal, Slot
 from app.i18n import current_language, tr
 from core.agents.roles import COMMON_RULES, TEMPLATES, by_key, title as role_title
 from core.tools.base import default_registry, expand_tool_names
+from providers.base import is_chat_model
 from providers.factory import build_provider, model_price
 from providers.presets import preset
 from ui.bridge.core import Controller, as_float, as_int, elide, error_text, status_title
@@ -25,6 +26,23 @@ ROLE_ICONS = {
     "critic": "scale", "documenter": "file-text", "researcher": "book-open",
     "supervisor": "shield-check", "custom": "sparkles",
 }
+
+
+def ordered_models(suggested: list[str], available: list[str]) -> list[str]:
+    """Сначала рекомендованные модели, потом остальные, что вернул провайдер.
+
+    Провайдер отдаёт список по алфавиту, и наверх попадают старые модели:
+    у Gemini это отключённые 2.0 и закрытые для новых ключей 2.5. Если
+    провайдер список прислал, рекомендованные берутся только из него: модель,
+    которой у ключа нет, предлагать незачем.
+    """
+    # Кэш мог сохраниться до того, как появился фильтр, поэтому чистим и здесь.
+    available = [m for m in available if is_chat_model(m)]
+    if not available:
+        return list(suggested)
+    have = set(available)
+    top = [m for m in suggested if m in have]
+    return top + [m for m in available if m not in set(top)]
 
 
 class AgentsController(Controller):
@@ -125,11 +143,12 @@ class AgentsController(Controller):
 
     @Slot(int, result="QVariantList")
     def modelsForKey(self, key_id: int) -> list[str]:  # noqa: N802
-        """Кэш последней проверки ключа, иначе популярные модели пресета."""
+        """Рекомендованные модели пресета, за ними остальные из кэша проверки ключа."""
         key = self.repos.keys.get(key_id) if self.ready and key_id >= 0 else None
         if key is None:
             return []
-        return list(key.meta.get("models") or preset(key.provider).suggested_models)
+        return ordered_models(preset(key.provider).suggested_models,
+                              key.meta.get("models") or [])
 
     @Slot(int)
     def loadModels(self, key_id: int) -> None:  # noqa: N802
@@ -151,7 +170,8 @@ class AgentsController(Controller):
                 # Только кэш моделей: подпись и адрес за время запроса могли
                 # поменять, и старые значения их бы затёрли.
                 self.repos.keys.update_meta(key.id, models=models[:300])
-            self.modelsLoaded.emit(key_id, models[:300], "")
+            self.modelsLoaded.emit(
+                key_id, ordered_models(preset(key.provider).suggested_models, models[:300]), "")
 
         def failed(exc: Exception) -> None:
             self.modelsLoaded.emit(key_id, [], tr("keys.test_fail", err=error_text(exc)))

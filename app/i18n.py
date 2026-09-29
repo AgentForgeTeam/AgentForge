@@ -6,7 +6,7 @@
     label.setText(tr("login.title"))
 
 Строки хранятся плоскими словарями «ключ -> перевод». Отсутствующий ключ
-возвращается как есть — это заметно в UI и помогает не потерять переводы.
+возвращается как есть - это заметно в UI и помогает не потерять переводы.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ _CURRENT = "ru"
 
 RU: dict[str, str] = {
     # --- общее ---
-    "app.title": "Agent Forge — оркестрация ИИ-агентов",
+    "app.title": "Agent Forge - оркестрация ИИ-агентов",
     "common.ok": "OK",
     "common.cancel": "Отмена",
     "common.save": "Сохранить",
@@ -49,26 +49,26 @@ RU: dict[str, str] = {
     "login.create": "Создать профиль",
     "login.create_title": "Новый локальный профиль",
     "login.remember": "Запомнить пароль в хранилище ОС",
-    "login.no_profiles": "Профилей пока нет — создайте первый",
+    "login.no_profiles": "Профилей пока нет - создайте первый",
     "login.bad_credentials": "Неверное имя профиля или пароль",
     "login.password_mismatch": "Пароли не совпадают",
     "login.password_short": "Пароль должен быть не короче 8 символов",
     "login.user_exists": "Профиль с таким именем уже существует",
     "login.warning": (
         "Пароль профиля используется как мастер-ключ для шифрования API-ключей. "
-        "Восстановить его невозможно — при утере ключи придётся добавить заново."
+        "Восстановить его невозможно - при утере ключи придётся добавить заново."
     ),
     # --- бюджеты (этап 9) ---
     "nav.budget": "Бюджеты",
     "bud.title": "Бюджеты и лимиты",
-    "bud.subtitle": "Лимит можно поставить на проект, задачу и каждого агента. Пустое поле — без ограничения",
+    "bud.subtitle": "Лимит можно поставить на проект, задачу и каждого агента. Пустое поле - без ограничения",
     "bud.spent": "израсходовано: {tokens} токенов · ${cost}",
     "bud.token_limit": "Лимит токенов",
     "bud.cost_limit": "Лимит стоимости, $",
     "bud.alert_at": "Алерт при",
     "bud.no_limit": "без лимита",
     "bud.used_pct": "Выбрано {pct}% бюджета",
-    "bud.exceeded": "Лимит исчерпан — новые вызовы модели заблокированы",
+    "bud.exceeded": "Лимит исчерпан - новые вызовы модели заблокированы",
     "bud.nothing": "Пока нечего ограничивать: создайте агентов и поставьте задачу.",
     # --- экспорт (этап 8) ---
     "nav.export": "Экспорт",
@@ -114,7 +114,7 @@ RU: dict[str, str] = {
     "dash.agents": "Агенты",
     "dash.feed": "Лента отчётов и сводок",
     "dash.incidents": "Инциденты",
-    "dash.no_feed": "Отчётов пока нет — запустите агентов на вкладке «Выполнение».",
+    "dash.no_feed": "Отчётов пока нет - запустите агентов на вкладке «Выполнение».",
     "dash.summary_line": "Сводка супервайзера",
     "dash.supervisor_line": "Проверки и сводки",
     "dash.unknown_agent": "Агент удалён",
@@ -134,7 +134,7 @@ RU: dict[str, str] = {
     "sup.incidents": "Инциденты",
     "sup.make_summary": "Составить сводку",
     "sup.no_summaries": "Сводок пока нет. Они появятся во время прогона или по кнопке выше.",
-    "sup.no_incidents": "Инцидентов нет — супервайзер не нашёл проблем.",
+    "sup.no_incidents": "Инцидентов нет - супервайзер не нашёл проблем.",
     "sup.resolve": "Закрыть инцидент",
     "sup.resolution": "Решение",
     "sup.delivered": "получателей: {n}",
@@ -142,10 +142,10 @@ RU: dict[str, str] = {
     "sup.by_event": "по событию",
     "sup.by_hand": "вручную",
     "sup.by_final": "итоговая",
-    "sup.model_api": "Супервайзер: {name} — {model}",
+    "sup.model_api": "Супервайзер: {name} - {model}",
     "sup.model_local": "Супервайзер: локальная модель {model} ({url})",
     "sup.not_configured": "Супервайзер не настроен. Выберите его на вкладке «Настройки».",
-    "sup.nothing_to_summarize": "Пока нечего обобщать — нет готовых результатов.",
+    "sup.nothing_to_summarize": "Пока нечего обобщать - нет готовых результатов.",
     # --- навигация ---
     "nav.workspaces": "Воркспейсы",
     "nav.keys": "API-ключи",
@@ -199,7 +199,7 @@ RU: dict[str, str] = {
     "task.title": "Постановка задачи",
     "task.name": "Название задачи",
     "task.body": "Формулировка задачи",
-    "task.placeholder": "Опишите, что нужно сделать. Чем подробнее — тем точнее разбиение на подзадачи.",
+    "task.placeholder": "Опишите, что нужно сделать. Чем подробнее - тем точнее разбиение на подзадачи.",
     "task.save": "Сохранить задачу",
     "task.subtasks": "Подзадачи",
     "task.add_subtask": "Добавить подзадачу",
@@ -243,7 +243,7 @@ RU: dict[str, str] = {
     "settings.theme": "Тема",
     "settings.hitl": "Human-in-the-loop (паузы в критических точках)",
     "settings.hitl_threshold": "Порог уверенности для паузы",
-    "settings.hitl_threshold_hint": "Если исполнитель оценил свою уверенность ниже этого значения, система остановится и спросит вас. 0 — не спрашивать никогда.",
+    "settings.hitl_threshold_hint": "Если исполнитель оценил свою уверенность ниже этого значения, система остановится и спросит вас. 0 - не спрашивать никогда.",
     "settings.hitl_milestone": "Пауза после каждого этапа работ",
     "settings.hitl_milestone_hint": "Спрашивать подтверждение перед запуском следующей волны подзадач",
     "sup.approvals": "Решения",
@@ -264,13 +264,13 @@ RU: dict[str, str] = {
     "settings.allowed_paths": "Доп. каталоги, доступные агентам",
     "settings.add_path": "Добавить каталог",
     "settings.change_password": "Сменить пароль профиля",
-    "settings.restart_note": "Язык переключается сразу. Во время прогона — после выхода и повторного входа.",
-    "settings.lang_after_run": "Идёт прогон — язык сменится после выхода и повторного входа, чтобы не прерывать агентов.",
+    "settings.restart_note": "Язык переключается сразу. Во время прогона - после выхода и повторного входа.",
+    "settings.lang_after_run": "Идёт прогон - язык сменится после выхода и повторного входа, чтобы не прерывать агентов.",
     "settings.budget": "Бюджеты и лимиты",
 }
 
 EN: dict[str, str] = {
-    "app.title": "Agent Forge — multi-agent orchestration",
+    "app.title": "Agent Forge - multi-agent orchestration",
     "common.ok": "OK",
     "common.cancel": "Cancel",
     "common.save": "Save",
@@ -300,14 +300,14 @@ EN: dict[str, str] = {
     "login.create": "Create profile",
     "login.create_title": "New local profile",
     "login.remember": "Remember password in OS keyring",
-    "login.no_profiles": "No profiles yet — create the first one",
+    "login.no_profiles": "No profiles yet - create the first one",
     "login.bad_credentials": "Wrong profile name or password",
     "login.password_mismatch": "Passwords do not match",
     "login.password_short": "Password must be at least 8 characters",
     "login.user_exists": "A profile with this name already exists",
     "login.warning": (
         "The profile password is also the master key that encrypts your API keys. "
-        "It cannot be recovered — if lost, keys must be re-entered."
+        "It cannot be recovered - if lost, keys must be re-entered."
     ),
     "nav.budget": "Budgets",
     "bud.title": "Budgets and limits",
@@ -318,7 +318,7 @@ EN: dict[str, str] = {
     "bud.alert_at": "Alert at",
     "bud.no_limit": "no limit",
     "bud.used_pct": "{pct}% of budget used",
-    "bud.exceeded": "Limit reached — further model calls are blocked",
+    "bud.exceeded": "Limit reached - further model calls are blocked",
     "bud.nothing": "Nothing to limit yet: create agents and define a task.",
     "nav.export": "Export",
     "exp.title": "Export result",
@@ -362,7 +362,7 @@ EN: dict[str, str] = {
     "dash.agents": "Agents",
     "dash.feed": "Reports and summaries",
     "dash.incidents": "Incidents",
-    "dash.no_feed": "No reports yet — start the agents on the Run tab.",
+    "dash.no_feed": "No reports yet - start the agents on the Run tab.",
     "dash.summary_line": "Supervisor summary",
     "dash.supervisor_line": "Supervisor checks",
     "dash.unknown_agent": "Deleted agent",
@@ -381,7 +381,7 @@ EN: dict[str, str] = {
     "sup.incidents": "Incidents",
     "sup.make_summary": "Create summary",
     "sup.no_summaries": "No summaries yet. They appear during a run or via the button above.",
-    "sup.no_incidents": "No incidents — the supervisor found no problems.",
+    "sup.no_incidents": "No incidents - the supervisor found no problems.",
     "sup.resolve": "Close incident",
     "sup.resolution": "Resolution",
     "sup.delivered": "recipients: {n}",
@@ -389,10 +389,10 @@ EN: dict[str, str] = {
     "sup.by_event": "on event",
     "sup.by_hand": "manual",
     "sup.by_final": "final",
-    "sup.model_api": "Supervisor: {name} — {model}",
+    "sup.model_api": "Supervisor: {name} - {model}",
     "sup.model_local": "Supervisor: local model {model} ({url})",
     "sup.not_configured": "Supervisor is not configured. Pick one on the Settings tab.",
-    "sup.nothing_to_summarize": "Nothing to summarize yet — no finished results.",
+    "sup.nothing_to_summarize": "Nothing to summarize yet - no finished results.",
     "nav.workspaces": "Workspaces",
     "nav.keys": "API keys",
     "nav.agents": "Agents",
@@ -482,7 +482,7 @@ EN: dict[str, str] = {
     "settings.theme": "Theme",
     "settings.hitl": "Human-in-the-loop (pause at critical points)",
     "settings.hitl_threshold": "Confidence threshold for pausing",
-    "settings.hitl_threshold_hint": "If an agent rates its own confidence below this, the system stops and asks you. 0 — never ask.",
+    "settings.hitl_threshold_hint": "If an agent rates its own confidence below this, the system stops and asks you. 0 - never ask.",
     "settings.hitl_milestone": "Pause after each stage",
     "settings.hitl_milestone_hint": "Ask for confirmation before starting the next wave of subtasks",
     "sup.approvals": "Decisions",
@@ -504,7 +504,7 @@ EN: dict[str, str] = {
     "settings.add_path": "Add folder",
     "settings.change_password": "Change profile password",
     "settings.restart_note": "Language switches immediately. During a run it applies after you log out and back in.",
-    "settings.lang_after_run": "A run is in progress — the language will change after you log out and back in, so agents are not interrupted.",
+    "settings.lang_after_run": "A run is in progress - the language will change after you log out and back in, so agents are not interrupted.",
     "settings.budget": "Budgets and limits",
 }
 

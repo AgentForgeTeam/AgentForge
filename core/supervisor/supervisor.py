@@ -1,4 +1,4 @@
-"""Этап 5 — служба супервайзера.
+"""Этап 5 - служба супервайзера.
 
 Обязанности:
 * проверять отчёты агентов по чек-листу и выносить вердикт;
@@ -9,7 +9,7 @@
 
 Модель супервайзера выбирается в настройках воркспейса: либо один из
 подключённых агентов со своим API-ключом, либо локальная модель через
-OpenAI-совместимый endpoint (Ollama, по умолчанию Qwen) — она работает
+OpenAI-совместимый endpoint (Ollama, по умолчанию Qwen) - она работает
 офлайн и ничего не стоит.
 """
 
@@ -68,7 +68,7 @@ class Supervisor:
         self.bus = bus
         self.workspace_id = workspace_id
         self.settings = settings
-        #: лимиты прогона: проверки супервайзера — самая дорогая часть
+        #: лимиты прогона: проверки супервайзера - самая дорогая часть
         #: системы, поэтому они обязаны проходить через тот же бюджет
         self.budget = budget
         self.on_usage = on_usage
@@ -78,10 +78,10 @@ class Supervisor:
         self._model: SupervisorModel | None = None
         self._summary_task: asyncio.Task | None = None
         self._stop = asyncio.Event()
-        #: текст последней ошибки сводки — чтобы интерфейс не выдавал её за
+        #: текст последней ошибки сводки - чтобы интерфейс не выдавал её за
         #: «нечего пересказывать»
         self.last_error = ""
-        #: задача текущего прогона — для привязки событий к нему
+        #: задача текущего прогона - для привязки событий к нему
         self._task_id: int | None = None
 
     def _label(self, agent_id: int | None) -> str:
@@ -162,7 +162,7 @@ class Supervisor:
         if self.budget is not None:
             blocked = await self.budget.ensure_allowed(None)
             if blocked is not None:
-                raise BudgetBlocked(f"лимит исчерпан — {blocked.reason()}")
+                raise BudgetBlocked(f"лимит исчерпан - {blocked.reason()}")
         result = await model.provider.complete(
             model.model,
             [ChatMessage("system", system), ChatMessage("user", user)],
@@ -199,7 +199,7 @@ class Supervisor:
         """Проверяет отчёт по чек-листу и возвращает вердикт.
 
         Если проверить не удалось (сеть, лимит, модель не настроена),
-        вердикт — ``unverified``: такой результат не считается принятым и
+        вердикт - ``unverified``: такой результат не считается принятым и
         не уходит дальше по конвейеру, пока его не посмотрит человек.
         """
         self._task_id = task.id
@@ -221,7 +221,7 @@ class Supervisor:
             raw = await self._ask(REVIEW_SYSTEM, user, task.id)
         except asyncio.CancelledError:
             raise
-        except Exception as exc:  # noqa: BLE001 — любая причина равна «не проверено»
+        except Exception as exc:  # noqa: BLE001 - любая причина равна «не проверено»
             log.warning("Супервайзер не смог проверить отчёт: %s", exc)
             # Раньше непроверенный отчёт молча принимался. Это опаснее, чем
             # остановиться: ошибка ушла бы в зависимые подзадачи без следа.
@@ -258,7 +258,7 @@ class Supervisor:
         for st in self.repos.tasks.subtasks(task_id):
             if st.id == exclude_subtask or not st.result:
                 continue
-            # Только принятое: статус review — это отчёт, который ещё
+            # Только принятое: статус review - это отчёт, который ещё
             # проверяется или ждёт человека, мерить им другие рано.
             if st.status != "done":
                 continue
@@ -291,7 +291,7 @@ class Supervisor:
             )
         except asyncio.CancelledError:
             raise
-        except Exception as exc:  # noqa: BLE001 — сводка не повод ронять прогон
+        except Exception as exc:  # noqa: BLE001 - сводка не повод ронять прогон
             self._emit(EventType.ERROR, f"сводка не составлена: {exc}")
             self.last_error = str(exc)
             return ""
@@ -349,7 +349,7 @@ class Supervisor:
         """Ищет прямые противоречия между результатами подзадач.
 
         Противоречие требует как минимум двух результатов, поэтому при одном
-        готовом результате вызов модели пропускается — это экономит токены,
+        готовом результате вызов модели пропускается - это экономит токены,
         а не срезает проверку.
         """
         self._task_id = task.id

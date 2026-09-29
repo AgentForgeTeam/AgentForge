@@ -71,7 +71,7 @@ class PrefsController(Controller):
 
     @staticmethod
     def _groups(names: list[str]) -> list[str]:
-        """Настройка хранит смесь групп и имён инструментов — приводим к группам."""
+        """Настройка хранит смесь групп и имён инструментов - приводим к группам."""
         groups = []
         for group in TOOL_SWITCHES:
             members = TOOL_GROUPS.get(group, [group])

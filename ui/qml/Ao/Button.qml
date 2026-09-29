@@ -51,7 +51,7 @@ T.AbstractButton {
                 GradientStop { position: 1; color: control.hot ? "#7C7FFB" : Theme.indigo }
             }
         }
-        // Бегущий блик — только на основной кнопке и только при полном движении.
+        // Бегущий блик - только на основной кнопке и только при полном движении.
         Rectangle {
             id: shine
             visible: control.primary && Theme.rich

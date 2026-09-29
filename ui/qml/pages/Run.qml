@@ -51,16 +51,16 @@ Page {
                 size: 64
                 thickness: 6
                 value: page.ctl.progress
-                label: page.ctl.total > 0 ? Math.round(page.ctl.progress * 100) + "%" : "—"
+                label: page.ctl.total > 0 ? Math.round(page.ctl.progress * 100) + "%" : "-"
             }
             Kpi { caption: i18n.t["run.k_done"]; value: page.ctl.done + " / " + page.ctl.total; tint: Theme.success }
             Kpi { caption: i18n.t["run.k_review"]; value: page.ctl.review; tint: page.ctl.review ? Theme.violetSoft : Theme.text }
             Kpi { caption: i18n.t["run.k_errors"]; value: page.ctl.errors; tint: page.ctl.errors ? Theme.danger : Theme.text }
-            Kpi { caption: i18n.t["run.k_time"]; value: backend.runElapsed !== "" ? backend.runElapsed : "—" }
-            Kpi { caption: i18n.t["run.k_tokens"]; value: backend.running ? backend.runTokens : "—" }
-            Kpi { caption: i18n.t["run.k_cost"]; value: backend.running ? backend.runCost : "—"; tint: Theme.teal }
+            Kpi { caption: i18n.t["run.k_time"]; value: backend.runElapsed !== "" ? backend.runElapsed : "-" }
+            Kpi { caption: i18n.t["run.k_tokens"]; value: backend.running ? backend.runTokens : "-" }
+            Kpi { caption: i18n.t["run.k_cost"]; value: backend.running ? backend.runCost : "-"; tint: Theme.teal }
             Item { Layout.fillWidth: true }
-            // Почему нельзя запустить — сразу видно, без попытки.
+            // Почему нельзя запустить - сразу видно, без попытки.
             RowLayout {
                 visible: !backend.running && page.ctl.blocker !== ""
                 spacing: 8
@@ -459,7 +459,7 @@ Page {
         readonly property bool isLive: model.live
     }
 
-    // «Печатает…» — три прыгающие точки.
+    // «Печатает…» - три прыгающие точки.
     component TypingDots: Row {
         spacing: 4
         Repeater {

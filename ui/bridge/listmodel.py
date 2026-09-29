@@ -81,7 +81,7 @@ class DictListModel(QAbstractListModel):
         return -1
 
     def update_row(self, key_value: Any, **changes: Any) -> None:
-        """Точечная правка одной строки — без пересборки списка."""
+        """Точечная правка одной строки - без пересборки списка."""
         row = self.find(key_value)
         if row < 0:
             return
@@ -134,7 +134,7 @@ class DictListModel(QAbstractListModel):
                 del self._items[row]
                 self.endRemoveRows()
 
-        # 2. если порядок оставшихся изменился — проще пересобрать целиком
+        # 2. если порядок оставшихся изменился - проще пересобрать целиком
         kept = [it.get(self._key) for it in self._items]
         if kept != [k for k in new_keys if k in set(kept)]:
             self._reset(new_items)

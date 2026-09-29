@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 
-// Полоса прогресса по статусам: сегменты растут плавно, а под полосой — легенда.
+// Полоса прогресса по статусам: сегменты растут плавно, а под полосой - легенда.
 ColumnLayout {
     id: root
     property var segments: []      // [{status, title, count}]

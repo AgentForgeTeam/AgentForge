@@ -64,7 +64,7 @@ class Worker(LLMProvider):
 
 
 class SupervisorProvider(LLMProvider):
-    """Проверяющий: вердикты задаются списком, остальное — заглушки."""
+    """Проверяющий: вердикты задаются списком, остальное - заглушки."""
 
     def __init__(self, verdicts: list[str] | None = None,
                  conflicts: str = '{"conflicts": []}',

@@ -3,7 +3,7 @@ import QtQuick.Controls.Basic as T
 import QtQuick.Layouts
 
 // Поле ввода с подписью, иконкой, ошибкой и светящимся фокусом.
-// password: true — скрытый ввод с кнопкой «показать».
+// password: true - скрытый ввод с кнопкой «показать».
 ColumnLayout {
     id: root
     property alias text: input.text

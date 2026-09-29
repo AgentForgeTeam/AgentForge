@@ -1,12 +1,13 @@
 """Провайдер для всех OpenAI-совместимых API.
 
 Покрывает OpenAI, Groq, OpenRouter, Ollama, Hugging Face Router и любой
-локальный сервер (LM Studio, vLLM, llama.cpp) — различается только base_url.
+локальный сервер (LM Studio, vLLM, llama.cpp) - различается только base_url.
 """
 
 from __future__ import annotations
 
 import json
+import re
 from typing import Any, AsyncIterator
 
 import httpx
@@ -21,6 +22,7 @@ from providers.base import (
     ToolSpec,
     Usage,
     estimate_tokens,
+    is_chat_model,
 )
 
 
@@ -84,14 +86,27 @@ class OpenAICompatProvider(LLMProvider):
         серверы (Groq, Ollama, vLLM…) знают только ``max_tokens``.
         """
         payload: dict[str, Any] = {"model": model, "messages": self._to_wire(messages)}
+        tool_payload = self._tools_payload(tools)
         if self.key == "openai":
             payload["max_completion_tokens"] = max_tokens
             if not _is_reasoning_model(model):
                 payload["temperature"] = temperature
+            if tool_payload:
+                name = _bare(model)
+                if name.startswith(_TOOLS_NEED_RESPONSES):
+                    # Понятная ошибка вместо загадочного отказа API.
+                    raise ProviderError(
+                        f"Модель {model} вызывает инструменты только через Responses API, "
+                        "а программа работает через Chat Completions. Выберите для агента "
+                        "gpt-6-luna, gpt-6-sol или gpt-5.4, отключите ему инструменты "
+                        "либо подключите эту модель через OpenRouter.")
+                if name.startswith(_TOOLS_NEED_NO_REASONING):
+                    # Через Chat Completions эти модели вызывают инструменты
+                    # только без рассуждения.
+                    payload["reasoning_effort"] = "none"
         else:
             payload["max_tokens"] = max_tokens
             payload["temperature"] = temperature
-        tool_payload = self._tools_payload(tools)
         if tool_payload:
             payload["tools"] = tool_payload
             payload["tool_choice"] = "auto"
@@ -138,7 +153,7 @@ class OpenAICompatProvider(LLMProvider):
         if u:
             usage = Usage(_int(u.get("prompt_tokens")), _int(u.get("completion_tokens")))
         else:
-            # Сервер не прислал расход — оценка лучше нуля, иначе вызов
+            # Сервер не прислал расход - оценка лучше нуля, иначе вызов
             # незаметно обходил бы лимиты бюджета.
             usage = Usage(sum(len(m.content or "") for m in messages) // 4,
                           estimate_tokens(text))
@@ -161,7 +176,7 @@ class OpenAICompatProvider(LLMProvider):
         чанках, поэтому они склеиваются по ``index`` и разбираются в конце.
         Расход токенов сервер присылает последним чанком, если попросить
         ``stream_options.include_usage``; часть совместимых серверов этот
-        параметр не знает — тогда запрос повторяется без него.
+        параметр не знает - тогда запрос повторяется без него.
         """
         payload = self._payload(model, messages, temperature, max_tokens, tools)
         payload["stream"] = True
@@ -293,16 +308,31 @@ class OpenAICompatProvider(LLMProvider):
         # Обычно {"data": [...]}, но часть серверов отдаёт голый список.
         items = data if isinstance(data, list) else (data.get("data") or data.get("models") or [])
         names = [it.get("id") or it.get("name", "") for it in items if isinstance(it, dict)]
-        return sorted(n for n in names if n)
+        # Озвучка, распознавание речи, картинки и эмбеддинги агенту не подходят.
+        return sorted(n for n in names if is_chat_model(n))
 
 
-#: модели OpenAI, которые принимают только стандартную температуру
-_REASONING_PREFIXES = ("o1", "o3", "o4", "gpt-5")
+#: модели, которые через Chat Completions вызывают инструменты только при
+#: ``reasoning_effort: none`` (так написано в их карточках на сайте OpenAI)
+_TOOLS_NEED_NO_REASONING = ("gpt-6-luna", "gpt-6-sol", "gpt-5.6-luna")
+#: модели, которые через Chat Completions инструменты не вызывают вовсе
+_TOOLS_NEED_RESPONSES = ("gpt-6-astra", "gpt-6.1-sol")
+
+
+def _bare(model: str) -> str:
+    return (model or "").lower().rsplit("/", 1)[-1]
 
 
 def _is_reasoning_model(model: str) -> bool:
-    name = (model or "").lower().rsplit("/", 1)[-1]
-    return name.startswith(_REASONING_PREFIXES) and not name.startswith("gpt-5-chat")
+    """Модели OpenAI с рассуждением: o-серия и GPT начиная с пятой версии.
+
+    Они принимают только стандартную температуру, любую другую API отвергает.
+    """
+    name = _bare(model)
+    if re.match(r"o\d", name):
+        return True
+    match = re.match(r"gpt-(\d+)", name)
+    return bool(match) and int(match.group(1)) >= 5 and "-chat" not in name
 
 
 def _int(value: Any) -> int:

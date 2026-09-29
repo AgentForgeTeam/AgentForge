@@ -3,7 +3,7 @@
 Все экспортёры получают одну и ту же модель блоков из ``bundle.py``,
 поэтому содержание Markdown, DOCX и PDF совпадает по построению.
 
-Отдельная история — кириллица в PDF: встроенные шрифты reportlab её не
+Отдельная история - кириллица в PDF: встроенные шрифты reportlab её не
 знают, поэтому приходится искать в системе TrueType-шрифт. Если не нашли,
 экспорт не молчит и не выдаёт кракозябры, а честно говорит об этом.
 """
@@ -88,13 +88,13 @@ def export_docx(bundle: ResultBundle, options: ExportOptions,
     blocks = [_clean_block(b) for b in build_document(bundle, options)]
     document = Document()
 
-    # Моноширинный стиль для кода — в стандартном шаблоне его нет.
+    # Моноширинный стиль для кода - в стандартном шаблоне его нет.
     styles = document.styles
     try:
         code_style = styles.add_style("AiorcCode", WD_STYLE_TYPE.PARAGRAPH)
         code_style.font.name = "Consolas"
         code_style.font.size = Pt(9)
-    except Exception:  # noqa: BLE001 — стиль уже есть
+    except Exception:  # noqa: BLE001 - стиль уже есть
         code_style = styles["AiorcCode"]
 
     for block in blocks:
@@ -147,7 +147,7 @@ MONO_CANDIDATES = [
 
 
 def find_font(candidates: list[str]) -> Path | None:
-    """Ищет шрифт в системе, а если не нашёл — в пакете matplotlib.
+    """Ищет шрифт в системе, а если не нашёл - в пакете matplotlib.
 
     matplotlib кладёт рядом с собой DejaVu, и это частый способ получить
     кириллический шрифт на машине, где системных TTF нет.
@@ -197,7 +197,7 @@ def export_pdf(bundle: ResultBundle, options: ExportOptions,
     if regular is None:
         raise ExportError(
             "Не найден шрифт с поддержкой кириллицы, а встроенные шрифты PDF "
-            "её не знают — текст получился бы нечитаемым.\n\n"
+            "её не знают - текст получился бы нечитаемым.\n\n"
             "Установите шрифты DejaVu (Linux: пакет fonts-dejavu) либо "
             "выберите экспорт в DOCX или Markdown."
         )
@@ -345,7 +345,7 @@ def export_zip(bundle: ResultBundle, options: ExportOptions,
                          json.dumps(manifest, ensure_ascii=False, indent=2))
 
     note = (f"В архив добавлено файлов: {written}" if written
-            else "Файлов в рабочем каталоге не было — в архиве только отчёт.")
+            else "Файлов в рабочем каталоге не было - в архиве только отчёт.")
     return ExportResult(path, "zip", path.stat().st_size, note)
 
 

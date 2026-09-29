@@ -45,7 +45,7 @@ class Backend(StateObject):
     toast = Signal(str, str, str)
     #: завершилась попытка входа или регистрации: ok, текст ошибки
     authFinished = Signal(bool, str)
-    #: ядро прислало событие — для страниц, которым нужна живая лента
+    #: ядро прислало событие - для страниц, которым нужна живая лента
     coreEvent = Signal("QVariantMap")
     #: просьба интерфейсу открыть страницу
     navigateRequested = Signal(str)
@@ -99,7 +99,7 @@ class Backend(StateObject):
 
     motionLevel = Property(int, _motion_level, notify=changed)
 
-    def _const(value):  # noqa: N805 — фабрика константных свойств
+    def _const(value):  # noqa: N805 - фабрика константных свойств
         return Property(str, lambda self: value, constant=True)
 
     appName = _const(APP_NAME)
@@ -149,7 +149,7 @@ class Backend(StateObject):
         self._set(authBusy=True)
 
         async def job() -> Session | None:
-            # Argon2id занимает десятые доли секунды — в отдельном потоке,
+            # Argon2id занимает десятые доли секунды - в отдельном потоке,
             # чтобы индикатор на кнопке не замирал.
             return await asyncio.to_thread(self.users.authenticate, username, password)
 
@@ -306,7 +306,7 @@ class Backend(StateObject):
         for controller in self._controllers.values():
             try:
                 controller.on_workspace_changed()
-            except Exception:  # noqa: BLE001 — одна страница не должна ломать остальные
+            except Exception:  # noqa: BLE001 - одна страница не должна ломать остальные
                 log.exception("Контроллер %s не обновился", type(controller).__name__)
 
     def _update_workspace_name(self) -> None:

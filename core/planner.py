@@ -1,7 +1,7 @@
 """Автоматическое разбиение задачи на подзадачи через ИИ (этап 3).
 
-Планировщик — обычный вызов модели с требованием вернуть строгий JSON.
-Модель берётся у агента-супервайзера, а если он не назначен — у первого
+Планировщик - обычный вызов модели с требованием вернуть строгий JSON.
+Модель берётся у агента-супервайзера, а если он не назначен - у первого
 доступного агента воркспейса.
 """
 
@@ -20,7 +20,7 @@ from storage.repositories import Repos
 log = logging.getLogger("aiorc.planner")
 
 PLANNER_SYSTEM = """\
-Ты — планировщик работ. Тебе дают формулировку задачи и список доступных \
+Ты - планировщик работ. Тебе дают формулировку задачи и список доступных \
 исполнителей с их ролями. Разбей задачу на 3-8 последовательных подзадач.
 
 Требования к разбиению:
@@ -74,7 +74,7 @@ async def plan_subtasks(repos: Repos, workspace_id: int,
     agent = choose_planner_agent(repos, workspace_id)
     if agent is None:
         raise RuntimeError(
-            "Нет ни одного агента с моделью и ключом — некому планировать. "
+            "Нет ни одного агента с моделью и ключом - некому планировать. "
             "Создайте агента на вкладке «Агенты»."
         )
 
@@ -97,7 +97,7 @@ async def plan_subtasks(repos: Repos, workspace_id: int,
                         task.id if task else None, task.token_limit if task else None)
     blocked = guard.blocking_scope(agent.id)
     if blocked is not None:
-        raise RuntimeError(f"Планирование не запущено: лимит исчерпан — {blocked.reason()}")
+        raise RuntimeError(f"Планирование не запущено: лимит исчерпан - {blocked.reason()}")
 
     secret = repos.keys.reveal(agent.api_key_id) if agent.api_key_id else ""
     key = repos.keys.get(agent.api_key_id) if agent.api_key_id else None
@@ -112,7 +112,7 @@ async def plan_subtasks(repos: Repos, workspace_id: int,
     finally:
         await provider.aclose()
 
-    # Учёт расхода — планирование тоже стоит денег.
+    # Учёт расхода - планирование тоже стоит денег.
     cost = estimate_cost(agent.provider, agent.model,
                          result.usage.input_tokens, result.usage.output_tokens)
     repos.budgets.log_call(workspace_id, task.id if task else None, None, agent.id,
@@ -127,7 +127,7 @@ async def plan_subtasks(repos: Repos, workspace_id: int,
         raise RuntimeError("Модель вернула ответ не в формате JSON. "
                            "Попробуйте ещё раз или выберите другую модель.") from exc
 
-    # Некоторые модели отвечают голым списком вместо объекта — принимаем и так.
+    # Некоторые модели отвечают голым списком вместо объекта - принимаем и так.
     if isinstance(data, list):
         items = data
     elif isinstance(data, dict) and isinstance(data.get("subtasks"), list):

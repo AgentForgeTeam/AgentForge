@@ -1,8 +1,8 @@
-"""Этап 4 — оркестратор выполнения задачи.
+"""Этап 4 - оркестратор выполнения задачи.
 
 Отвечает за расписание: какие подзадачи можно запускать сейчас, какие ждут
 предшественников, сколько агентов работают параллельно. Каждый агент
-выполняет свои подзадачи последовательно (лок на агента), разные агенты —
+выполняет свои подзадачи последовательно (лок на агента), разные агенты -
 параллельно, все в одном asyncio-лупе.
 
 Оркестратор ведёт весь жизненный цикл: статусы, отчёты, расход, паузы и
@@ -78,7 +78,7 @@ class Orchestrator:
         self._confidence_threshold: float = 0.0
         self._semaphore: asyncio.Semaphore | None = None
         self._workspace_id: int | None = None
-        #: id подзадач текущей задачи — зависимости на прочие id игнорируются
+        #: id подзадач текущей задачи - зависимости на прочие id игнорируются
         self._known_ids: set[int] | None = None
 
     # -- управление ----------------------------------------------------------
@@ -240,7 +240,7 @@ class Orchestrator:
             for subtask, outcome in zip(ready, results):
                 pending.pop(subtask.id, None)
                 # CancelledError наследуется от BaseException, а не от Exception,
-                # поэтому проверяем именно BaseException — иначе отменённая
+                # поэтому проверяем именно BaseException - иначе отменённая
                 # подзадача была бы ошибочно засчитана как выполненная.
                 if isinstance(outcome, asyncio.CancelledError):
                     continue
@@ -252,7 +252,7 @@ class Orchestrator:
 
             # Завершён этап работ: если пользователь просил останавливаться
             # на контрольных точках, спрашиваем перед следующей волной.
-            # На последней волне вопрос не задаём — спрашивать «продолжать?»,
+            # На последней волне вопрос не задаём - спрашивать «продолжать?»,
             # когда продолжать уже нечего, бессмысленно.
             if (pending and self._gate is not None and not self._stop.is_set()
                     and settings.get("hitl_pause_on_milestone")):
@@ -296,7 +296,7 @@ class Orchestrator:
             ))
 
     def _wave_summary(self, task: Task, done_ids: set[int]) -> str:
-        """Короткая сводка по завершённой волне — чтобы решать осознанно."""
+        """Короткая сводка по завершённой волне - чтобы решать осознанно."""
         lines: list[str] = []
         for subtask in self.repos.tasks.subtasks(task.id):
             if subtask.id not in done_ids:
@@ -426,8 +426,8 @@ class Orchestrator:
         """Сохраняет результат и проводит его через супервайзера.
 
         Возвращает ``(итог, замечания, доработку назначил человек)``:
-        итог ``True``/``False`` — подзадача закрыта успешно или с ошибкой,
-        ``None`` — назначена доработка. Третий флаг говорит вызывающему коду,
+        итог ``True``/``False`` - подзадача закрыта успешно или с ошибкой,
+        ``None`` - назначена доработка. Третий флаг говорит вызывающему коду,
         что круг доработки нужно выдать сверх автоматического лимита.
         """
         finished = self._finish_subtask(workspace_id, task, subtask, agent, result)
@@ -466,7 +466,7 @@ class Orchestrator:
                 self.bus.log(f"закрыто замечаний после доработки: {closed}",
                              workspace_id=workspace_id, subtask_id=subtask.id,
                              agent_name="Супервайзер")
-            # Супервайзер доволен, но сам исполнитель — нет. Это как раз тот
+            # Супервайзер доволен, но сам исполнитель - нет. Это как раз тот
             # случай, когда дешевле спросить человека, чем нести сомнительный
             # результат дальше по цепочке подзадач.
             if (self._gate is not None and report.confidence is not None
@@ -485,7 +485,7 @@ class Orchestrator:
                     return await self._apply_decision(
                         workspace_id, task, subtask, agent, answer, None
                     )
-                # Пользователь подтвердил результат — возвращаем статусы,
+                # Пользователь подтвердил результат - возвращаем статусы,
                 # которые были сняты на время ожидания ответа.
                 self.repos.tasks.update_subtask(subtask.id, status="done")
                 self.repos.agents.set_status(agent.id, "idle")
@@ -507,7 +507,7 @@ class Orchestrator:
             ))
             return None, verdict.notes, False
 
-        # Доработки исчерпаны либо это конфликт — фиксируем инцидент
+        # Доработки исчерпаны либо это конфликт - фиксируем инцидент
         # и, если human-in-the-loop включён, останавливаемся и спрашиваем.
         incident_id = self.repos.incidents.add(
             workspace_id,
@@ -525,7 +525,7 @@ class Orchestrator:
     async def _handle_unverified(self, workspace_id: int, task: Task, subtask: Subtask,
                                  agent: Agent, report: Report, verdict
                                  ) -> tuple[bool | None, str, bool]:
-        """Супервайзер не смог проверить отчёт — решение за человеком."""
+        """Супервайзер не смог проверить отчёт - решение за человеком."""
         incident_id = self.repos.incidents.add(
             workspace_id, kind="unverified",
             description=verdict.notes or "Результат не прошёл проверку супервайзера",
@@ -587,7 +587,7 @@ class Orchestrator:
                               ) -> tuple[bool | None, str, bool]:
         """Применяет решение пользователя к подзадаче.
 
-        Третий элемент кортежа — признак того, что круг доработки назначил
+        Третий элемент кортежа - признак того, что круг доработки назначил
         человек, а значит его надо выдать сверх автоматического лимита.
         """
         if incident_id is not None:
@@ -646,7 +646,7 @@ class Orchestrator:
         """Лимит исчерпан посреди прогона: спросить, поднимать ли его.
 
         Возвращает ``True``, если пользователь разрешил продолжить (лимит
-        поднимает сам ``BudgetGuard``). Остановка прогона — отдельное
+        поднимает сам ``BudgetGuard``). Остановка прогона - отдельное
         решение: тогда заблокированные вызовы завершаются ошибкой.
         """
         gate = self._gate
@@ -710,7 +710,7 @@ class Orchestrator:
             ))
             return False
 
-        # Отчёт — это то, что увидит супервайзер.
+        # Отчёт - это то, что увидит супервайзер.
         report_id = self.repos.reports.add_report(
             workspace_id, task.id, subtask.id, agent.id,
             content=result.result_text, confidence=result.confidence,
@@ -785,7 +785,7 @@ class Orchestrator:
         if not settings.get("human_in_the_loop", True):
             self._gate = None
             self._confidence_threshold = 0.0
-            self.bus.log("Human-in-the-loop выключен — система не будет останавливаться",
+            self.bus.log("Human-in-the-loop выключен - система не будет останавливаться",
                          workspace_id=workspace_id)
             return
         self._gate = ApprovalGate(self.repos, self.bus, workspace_id)
@@ -798,12 +798,12 @@ class Orchestrator:
 
     @property
     def gate(self) -> ApprovalGate | None:
-        """Ворота согласования — интерфейс отдаёт через них решения пользователя."""
+        """Ворота согласования - интерфейс отдаёт через них решения пользователя."""
         return self._gate
 
     @property
     def budget(self) -> BudgetGuard | None:
-        """Бюджет текущего прогона — для живых индикаторов в интерфейсе."""
+        """Бюджет текущего прогона - для живых индикаторов в интерфейсе."""
         return self._budget
 
     def _count_supervisor_usage(self, tokens: int, cost: float) -> None:
@@ -818,7 +818,7 @@ class Orchestrator:
                                 on_usage=self._count_supervisor_usage)
         if not supervisor.available():
             self._supervisor = None
-            self.bus.log("Супервайзер не настроен — отчёты принимаются без проверки",
+            self.bus.log("Супервайзер не настроен - отчёты принимаются без проверки",
                          workspace_id=workspace_id, task_id=task.id)
             return
         self._supervisor = supervisor
@@ -830,7 +830,7 @@ class Orchestrator:
             self._gate = None
         # Прогон окончен: агенты, остановленные посреди работы или
         # ожидавшие решения, больше не «работают» и не «на паузе».
-        # Статус подзадачи (paused) сохраняется — по нему видно, что
+        # Статус подзадачи (paused) сохраняется - по нему видно, что
         # её можно продолжить следующим запуском.
         if self._workspace_id is not None:
             for agent in self.repos.agents.list(self._workspace_id):

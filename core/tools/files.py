@@ -35,7 +35,7 @@ class FileReadTool(Tool):
     async def run(self, ctx: ToolContext, **kwargs: Any) -> str:
         path = ctx.resolve(str(kwargs.get("path", "")), must_exist=True)
         if path.is_dir():
-            raise ToolError(f"«{path.name}» — каталог, используй list_dir")
+            raise ToolError(f"«{path.name}» - каталог, используй list_dir")
         try:
             limit = min(max(1, int(kwargs.get("max_bytes") or MAX_READ_BYTES)), MAX_READ_BYTES)
         except (TypeError, ValueError):
@@ -96,7 +96,7 @@ class ListDirTool(Tool):
     async def run(self, ctx: ToolContext, **kwargs: Any) -> str:
         path = ctx.resolve(str(kwargs.get("path") or "."), must_exist=True)
         if not path.is_dir():
-            raise ToolError(f"«{path.name}» — не каталог")
+            raise ToolError(f"«{path.name}» - не каталог")
         lines: list[str] = []
         for item in sorted(path.iterdir(), key=lambda p: (p.is_file(), p.name.lower())):
             if item.name.startswith("."):

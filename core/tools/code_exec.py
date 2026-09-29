@@ -33,7 +33,7 @@ class CodeExecTool(Tool):
         code = (kwargs.get("code") or "").strip()
         language = (kwargs.get("language") or "python").lower()
         if not code:
-            raise ToolError("Пустой код — нечего исполнять")
+            raise ToolError("Пустой код - нечего исполнять")
         if language not in LANG_COMMANDS:
             raise ToolError(f"Язык «{language}» не поддерживается")
 

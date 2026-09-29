@@ -117,7 +117,7 @@ Page {
 
                     RowLayout {
                         spacing: 6
-                        Badge { text: model.modelName !== "" ? model.modelName : "—"; tone: "accent"; icon: "cpu" }
+                        Badge { text: model.modelName !== "" ? model.modelName : "-"; tone: "accent"; icon: "cpu" }
                         Badge { visible: model.price !== ""; text: model.price; tone: "muted"; icon: "coins" }
                     }
 

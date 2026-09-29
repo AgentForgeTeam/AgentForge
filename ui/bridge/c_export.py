@@ -146,7 +146,7 @@ class ExportController(Controller):
 
         def job():
             # Данные собираются заново: с момента открытия экрана агенты
-            # могли дописать результаты. Сборка DOCX/PDF занимает секунды —
+            # могли дописать результаты. Сборка DOCX/PDF занимает секунды -
             # в отдельном потоке, чтобы окно не замирало.
             bundle = collect(repos, ws_id)
             return export(bundle, options, fmt, target)

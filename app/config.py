@@ -18,7 +18,7 @@ APP_SLUG = "agent-forge"
 #: каталог данных до переименования проекта (AI Orchestrator → Agent Forge)
 LEGACY_SLUG = "ai-orchestrator"
 APP_VERSION = "1.1.1"          # 1.1.1: исправления после полного прохода по коду
-SCHEMA_VERSION = 1             # версия схемы SQLite (для миграций)
+SCHEMA_VERSION = 2             # версия схемы SQLite (для миграций)
 
 
 def _default_home() -> Path:
@@ -98,7 +98,7 @@ class AppSettings:
                 data = json.loads(PATHS.config_file.read_text("utf-8"))
                 known = {f for f in cls.__dataclass_fields__}
                 return cls(**{k: v for k, v in data.items() if k in known})
-            except Exception:  # noqa: BLE001 — повреждённый конфиг не должен ронять старт
+            except Exception:  # noqa: BLE001 - повреждённый конфиг не должен ронять старт
                 pass
         return cls()
 
@@ -115,7 +115,7 @@ class AppSettings:
 
 DEFAULT_WORKSPACE_SETTINGS: dict = {
     "human_in_the_loop": True,          # паузы в критических точках
-    "hitl_confidence_threshold": 0.5,   # ниже этой самооценки агента — спросить человека
+    "hitl_confidence_threshold": 0.5,   # ниже этой самооценки агента - спросить человека
     "hitl_pause_on_milestone": False,   # пауза после каждой волны подзадач
     "summary_interval_minutes": 15,     # периодическая сводка супервайзера
     "summary_on_event": True,           # сводка при завершении подзадачи
