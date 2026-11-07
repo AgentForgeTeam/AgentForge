@@ -202,6 +202,7 @@ export function Settings() {
             </div>
           )}
           <Toggle label={t("settings.fetch_pages")} checked={ws.fetch_pages !== false} onChange={(v) => set("fetch_pages", v)} />
+          <Toggle label={t("settings.llm_guard")} hint={t("settings.llm_guard_hint")} checked={Boolean(ws.llm_injection_check)} onChange={(v) => set("llm_injection_check", v)} />
         </Section>
 
         <Section icon="box" title={t("settings.sandbox")} index={5} disabled={!hasWs}>
