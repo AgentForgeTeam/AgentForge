@@ -1,0 +1,49 @@
+name: Проверки
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  core:
+    name: Ядро (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+      - name: Зависимости
+        run: pip install -r requirements-dev.txt
+      - name: Статический анализ
+        run: python -m pyflakes app bridge core eval providers storage tests utils main.py
+      - name: Тесты
+        run: python -m pytest -q
+      - name: Фильтр prompt injection на открытом наборе атак
+        run: python -m eval.injection_eval --no-llm --out ci-results
+
+  window:
+    name: Окно (Electron + React)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: desktop
+    env:
+      # Сам Electron для проверки типов и сборки страницы не нужен.
+      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+      - name: Зависимости
+        run: npm ci
+      - name: Проверка типов и сборка
+        run: npm run build
