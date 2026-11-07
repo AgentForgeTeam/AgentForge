@@ -207,3 +207,35 @@ async def test_llm_classifier_answer_parsing(answer, expected):
     assert injected is expected
     assert "some page text" in model.seen
     assert usage.total == 55
+
+
+def test_attack_set_is_built_from_public_benchmarks():
+    from eval.injection_eval import load
+
+    items = load()
+    sets = {}
+    for item in items:
+        sets[(item["set"], item["label"])] = sets.get((item["set"], item["label"]), 0) + 1
+    assert sets[("bipia", 1)] == 75 and sets[("clean", 0)] == 75
+    assert sets[("deepset", 1)] + sets[("deepset", 0)] == 116
+    bipia = {i["id"]: i for i in items if i["set"] == "bipia"}
+    clean = {i["id"]: i for i in items if i["set"] == "clean"}
+    # Атака вставлена в тот же абзац, что лежит в чистой части: фильтр
+    # должен реагировать на вставку, а не на тему текста.
+    for i in (0, 2):                       # вставка в начало и в конец абзаца
+        attack, carrier = bipia[f"bipia-{i:03d}"], clean[f"clean-{i:03d}"]
+        assert attack["position"] in ("start", "end")
+        assert carrier["text"] in attack["text"] and len(attack["text"]) > len(carrier["text"])
+    assert all(i["source"].startswith("https://") for i in items)
+
+
+def test_rates_count_caught_attacks_and_false_alarms():
+    from eval.injection_eval import rates
+
+    items = [{"id": "a", "set": "bipia", "label": 1}, {"id": "b", "set": "bipia", "label": 1},
+             {"id": "c", "set": "clean", "label": 0}, {"id": "d", "set": "deepset", "label": 0}]
+    r = rates(items, {"a": True, "c": True})
+    assert r["bipia_attacks_caught"]["share"] == 0.5
+    assert r["clean_false_alarms"]["share"] == 1.0
+    assert r["deepset_benign_false_alarms"]["share"] == 0.0
+    assert r["deepset_attacks_caught"]["share"] is None
