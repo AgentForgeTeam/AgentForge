@@ -158,7 +158,26 @@ class AgentRunner:
             # Ключ поискового API хранится в настройках зашифрованным.
             search_api_key=self.repos.secrets.open(self.settings.get("search_api_key", "")),
             fetch_pages=bool(self.settings.get("fetch_pages", True)),
+            injection_check=(self._check_injection
+                             if self.settings.get("llm_injection_check") else None),
         )
+
+    async def _check_injection(self, text: str) -> str | None:
+        """Второй слой защиты: модель агента проверяет внешний текст на инъекцию."""
+        from core.security.injection import classify_with_llm
+
+        try:
+            injected, reason, usage = await classify_with_llm(
+                self.provider, self.agent.model, text)
+        except ProviderError as exc:
+            # Проверка не удалась - остаётся эвристика, работа не встаёт.
+            log.warning("Проверка внешних данных моделью не удалась: %s", exc)
+            return None
+        self._account(CompletionResult(text="", usage=usage))
+        if not injected:
+            return None
+        self._emit(EventType.LOG, f"фильтр-модель скрыла внешние данные: {reason[:160]}")
+        return reason or "похоже на prompt injection"
 
     def _briefing(self) -> str:
         """Задание агенту: общая задача, своя подзадача, вход от предшественников."""

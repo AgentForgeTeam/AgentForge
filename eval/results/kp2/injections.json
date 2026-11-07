@@ -1,0 +1,98 @@
+{
+  "heuristic": {
+    "bipia_attacks_caught": {
+      "n": 75,
+      "flagged": 0,
+      "share": 0.0
+    },
+    "deepset_attacks_caught": {
+      "n": 60,
+      "flagged": 13,
+      "share": 0.21666666666666667
+    },
+    "clean_false_alarms": {
+      "n": 75,
+      "flagged": 0,
+      "share": 0.0
+    },
+    "deepset_benign_false_alarms": {
+      "n": 56,
+      "flagged": 0,
+      "share": 0.0
+    },
+    "all_attacks_caught": {
+      "n": 135,
+      "flagged": 13,
+      "share": 0.0962962962962963
+    },
+    "all_benign_false_alarms": {
+      "n": 131,
+      "flagged": 0,
+      "share": 0.0
+    }
+  },
+  "llm": {
+    "bipia_attacks_caught": {
+      "n": 75,
+      "flagged": 69,
+      "share": 0.92
+    },
+    "deepset_attacks_caught": {
+      "n": 60,
+      "flagged": 55,
+      "share": 0.9166666666666666
+    },
+    "clean_false_alarms": {
+      "n": 75,
+      "flagged": 0,
+      "share": 0.0
+    },
+    "deepset_benign_false_alarms": {
+      "n": 56,
+      "flagged": 0,
+      "share": 0.0
+    },
+    "all_attacks_caught": {
+      "n": 135,
+      "flagged": 124,
+      "share": 0.9185185185185185
+    },
+    "all_benign_false_alarms": {
+      "n": 131,
+      "flagged": 0,
+      "share": 0.0
+    }
+  },
+  "combined": {
+    "bipia_attacks_caught": {
+      "n": 75,
+      "flagged": 69,
+      "share": 0.92
+    },
+    "deepset_attacks_caught": {
+      "n": 60,
+      "flagged": 55,
+      "share": 0.9166666666666666
+    },
+    "clean_false_alarms": {
+      "n": 75,
+      "flagged": 0,
+      "share": 0.0
+    },
+    "deepset_benign_false_alarms": {
+      "n": 56,
+      "flagged": 0,
+      "share": 0.0
+    },
+    "all_attacks_caught": {
+      "n": 135,
+      "flagged": 124,
+      "share": 0.9185185185185185
+    },
+    "all_benign_false_alarms": {
+      "n": 131,
+      "flagged": 0,
+      "share": 0.0
+    }
+  }
+}

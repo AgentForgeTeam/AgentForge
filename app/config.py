@@ -136,4 +136,5 @@ DEFAULT_WORKSPACE_SETTINGS: dict = {
     "search_backend": "duckduckgo",     # "duckduckgo" | "tavily" | "brave"
     "search_api_key": "",               # ключ Tavily/Brave, хранится зашифрованным
     "fetch_pages": True,                # скачивать и парсить страницы из выдачи
+    "llm_injection_check": False,       # проверять внешние данные моделью-классификатором
 }

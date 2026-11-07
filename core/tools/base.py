@@ -11,7 +11,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Awaitable, Callable
 
 from providers.base import ToolSpec
 
@@ -38,6 +38,9 @@ class ToolContext:
     search_backend: str = "duckduckgo"
     search_api_key: str = ""
     fetch_pages: bool = True
+    # второй слой защиты от prompt injection: проверка внешнего текста моделью,
+    # возвращает причину, если текст похож на атаку (None - всё чисто)
+    injection_check: Callable[[str], Awaitable[str | None]] | None = None
 
     def roots(self) -> list[Path]:
         return [self.workspace_dir.resolve(), *[p.resolve() for p in self.extra_allowed_paths]]
@@ -101,12 +104,23 @@ class ToolRegistry:
         return list(self._tools)
 
     async def invoke(self, name: str, ctx: ToolContext, **kwargs: Any) -> str:
-        """Вызывает инструмент, превращая любые ошибки в текст для модели."""
+        """Вызывает инструмент, превращая любые ошибки в текст для модели.
+
+        Текст из внешних источников (поиск, страницы, файлы) проходит фильтр
+        prompt injection, см. ``core/security/injection.py``.
+        """
+        from core.security.injection import UNTRUSTED_TOOLS, guard_tool_output
+
         tool = self.get(name)
         if tool is None:
             return f"ОШИБКА: инструмент «{name}» недоступен."
         try:
-            return await tool.run(ctx, **kwargs)
+            output = await tool.run(ctx, **kwargs)
+            flagged = None
+            if (ctx.injection_check and name in UNTRUSTED_TOOLS and output
+                    and not output.startswith("ОШИБКА")):
+                flagged = await ctx.injection_check(output)
+            return guard_tool_output(name, output, flagged)
         except ToolError as exc:
             return f"ОШИБКА ИНСТРУМЕНТА: {exc}"
         except Exception as exc:  # noqa: BLE001 - модель должна узнать о сбое
