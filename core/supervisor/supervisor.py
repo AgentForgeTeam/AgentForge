@@ -21,6 +21,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from core.budget import BudgetBlocked, BudgetGuard
+from core.chain import chain_note
 from core.events import Event, EventBus, EventType
 from core.supervisor.checklist import (
     CONFLICT_SYSTEM,
@@ -205,10 +206,15 @@ class Supervisor:
         self._task_id = task.id
         label = self._label(report.agent_id)
         context = self._accepted_context(task.id, exclude_subtask=subtask.id)
+        # Промежуточный этап не обязан отвечать на всю задачу проекта.
+        subtask_text = f"{subtask.title}\n{subtask.description}"[:2000]
+        note = chain_note(self.repos.tasks.subtasks(task.id), subtask, for_supervisor=True)
+        if note:
+            subtask_text += f"\n\n{note}"
 
         user = REVIEW_USER.format(
             task=f"{task.title}\n{task.description}"[:4000],
-            subtask=f"{subtask.title}\n{subtask.description}"[:2000],
+            subtask=subtask_text,
             label=label,
             confidence=(f"{report.confidence:.2f}" if report.confidence is not None
                         else "не указана"),
