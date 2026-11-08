@@ -1,0 +1,96 @@
+{
+  "architectures": {
+    "single": {
+      "n": 40,
+      "correct": 35,
+      "accuracy": 0.875,
+      "ci95": [
+        0.7388757932976187,
+        0.9454058022645873
+      ],
+      "by_source": {
+        "frames": {
+          "n": 14,
+          "correct": 9,
+          "accuracy": 0.6428571428571429
+        },
+        "gsm8k": {
+          "n": 13,
+          "correct": 13,
+          "accuracy": 1.0
+        },
+        "humaneval": {
+          "n": 13,
+          "correct": 13,
+          "accuracy": 1.0
+        }
+      },
+      "tokens_total": 251515,
+      "tokens_per_task": 6287.875,
+      "cost_total": 0.1193,
+      "cost_per_task": 0.0029836249999999993,
+      "seconds_per_task": 18.319999999999993,
+      "supervisor_share": 0.0,
+      "planner_share": 0.0,
+      "links_total": 28,
+      "links_fabricated": 6,
+      "links_fabricated_share": 0.21428571428571427,
+      "limit_exceeded": 0,
+      "errors": 0,
+      "stalled": 0
+    },
+    "team": {
+      "n": 40,
+      "correct": 34,
+      "accuracy": 0.85,
+      "ci95": [
+        0.7092737396097997,
+        0.9293890829149256
+      ],
+      "by_source": {
+        "frames": {
+          "n": 14,
+          "correct": 11,
+          "accuracy": 0.7857142857142857
+        },
+        "gsm8k": {
+          "n": 13,
+          "correct": 13,
+          "accuracy": 1.0
+        },
+        "humaneval": {
+          "n": 13,
+          "correct": 10,
+          "accuracy": 0.7692307692307693
+        }
+      },
+      "tokens_total": 921649,
+      "tokens_per_task": 23041.225,
+      "cost_total": 0.4188,
+      "cost_per_task": 0.010469224999999997,
+      "seconds_per_task": 87.22250000000001,
+      "supervisor_share": 0.2779745868546486,
+      "planner_share": 0.03278146018712113,
+      "links_total": 41,
+      "links_fabricated": 14,
+      "links_fabricated_share": 0.34146341463414637,
+      "limit_exceeded": 0,
+      "errors": 1,
+      "stalled": 10
+    }
+  },
+  "paired": {
+    "tasks": 40,
+    "both": 32,
+    "only_single": [
+      "humaneval-HumanEval_142",
+      "humaneval-HumanEval_163",
+      "humaneval-HumanEval_91"
+    ],
+    "only_team": [
+      "frames-105",
+      "frames-430"
+    ],
+    "neither": 3
+  }
+}

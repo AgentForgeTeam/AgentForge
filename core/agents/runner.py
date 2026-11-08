@@ -18,6 +18,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from app.config import PATHS
+from core.chain import chain_note
 from core.events import Event, EventBus, EventType
 from core.tools.base import ToolContext, ToolRegistry, expand_tool_names
 from providers.base import ChatMessage, CompletionResult, LLMProvider, ProviderError, ToolCall
@@ -190,6 +191,10 @@ class AgentRunner:
         ]
         if self.subtask.description:
             parts.append(self.subtask.description)
+        note = chain_note(self.repos.tasks.subtasks(self.task.id), self.subtask,
+                          for_supervisor=False)
+        if note:
+            parts += ["", note]
 
         # Результаты подзадач, от которых зависит текущая: это не "чужая
         # переписка", а переданный по конвейеру артефакт работы.
