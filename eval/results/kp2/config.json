@@ -1,0 +1,16 @@
+{
+  "provider": "gemini",
+  "agent_model": "gemini-3.5-flash-lite",
+  "supervisor_model": "gemini-3.1-flash-lite",
+  "judge_model": "gemini-3.1-flash-lite-preview",
+  "max_steps": 6,
+  "max_tokens": 4096,
+  "token_limit": 300000,
+  "task_timeout": 900,
+  "rework_rounds": 1,
+  "parallel": 3,
+  "archs": [
+    "single",
+    "team"
+  ]
+}
